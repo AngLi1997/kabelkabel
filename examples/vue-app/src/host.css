@@ -1,0 +1,57 @@
+/* 宿主系统自身样式（用于验证组件不污染、不受宿主全局样式影响） */
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: system-ui, sans-serif;
+  background: #e9ecf0;
+}
+
+/* 故意设置的宿主全局样式，Kabel 内部不应受影响 */
+button {
+  letter-spacing: 0;
+}
+
+.host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.host-nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 44px;
+  padding: 0 16px;
+  background: #16345c;
+  color: #fff;
+  font-size: 14px;
+}
+
+.host-nav__brand {
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.host-nav__crumb {
+  opacity: 0.85;
+}
+
+.host-nav__spacer {
+  flex: 1;
+}
+
+.host-nav__log {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.host-main {
+  flex: 1;
+  min-height: 0;
+}

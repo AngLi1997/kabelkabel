@@ -1,0 +1,58 @@
+/* ---------- Metadata editor ---------- */
+.kb-md {
+  height: 100%;
+  padding: var(--kb-space-3) var(--kb-space-4) var(--kb-space-4);
+  overflow: auto;
+}
+
+.kb-md__grid {
+  display: grid;
+  column-gap: var(--kb-space-4);
+  row-gap: 10px;
+}
+
+.kb-md__field {
+  display: flex;
+  align-items: flex-start;
+  min-width: 0;
+  border-radius: var(--kb-radius);
+  transition: background-color 400ms ease;
+}
+
+.kb-md__field.is-flash {
+  background: var(--kb-color-primary-soft);
+}
+
+.kb-md__label {
+  flex: none;
+  width: var(--kb-label-width);
+  padding-right: var(--kb-space-2);
+  overflow: hidden;
+  line-height: var(--kb-control-height);
+  text-align: right;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--kb-color-text);
+}
+
+.kb-md__field.is-required .kb-md__label::before {
+  content: '*';
+  margin-right: 3px;
+  color: var(--kb-color-danger);
+}
+
+.kb-md__control {
+  flex: 1;
+  min-width: 0;
+}
+
+.kb-md__error {
+  margin-top: 2px;
+  font-size: var(--kb-font-size-sm);
+  line-height: 1.4;
+  color: var(--kb-color-danger);
+}
+
+.kb-root[data-size='sm'] .kb-md {
+  padding: var(--kb-space-2) var(--kb-space-3) var(--kb-space-3);
+}

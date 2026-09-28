@@ -1,0 +1,54 @@
+/*
+ * Kabel 设计令牌。全部定义在 .kb-root 作用域内，不影响宿主页面。
+ * 主题插件/宿主可通过覆盖这些变量换肤，例如：
+ *   .kb-root { --kb-color-primary: #a4262c; }
+ */
+.kb-root {
+  --kb-color-primary: #1f4e8c;
+  --kb-color-primary-hover: #2a5d9f;
+  --kb-color-primary-active: #173d6e;
+  --kb-color-primary-soft: #e9eff7;
+  --kb-color-danger: #b8322a;
+  --kb-color-danger-soft: #fbeeed;
+  --kb-color-warning: #a8660f;
+  --kb-color-warning-soft: #fdf4e6;
+  --kb-color-success: #2b7446;
+  --kb-color-success-soft: #ebf5ee;
+
+  --kb-color-text: #1f2329;
+  --kb-color-text-2: #3d4450;
+  --kb-color-text-disabled: #a1a7b0;
+  --kb-color-icon: #4a5260;
+
+  --kb-color-bg: #eceef1;
+  --kb-color-surface: #ffffff;
+  --kb-color-surface-2: #f6f7f9;
+  --kb-color-hover: #eef1f5;
+  --kb-color-border: #d8dce2;
+  --kb-color-border-strong: #bcc3cc;
+  --kb-color-divider: #e4e7ec;
+  --kb-color-canvas: #3b4048;
+
+  --kb-font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Source Han Sans SC',
+    'Noto Sans CJK SC', 'Helvetica Neue', Arial, sans-serif;
+  --kb-font-size: 13px;
+  --kb-font-size-sm: 12px;
+  --kb-line-height: 1.5;
+
+  --kb-radius: 2px;
+  --kb-control-height: 28px;
+  --kb-control-height-sm: 24px;
+  --kb-toolbar-height: 40px;
+  --kb-header-height: 32px;
+  --kb-statusbar-height: 26px;
+  --kb-label-width: 96px;
+
+  --kb-space-1: 4px;
+  --kb-space-2: 8px;
+  --kb-space-3: 12px;
+  --kb-space-4: 16px;
+
+  --kb-shadow-overlay: 0 6px 24px rgba(20, 28, 40, 0.14);
+  --kb-focus-ring: 0 0 0 2px rgba(31, 78, 140, 0.18);
+  --kb-transition: 120ms ease;
+}

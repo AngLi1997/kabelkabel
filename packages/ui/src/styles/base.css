@@ -1,0 +1,88 @@
+/* 作用域内的基础重置，只作用于 .kb-root 子树 */
+.kb-root {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  font-family: var(--kb-font-family);
+  font-size: var(--kb-font-size);
+  line-height: var(--kb-line-height);
+  color: var(--kb-color-text);
+  background: var(--kb-color-bg);
+  text-align: left;
+  -webkit-font-smoothing: antialiased;
+}
+
+.kb-root *,
+.kb-root *::before,
+.kb-root *::after {
+  box-sizing: border-box;
+}
+
+.kb-root [hidden] {
+  display: none !important;
+}
+
+.kb-root button,
+.kb-root input,
+.kb-root select,
+.kb-root textarea {
+  font: inherit;
+  color: inherit;
+  margin: 0;
+}
+
+.kb-root button {
+  cursor: pointer;
+}
+
+.kb-root :focus-visible {
+  outline: none;
+  box-shadow: var(--kb-focus-ring);
+}
+
+.kb-root.is-resizing {
+  user-select: none;
+}
+
+.kb-root.is-resizing-x,
+.kb-root.is-resizing-x * {
+  cursor: col-resize !important;
+}
+
+.kb-root.is-resizing-y,
+.kb-root.is-resizing-y * {
+  cursor: row-resize !important;
+}
+
+.kb-root.is-resizing iframe,
+.kb-root.is-resizing img {
+  pointer-events: none;
+}
+
+.kb-icon {
+  display: inline-block;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+  line-height: 1;
+  vertical-align: -0.2em;
+  color: inherit;
+  fill: currentColor;
+  overflow: hidden;
+}
+
+.kb-view-host {
+  height: 100%;
+  min-height: 0;
+}
+
+.kb-scroll {
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--kb-color-border-strong) transparent;
+}

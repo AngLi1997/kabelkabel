@@ -1,0 +1,14 @@
+{
+  "name": "@kabel-examples/plugins",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "示例：以独立 npm 包形式分发的第三方插件",
+  "exports": {
+    "./archive-code": "./archive-code.ts",
+    "./ocr-assist": "./ocr-assist.ts"
+  },
+  "dependencies": {
+    "@kabel/editor": "workspace:*"
+  }
+}

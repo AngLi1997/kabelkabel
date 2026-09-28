@@ -1,0 +1,124 @@
+/* ---------- Image viewer ---------- */
+.kb-viewer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.kb-viewer__stage {
+  position: relative;
+  flex: 1;
+  min-height: 120px;
+  overflow: hidden;
+  background: var(--kb-color-canvas);
+  outline: none;
+}
+
+.kb-viewer__stage.is-ready {
+  cursor: grab;
+}
+
+.kb-viewer__stage.is-ready:active {
+  cursor: grabbing;
+}
+
+.kb-viewer__stage .kb-empty {
+  color: #c9ced6;
+}
+
+.kb-viewer__stage .kb-empty .kb-icon {
+  color: #7b828d;
+}
+
+.kb-viewer__image {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  max-width: none;
+  transform-origin: center center;
+  background: #fff;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.kb-viewer__thumbs {
+  display: flex;
+  flex: none;
+  gap: 6px;
+  padding: 6px 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-top: 1px solid var(--kb-color-divider);
+  background: var(--kb-color-surface-2);
+}
+
+.kb-viewer__thumb {
+  position: relative;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  aspect-ratio: 3 / 4;
+  padding: 2px;
+  border: 1px solid var(--kb-color-border);
+  border-radius: var(--kb-radius);
+  background: var(--kb-color-surface);
+}
+
+.kb-viewer__thumb img {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  object-fit: contain;
+}
+
+.kb-viewer__thumb span {
+  flex: none;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--kb-color-text-2);
+}
+
+.kb-viewer__thumb:hover {
+  border-color: var(--kb-color-border-strong);
+}
+
+.kb-viewer__thumb.is-active {
+  border-color: var(--kb-color-primary);
+  box-shadow: inset 0 0 0 1px var(--kb-color-primary);
+}
+
+.kb-viewer__thumb.is-active span {
+  color: var(--kb-color-primary);
+  font-weight: 600;
+}
+
+.kb-viewer__bar {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px 8px;
+  min-height: 32px;
+  padding: 2px 4px;
+  border-top: 1px solid var(--kb-color-border);
+  background: var(--kb-color-surface);
+}
+
+.kb-viewer__group {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.kb-viewer__page,
+.kb-viewer__zoom {
+  min-width: 44px;
+  font-size: var(--kb-font-size-sm);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}

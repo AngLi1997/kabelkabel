@@ -1,0 +1,23 @@
+{
+  "name": "kabel-example-vue",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@kabel/editor": "workspace:*",
+    "@kabel/vue": "workspace:*",
+    "vue": "^3.5.0",
+    "@kabel-examples/plugins": "workspace:*"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.4",
+    "typescript": "~5.9.3",
+    "vite": "^6.4.3",
+    "vue-tsc": "^2.2.12"
+  }
+}

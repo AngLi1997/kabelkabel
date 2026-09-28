@@ -1,0 +1,338 @@
+/* ---------- Toolbar ---------- */
+.kb-toolbar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kb-space-2);
+  height: var(--kb-toolbar-height);
+  padding: 0 var(--kb-space-2);
+  border-bottom: 1px solid var(--kb-color-border);
+  background: var(--kb-color-surface);
+}
+
+.kb-toolbar__group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.kb-toolbar__group:first-child {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.kb-toolbar .kb-btn--primary {
+  margin-right: 4px;
+}
+
+.kb-toolbar__sep {
+  flex: none;
+  width: 1px;
+  height: 16px;
+  margin: 0 6px;
+  background: var(--kb-color-divider);
+}
+
+/* ---------- Body & regions ---------- */
+.kb-body {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  gap: 0;
+  padding: var(--kb-space-2);
+}
+
+.kb-region {
+  position: relative;
+  display: flex;
+  flex: none;
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid var(--kb-color-border);
+  background: var(--kb-color-surface);
+}
+
+.kb-region--main {
+  flex: 1 1 0;
+}
+
+.kb-body > .kb-region--left.is-collapsed {
+  margin-right: var(--kb-space-2);
+}
+
+.kb-body > .kb-region--right.is-collapsed {
+  margin-left: var(--kb-space-2);
+}
+
+.kb-region.is-collapsed {
+  width: 28px;
+}
+
+.kb-region.is-maximized {
+  flex: 1 1 0;
+  width: auto;
+}
+
+.kb-region__inner {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.kb-region__header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  height: var(--kb-header-height);
+  padding: 0 4px 0 var(--kb-space-3);
+  border-bottom: 1px solid var(--kb-color-border);
+  background: var(--kb-color-surface-2);
+}
+
+.kb-region--right .kb-region__header {
+  padding-left: 4px;
+}
+
+.kb-region__heading {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  align-self: stretch;
+  min-width: 0;
+}
+
+.kb-region--right .kb-region__heading {
+  padding-left: 4px;
+}
+
+.kb-region__heading .kb-tabs {
+  margin-left: -10px;
+}
+
+.kb-region__title {
+  overflow: hidden;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.kb-region__tools {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+}
+
+.kb-region__body {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.kb-region__pane {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.kb-region__rail {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 0;
+  border: 0;
+  background: var(--kb-color-surface-2);
+  color: var(--kb-color-text-2);
+}
+
+.kb-region__rail:hover {
+  color: var(--kb-color-primary);
+}
+
+.kb-region__rail-title {
+  writing-mode: vertical-rl;
+  letter-spacing: 2px;
+}
+
+/* 中等宽度：右侧区域以浮层形式展开，不挤占著录区域 */
+.kb-body.is-overlay-right > .kb-region--right:not(.is-collapsed):not(.is-maximized) {
+  position: absolute;
+  top: var(--kb-space-2);
+  right: var(--kb-space-2);
+  bottom: var(--kb-space-2);
+  z-index: 5;
+  box-shadow: var(--kb-shadow-overlay);
+}
+
+
+/* ---------- Stack ---------- */
+.kb-stack {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.kb-stack__item {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.kb-stack__item + .kb-stack__item,
+.kb-stack .kb-resizer + .kb-stack__item {
+  border-top: 1px solid var(--kb-color-divider);
+}
+
+.kb-stack__header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  height: 30px;
+  padding: 0 4px 0 6px;
+  border-bottom: 1px solid var(--kb-color-divider);
+}
+
+.kb-stack__item.is-folded .kb-stack__header {
+  border-bottom: 0;
+}
+
+.kb-stack__toggle {
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+
+.kb-stack__toggle .kb-icon {
+  color: var(--kb-color-icon);
+}
+
+.kb-stack__title {
+  overflow: hidden;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.kb-stack__body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ---------- Status bar ---------- */
+.kb-statusbar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kb-space-3);
+  height: var(--kb-statusbar-height);
+  padding: 0 var(--kb-space-3);
+  border-top: 1px solid var(--kb-color-border);
+  background: var(--kb-color-surface);
+  font-size: var(--kb-font-size-sm);
+  white-space: nowrap;
+}
+
+.kb-statusbar__group {
+  display: flex;
+  align-items: center;
+  gap: var(--kb-space-4);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.kb-statusbar__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--kb-color-text-2);
+}
+
+.kb-statusbar__item .kb-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.kb-statusbar__item.is-action {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: inherit;
+}
+
+.kb-statusbar__item.is-action:hover {
+  color: var(--kb-color-primary);
+}
+
+.kb-statusbar__item.is-success {
+  color: var(--kb-color-success);
+}
+
+.kb-statusbar__item.is-warning {
+  color: var(--kb-color-warning);
+}
+
+.kb-statusbar__item.is-danger {
+  color: var(--kb-color-danger);
+}
+
+/* ---------- Compact switcher（窄屏） ---------- */
+.kb-switcher {
+  display: flex;
+  flex: none;
+  gap: 0;
+  margin: var(--kb-space-2) var(--kb-space-2) 0;
+  border: 1px solid var(--kb-color-border);
+  border-radius: var(--kb-radius);
+  background: var(--kb-color-surface);
+  overflow: hidden;
+}
+
+.kb-switcher__item {
+  flex: 1;
+  height: 30px;
+  border: 0;
+  background: transparent;
+  color: var(--kb-color-text-2);
+}
+
+.kb-switcher__item + .kb-switcher__item {
+  border-left: 1px solid var(--kb-color-border);
+}
+
+.kb-switcher__item.is-active {
+  background: var(--kb-color-primary);
+  color: #fff;
+}
+
+.kb-root[data-size='sm'] .kb-region {
+  flex: 1 1 0;
+  width: auto !important;
+}
+
+.kb-root[data-size='sm'] .kb-toolbar {
+  padding: 0 4px;
+}

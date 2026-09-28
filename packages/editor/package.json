@@ -1,0 +1,39 @@
+{
+  "name": "@kabel/editor",
+  "version": "0.1.0",
+  "description": "Kabel 档案著录工具主包：baseline 预设（三栏工作台 + 元数据编辑器 + 影像查看 + 辅助面板）与宿主 API",
+  "type": "module",
+  "license": "MIT",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./style.css": "./dist/style.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "scripts": {
+    "build": "tsup && node ../../scripts/build-css.mjs dist/style.css ../ui/src/styles/tokens.css ../ui/src/styles/base.css ../ui/src/styles/components.css ../ui/src/styles/shell.css ../plugin-metadata/src/style.css ../plugin-viewer/src/style.css ../plugin-inspector/src/style.css"
+  },
+  "dependencies": {
+    "@kabel/core": "workspace:*",
+    "@kabel/ui": "workspace:*",
+    "@kabel/plugin-metadata": "workspace:*",
+    "@kabel/plugin-viewer": "workspace:*",
+    "@kabel/plugin-inspector": "workspace:*"
+  }
+}

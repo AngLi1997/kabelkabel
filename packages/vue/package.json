@@ -1,0 +1,42 @@
+{
+  "name": "@kabel/vue",
+  "version": "0.1.0",
+  "description": "Kabel 档案著录工具 Vue 3 适配器：<KabelEditor>、<KabelPanel>、组合式 API 与 Vue 视图桥接",
+  "type": "module",
+  "license": "MIT",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./style.css": "./dist/style.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "scripts": {
+    "build": "tsup && node ../../scripts/build-css.mjs dist/style.css ../editor/dist/style.css"
+  },
+  "peerDependencies": {
+    "vue": "^3.3.0"
+  },
+  "dependencies": {
+    "@kabel/editor": "workspace:*"
+  },
+  "devDependencies": {
+    "@vue/test-utils": "^2.4.6",
+    "vue": "^3.5.0"
+  }
+}
