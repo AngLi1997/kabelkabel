@@ -29,6 +29,7 @@ export function createMetadataState(schema: NormalizedSchema, readonly = false):
     saving: false,
     savedAt: null,
     saveError: null,
+    filling: false,
   };
 }
 
@@ -40,7 +41,9 @@ export const metadataSlice = createSlice({
     setSchema: (s: MetadataState, schema: NormalizedSchema) => ({
       ...createMetadataState(schema, s.readonly),
       savedAt: s.savedAt,
+      filling: s.filling,
     }),
+    setFilling: (s: MetadataState, filling: boolean) => (s.filling === filling ? s : { ...s, filling }),
     setReadonly: (s: MetadataState, readonly: boolean) => (s.readonly === readonly ? s : { ...s, readonly }),
     toggleGroup: (s: MetadataState, key: string) => ({ ...s, collapsed: { ...s.collapsed, [key]: !s.collapsed[key] } }),
     setGroupCollapsed: (s: MetadataState, p: { key: string; collapsed: boolean }) =>

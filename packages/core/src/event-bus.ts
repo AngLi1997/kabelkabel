@@ -13,7 +13,8 @@ export interface KabelEvents {
   ready: { instanceId: string };
   error: { error: unknown; source?: string };
   'plugin:registered': { name: string };
-  'plugin:unregistered': { name: string };
+  /** disabled 为 true 表示被停用（可重新启用），否则为卸载 */
+  'plugin:unregistered': { name: string; disabled?: boolean };
   'command:before': { id: string; args: unknown[] };
   'command:after': { id: string; args: unknown[]; result: unknown };
 }

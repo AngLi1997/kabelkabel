@@ -12,6 +12,7 @@ export interface InspectorPluginOptions {
 export const inspectorPlugin = (options: InspectorPluginOptions = {}) =>
   definePlugin({
     name: 'kabel:inspector',
+    title: '辅助信息',
     dependencies: [METADATA_PLUGIN],
     setup(ctx) {
       const enabled = new Set(options.panels ?? ['validation', 'history']);
@@ -20,7 +21,7 @@ export const inspectorPlugin = (options: InspectorPluginOptions = {}) =>
           id: 'inspector.validation',
           region: 'right',
           title: '校验结果',
-          order: 10,
+          order: 30,
           weight: 1,
           view: ValidationPanel,
           actions: [{ id: 'inspector.validate', icon: 'validate', tooltip: '重新校验', command: 'metadata.validate' }],
@@ -31,7 +32,7 @@ export const inspectorPlugin = (options: InspectorPluginOptions = {}) =>
           id: 'inspector.history',
           region: 'right',
           title: '操作记录',
-          order: 20,
+          order: 40,
           weight: 1.4,
           view: HistoryPanel,
           actions: [

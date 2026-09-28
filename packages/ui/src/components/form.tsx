@@ -199,3 +199,56 @@ export function CheckboxGroup({ id, value, onChange, onFocus, onBlur, disabled, 
     </div>
   );
 }
+
+export interface SwitchProps {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  disabled?: boolean;
+  title?: string;
+  /** 无障碍名称 */
+  label?: string;
+}
+
+export function Switch({ checked, onChange, disabled, title, label }: SwitchProps) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      class={cx('kb-switch', checked && 'is-checked')}
+      aria-checked={checked}
+      aria-label={label}
+      title={title}
+      disabled={disabled}
+      onClick={() => onChange(!checked)}
+    >
+      <span class="kb-switch__thumb" />
+    </button>
+  );
+}
+
+export interface SegmentedProps<V extends string | number> {
+  value: V;
+  options: readonly { label: string; value: V }[];
+  onChange: (value: V) => void;
+  label?: string;
+}
+
+/** 分段选择：少量互斥选项的紧凑单选 */
+export function Segmented<V extends string | number>({ value, options, onChange, label }: SegmentedProps<V>) {
+  return (
+    <div class="kb-segmented" role="radiogroup" aria-label={label}>
+      {options.map((option) => (
+        <button
+          key={String(option.value)}
+          type="button"
+          role="radio"
+          aria-checked={option.value === value}
+          class={cx('kb-segmented__item', option.value === value && 'is-active')}
+          onClick={() => onChange(option.value)}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}

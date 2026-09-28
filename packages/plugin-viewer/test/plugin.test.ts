@@ -1,6 +1,6 @@
 import { setupPlugins } from '@kabel/core/testing';
 import { describe, expect, it, vi } from 'vitest';
-import { VIEWER_SERVICE, viewerActions, viewerPlugin, type UrlFactory } from '../src';
+import { groupImages, pagePosition, VIEWER_SERVICE, viewerActions, viewerPlugin, type UrlFactory } from '../src';
 
 const urls = (): UrlFactory & { revoked: string[] } => {
   let n = 0;
@@ -12,7 +12,7 @@ describe('viewerPlugin', () => {
   it('初始化影像并提供翻页、缩放命令', async () => {
     const { kernel, panels } = await setupPlugins(viewerPlugin({ images: ['/1.jpg', '/2.jpg', '/3.jpg'] }));
     await vi.waitFor(() => expect(kernel.getState().viewer.images).toHaveLength(3));
-    expect(panels()[0]!.region).toBe('left');
+    expect(panels()[0]!.region).toBe('main');
     expect(kernel.commands.isEnabled('viewer.prev')).toBe(false);
     await kernel.execute('viewer.next');
     await kernel.execute('viewer.next');
@@ -61,5 +61,23 @@ describe('viewerPlugin', () => {
     expect(kernel.getState().viewer.zoom).toBe(8);
     kernel.dispatch(viewerActions.setZoom(0.001));
     expect(kernel.getState().viewer.zoom).toBe(0.1);
+  });
+});
+
+describe('影像目录', () => {
+  it('按目录分组并计算页码位置', async () => {
+    const { kernel } = await setupPlugins(viewerPlugin());
+    await kernel.services.get(VIEWER_SERVICE).setImages([
+      { url: '/1.jpg', group: '正文' },
+      { url: '/2.jpg', group: '正文' },
+      { url: '/3.jpg', group: '附件' },
+    ]);
+    const v = kernel.getState().viewer;
+    expect(groupImages(v.images).map((g) => [g.name, g.start, g.items.length])).toEqual([
+      ['正文', 0, 2],
+      ['附件', 2, 1],
+    ]);
+    await kernel.execute('viewer.goto', 2);
+    expect(pagePosition(kernel.getState().viewer)).toEqual({ total: 3, page: 3, group: '附件', groupPage: 1, groupTotal: 1 });
   });
 });

@@ -1,5 +1,6 @@
-import type { PanelViewProps } from '@kabel/core';
-import { cx, Empty, Section, useContributions, useElementSize, useKernel, useSelector, ViewHost } from '@kabel/ui';
+import type { PanelAction, PanelViewProps } from '@kabel/core';
+import { cx, Empty, PanelActions, Section, useContributions, useElementSize, useKernel, useSelector, ViewHost } from '@kabel/ui';
+import type { RefObject } from 'preact';
 import { useRef } from 'preact/hooks';
 import { builtinFieldTypes, FieldTypes } from './field-types';
 import { metadataActions, recordActions } from './slices';
@@ -10,16 +11,34 @@ const MIN_FIELD_WIDTH = 300;
 
 export const fieldDomId = (instanceId: string, key: string) => `kb-${instanceId}-field-${key}`;
 
-export function MetadataForm(_: PanelViewProps) {
-  const kernel = useKernel();
+export interface MetadataFormProps extends PanelViewProps {
+  /** 面板顶部右侧的操作按钮 */
+  actions?: readonly PanelAction[];
+}
+
+export function MetadataForm({ actions }: MetadataFormProps) {
   const schema = useSelector((s) => s.metadata.schema);
-  const collapsed = useSelector((s) => s.metadata.collapsed);
   const root = useRef<HTMLDivElement>(null);
   const { width } = useElementSize(root);
   const fitColumns = width ? Math.max(1, Math.floor((width - 24) / MIN_FIELD_WIDTH)) : schema.columns;
 
-  if (!schema.groups.length) return <Empty icon="file" text="未配置著录项" />;
+  return (
+    <div class="kb-md-panel">
+      {!!actions?.length && (
+        <div class="kb-md__bar">
+          <span class="kb-md__bar-title">{schema.title}</span>
+          <PanelActions actions={actions} />
+        </div>
+      )}
+      {schema.groups.length ? <Groups root={root} fitColumns={fitColumns} /> : <Empty icon="file" text="未配置著录项" />}
+    </div>
+  );
+}
 
+function Groups({ root, fitColumns }: { root: RefObject<HTMLDivElement>; fitColumns: number }) {
+  const kernel = useKernel();
+  const schema = useSelector((s) => s.metadata.schema);
+  const collapsed = useSelector((s) => s.metadata.collapsed);
   return (
     <div ref={root} class="kb-md kb-scroll" style={{ '--kb-label-width': `${schema.labelWidth}px` }}>
       {schema.groups.map((group) => {

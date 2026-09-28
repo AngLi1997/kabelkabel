@@ -2,6 +2,8 @@
 export interface ImageObjectInput {
   id?: string;
   name?: string;
+  /** 所属目录（如“正文”“附件”），缩略图按目录分组显示 */
+  group?: string;
   url?: string;
   src?: string;
   base64?: string;
@@ -31,6 +33,8 @@ export interface ImageItem {
   /** 可直接用于 <img src> 的地址 */
   src: string;
   thumbnail: string;
+  /** 所属目录 */
+  group?: string;
 }
 
 const BASE64_SIGNATURES: [string, string][] = [
@@ -114,6 +118,7 @@ export function resolveImage(input: Exclude<ImageSourceInput, ImageLoader>, inde
   let name = '';
   let id: string | undefined;
   let thumbnail: string | undefined;
+  let group: string | undefined;
 
   if (typeof input === 'string') {
     src = fromString(input);
@@ -126,6 +131,7 @@ export function resolveImage(input: Exclude<ImageSourceInput, ImageLoader>, inde
   } else {
     const obj = input as ImageObjectInput;
     id = obj.id;
+    group = obj.group || undefined;
     const blob = obj.file ?? obj.blob;
     if (obj.url ?? obj.src) src = fromString((obj.url ?? obj.src)!, obj.mime);
     else if (obj.base64) src = base64ToDataUrl(obj.base64, obj.mime);
@@ -137,7 +143,13 @@ export function resolveImage(input: Exclude<ImageSourceInput, ImageLoader>, inde
   }
 
   return {
-    item: { id: id ?? `image-${index + 1}`, name: name || `第 ${index + 1} 页`, src, thumbnail: thumbnail ?? src },
+    item: {
+      id: id ?? `image-${index + 1}`,
+      name: name || `第 ${index + 1} 页`,
+      src,
+      thumbnail: thumbnail ?? src,
+      ...(group ? { group } : {}),
+    },
     objectUrls,
   };
 }

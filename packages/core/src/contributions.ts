@@ -88,9 +88,24 @@ export interface PanelContribution {
   when?: StatePredicate;
 }
 
+export interface SettingsPageProps {
+  kernel: Kernel;
+}
+
+/** 设置页中的一个分类页（如插件管理、主题） */
+export interface SettingsPage {
+  id: string;
+  title: string;
+  icon?: string;
+  order?: number;
+  view: View<SettingsPageProps>;
+  when?: StatePredicate;
+}
+
 /** 内置扩展点 */
 export const ExtensionPoints = {
   toolbar: defineExtensionPoint<ToolbarItem>('kabel.toolbar'),
   statusbar: defineExtensionPoint<StatusItem>('kabel.statusbar'),
   panels: defineExtensionPoint<PanelContribution>('kabel.panels'),
+  settings: defineExtensionPoint<SettingsPage>('kabel.settings'),
 } as const;

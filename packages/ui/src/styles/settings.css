@@ -1,0 +1,199 @@
+/* ---------- Settings dialog ---------- */
+.kb-settings {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--kb-space-4);
+  background: rgba(20, 28, 40, 0.32);
+}
+
+.kb-settings__dialog {
+  display: flex;
+  flex-direction: column;
+  width: 760px;
+  max-width: 100%;
+  height: 520px;
+  max-height: 100%;
+  border: 1px solid var(--kb-color-border);
+  background: var(--kb-color-surface);
+  box-shadow: var(--kb-shadow-overlay);
+  outline: none;
+}
+
+.kb-settings__header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--kb-header-height);
+  padding: 0 4px 0 var(--kb-space-3);
+  border-bottom: 1px solid var(--kb-color-border);
+  background: var(--kb-color-surface-2);
+}
+
+.kb-settings__title {
+  font-weight: 600;
+}
+
+.kb-settings__body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.kb-settings__nav {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  width: 140px;
+  padding: var(--kb-space-2) 0;
+  border-right: 1px solid var(--kb-color-divider);
+  background: var(--kb-color-surface-2);
+}
+
+.kb-settings__nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 var(--kb-space-3);
+  border: 0;
+  background: transparent;
+  color: var(--kb-color-text-2);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.kb-settings__nav-item:hover {
+  background: var(--kb-color-hover);
+  color: var(--kb-color-text);
+}
+
+.kb-settings__nav-item.is-active {
+  background: var(--kb-color-primary-soft);
+  color: var(--kb-color-primary);
+  font-weight: 600;
+}
+
+.kb-settings__nav-item.is-active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--kb-color-primary);
+}
+
+.kb-settings__content {
+  flex: 1;
+  min-width: 0;
+  padding: var(--kb-space-3) var(--kb-space-4);
+}
+
+/* 窄屏：弹窗铺满，分类导航改为横排 */
+.kb-root[data-size='sm'] .kb-settings {
+  padding: 0;
+}
+
+.kb-root[data-size='sm'] .kb-settings__dialog {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.kb-root[data-size='sm'] .kb-settings__body {
+  flex-direction: column;
+}
+
+.kb-root[data-size='sm'] .kb-settings__nav {
+  flex-direction: row;
+  width: auto;
+  padding: 0;
+  border-right: 0;
+  border-bottom: 1px solid var(--kb-color-divider);
+  overflow-x: auto;
+}
+
+.kb-root[data-size='sm'] .kb-settings__nav-item.is-active::before {
+  top: auto;
+  right: 0;
+  width: auto;
+  height: 2px;
+}
+
+.kb-root[data-size='sm'] .kb-settings__content {
+  padding: var(--kb-space-3);
+}
+
+/* ---------- Setting rows ---------- */
+.kb-setting-row {
+  display: flex;
+  align-items: center;
+  gap: var(--kb-space-3);
+  min-height: 44px;
+  border-bottom: 1px solid var(--kb-color-divider);
+}
+
+.kb-setting-row:last-child {
+  border-bottom: 0;
+}
+
+.kb-setting-row__label {
+  flex: none;
+  width: var(--kb-label-width);
+  color: var(--kb-color-text-2);
+  text-align: right;
+}
+
+.kb-setting-row__control {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--kb-space-2);
+  min-width: 0;
+}
+
+.kb-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kb-space-2);
+}
+
+.kb-swatch {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 2px solid var(--kb-color-surface);
+  border-radius: var(--kb-radius);
+  background: var(--kb-swatch);
+  box-shadow: 0 0 0 1px var(--kb-color-border);
+}
+
+.kb-swatch.is-active {
+  box-shadow: 0 0 0 2px var(--kb-swatch);
+}
+
+/* ---------- 插件管理 ---------- */
+.kb-plugins__name {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding-left: calc(var(--kb-depth, 0) * 18px);
+}
+
+/* 依赖关系连接线：└ */
+.kb-plugins__branch {
+  position: absolute;
+  left: calc(var(--kb-depth) * 18px - 12px);
+  top: -12px;
+  width: 8px;
+  height: 20px;
+  border-left: 1px solid var(--kb-color-border-strong);
+  border-bottom: 1px solid var(--kb-color-border-strong);
+}

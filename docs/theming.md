@@ -39,7 +39,7 @@ import '@kabel/vue/style.css';       // 或 '@kabel/editor/style.css'
 | 尺寸 | `--kb-radius`、`--kb-control-height(-sm)`、`--kb-toolbar-height`、`--kb-header-height`、`--kb-statusbar-height`、`--kb-label-width`、`--kb-space-1…4` |
 | 其他 | `--kb-shadow-overlay`、`--kb-focus-ring`、`--kb-transition` |
 
-主题插件（后续版本）即是在运行期切换一组变量；当前版本提供一套默认主题。插件与宿主面板的自定义样式也应使用这些变量，以保持一致（示例 `examples/vue-app/src/components/RecordList.vue`）。
+主题插件 `kabel:theme`（设置 › 主题）在运行期切换这组变量：配色方案（浅色 / 深色 / 跟随系统）、主题色（悬停、按下、浅色与焦点环由 `color-mix` 派生）、界面密度与字号，状态存于 `state.theme` 并持久化。可通过 `theme: { defaults, accents }` 设置初始值与可选主题色，或执行命令 `theme.set` / `theme.reset`。插件与宿主面板的自定义样式也应使用这些变量，以保持一致（示例 `examples/vue-app/src/components/RecordList.vue`）。
 
 ## Tailwind（可选）
 
@@ -54,7 +54,7 @@ module.exports = { presets: [require('@kabel/ui/tailwind-preset')] };
 
 内置一套 24×24 线性图标，以 iconfont Symbol 格式注入。名称：
 
-`save undo redo validate chevron-left/right/up/down fold-left fold-right panel-left panel-right maximize restore close zoom-in zoom-out fit actual-size rotate-left rotate-right image grid file list history warning error success info reset unfold fold more plus minus submit link folder tag hash search layout arrow-up arrow-down edit eye`
+`save undo redo validate chevron-left/right/up/down fold-left fold-right panel-left panel-right maximize restore close zoom-in zoom-out fit actual-size rotate-left rotate-right image grid file list history warning error success info reset unfold fold more plus minus submit link folder tag hash search layout arrow-up arrow-down edit eye settings plugin palette box hand download trash`
 
 ### 使用宿主的 iconfont 项目
 

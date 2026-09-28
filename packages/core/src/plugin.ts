@@ -14,6 +14,10 @@ export interface KabelPlugin {
   /** 全局唯一名称，建议 `scope:name`，如 `kabel:viewer` */
   name: string;
   version?: string;
+  /** 显示名称，用于设置中的插件管理 */
+  title?: string;
+  /** 内置插件（baseline 的组成部分）：不允许在运行期停用，也不在插件管理中显示 */
+  builtin?: boolean;
   /** 依赖的插件名，注册时自动按依赖拓扑排序；卸载依赖时会先卸载依赖方 */
   dependencies?: string[];
   /**
@@ -62,6 +66,7 @@ export interface PluginRecord {
 /** 插件生命周期管理：依赖排序、同步/异步 setup、按逆序卸载 */
 export class PluginManager {
   private records = new Map<string, PluginRecord>();
+  private disabled = new Map<string, KabelPlugin>();
 
   constructor(private readonly kernel: Kernel) {}
 
@@ -98,18 +103,63 @@ export class PluginManager {
   }
 
   unregister(name: string): void {
-    const record = this.records.get(name);
-    if (!record) return;
-    for (const [other, r] of [...this.records].reverse()) {
-      if (r.plugin.dependencies?.includes(name)) this.unregister(other);
-    }
-    this.records.delete(name);
-    record.disposables.dispose();
-    this.kernel.bus.emit('plugin:unregistered', { name });
+    this.disabled.delete(name);
+    this.remove(name, false);
+  }
+
+  /** 已停用（可重新启用）的插件 */
+  listDisabled(): KabelPlugin[] {
+    return [...this.disabled.values()];
+  }
+
+  isDisabled(name: string): boolean {
+    return this.disabled.has(name);
+  }
+
+  /**
+   * 停用插件：与卸载相同（依赖它的插件一并停用），但保留插件定义以便重新启用。
+   * 返回被停用的插件名；内置插件（builtin）不可停用。
+   */
+  disable(name: string): string[] {
+    if (this.records.get(name)?.plugin.builtin) return [];
+    return this.remove(name, true);
+  }
+
+  /** 重新启用已停用的插件，其已停用的依赖会一并启用 */
+  enable(name: string): Promise<void> {
+    const plugins: KabelPlugin[] = [];
+    const collect = (n: string) => {
+      const plugin = this.disabled.get(n);
+      if (!plugin || plugins.includes(plugin)) return;
+      plugins.push(plugin);
+      plugin.dependencies?.forEach(collect);
+    };
+    collect(name);
+    for (const plugin of plugins) this.disabled.delete(plugin.name);
+    return this.register(plugins).catch((error) => {
+      // 启用失败（如依赖已被卸载）时保留在停用列表中
+      for (const plugin of plugins) if (!this.records.has(plugin.name)) this.disabled.set(plugin.name, plugin);
+      throw error;
+    });
   }
 
   disposeAll(): void {
+    this.disabled.clear();
     for (const name of [...this.records.keys()].reverse()) this.unregister(name);
+  }
+
+  private remove(name: string, keep: boolean, removed: string[] = []): string[] {
+    const record = this.records.get(name);
+    if (!record) return removed;
+    for (const [other, r] of [...this.records].reverse()) {
+      if (r.plugin.dependencies?.includes(name)) this.remove(other, keep, removed);
+    }
+    this.records.delete(name);
+    if (keep) this.disabled.set(name, record.plugin);
+    removed.push(name);
+    record.disposables.dispose();
+    this.kernel.bus.emit('plugin:unregistered', { name, disabled: keep });
+    return removed;
   }
 
   private activateAll(plugins: KabelPlugin[]): void | Promise<void> {
@@ -130,6 +180,7 @@ export class PluginManager {
     for (const dep of plugin.dependencies ?? []) {
       if (!this.records.has(dep)) throw new Error(`[kabel] plugin "${plugin.name}" requires "${dep}"`);
     }
+    this.disabled.delete(plugin.name);
     const disposables = new DisposableStore();
     const record: PluginRecord = { plugin, disposables };
     this.records.set(plugin.name, record);

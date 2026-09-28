@@ -22,35 +22,6 @@ button {
   height: 100%;
 }
 
-.host-nav {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  height: 44px;
-  padding: 0 16px;
-  background: #16345c;
-  color: #fff;
-  font-size: 14px;
-}
-
-.host-nav__brand {
-  font-weight: 600;
-  letter-spacing: 1px;
-}
-
-.host-nav__crumb {
-  opacity: 0.85;
-}
-
-.host-nav__spacer {
-  flex: 1;
-}
-
-.host-nav__log {
-  font-size: 12px;
-  opacity: 0.85;
-}
-
 .host-main {
   flex: 1;
   min-height: 0;

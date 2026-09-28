@@ -10,6 +10,7 @@
       "@kabel/plugin-metadata": ["./packages/plugin-metadata/src/index.ts"],
       "@kabel/plugin-viewer": ["./packages/plugin-viewer/src/index.ts"],
       "@kabel/plugin-inspector": ["./packages/plugin-inspector/src/index.ts"],
+      "@kabel/plugin-annotation": ["./packages/plugin-annotation/src/index.ts"],
       "@kabel/editor": ["./packages/editor/src/index.ts"],
       "@kabel/vue": ["./packages/vue/src/index.ts"]
     }

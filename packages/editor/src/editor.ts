@@ -12,6 +12,11 @@ import {
   type StorageInput,
   type Unsubscribe,
 } from '@kabel/core';
+import {
+  ANNOTATION_SERVICE,
+  type AnnotationDocument,
+  type AnnotationPluginOptions,
+} from '@kabel/plugin-annotation';
 import type { InspectorPluginOptions } from '@kabel/plugin-inspector';
 import {
   METADATA_SERVICE,
@@ -24,7 +29,7 @@ import {
   type ValidationResult,
 } from '@kabel/plugin-metadata';
 import { VIEWER_SERVICE, type ImageSourceInput, type ViewerPluginOptions } from '@kabel/plugin-viewer';
-import { mountWorkbench, type IconConfig, type LayoutOptions } from '@kabel/ui';
+import { mountWorkbench, type IconConfig, type LayoutOptions, type ThemeOptions } from '@kabel/ui';
 import { createBaselinePreset } from './preset';
 
 export type EventListeners = { [K in keyof KabelEvents]?: EventHandler<KabelEvents[K]> };
@@ -42,9 +47,17 @@ export interface EditorOptions {
   /** 替换默认 baseline 预设；`false` 表示不使用任何预设 */
   preset?: PluginInput | false;
   layout?: LayoutOptions;
-  metadata?: Omit<MetadataPluginOptions, 'schema' | 'record' | 'readonly'>;
+  /**
+   * 著录信息（右侧面板）。传入 schema / record 或本配置对象时启用，`false` 强制关闭。
+   */
+  metadata?: Omit<MetadataPluginOptions, 'schema' | 'record' | 'readonly'> | false;
   viewer?: Omit<ViewerPluginOptions, 'images'> | false;
+  /** 图片标记：标记类型、导出文件名等；`false` 关闭 */
+  annotation?: AnnotationPluginOptions | false;
   inspector?: InspectorPluginOptions | false;
+  /** `false` 关闭工具栏右侧的设置入口 */
+  settings?: false;
+  theme?: ThemeOptions | false;
   /** 实例标识，用于布局持久化命名空间；同页多实例需不同 */
   instanceId?: string;
   /** 持久化存储，默认 localStorage */
@@ -84,6 +97,13 @@ export interface ArchiveEditor {
   setSchema(schema: SchemaInput): void;
   setImages(images: readonly ImageSourceInput[]): Promise<void>;
   setReadonly(readonly: boolean): void;
+  /** 当前影像的全部标记（JSON 导出格式） */
+  getAnnotations(): AnnotationDocument | undefined;
+  /** 载入标记；可在 setImages 之后立即调用，影像就绪后生效 */
+  setAnnotations(doc: AnnotationDocument | null): void;
+  /** 导出标记：json 返回文档对象，yolo 返回 `路径 → 文本` 的文件集合 */
+  exportAnnotations(format: 'json'): AnnotationDocument | undefined;
+  exportAnnotations(format: 'yolo'): Record<string, string> | undefined;
   validate(): ValidationResult;
   save(): Promise<SaveResult>;
   undo(): void;
@@ -119,13 +139,23 @@ function resolveTarget(target: HTMLElement | string): HTMLElement {
  */
 export function createArchiveEditor(target: HTMLElement | string, options: EditorOptions = {}): ArchiveEditor {
   const el = resolveTarget(target);
+  const withMetadata =
+    options.metadata !== false && (options.schema !== undefined || options.record !== undefined || options.metadata !== undefined);
   const preset =
     options.preset === undefined
       ? createBaselinePreset({
           layout: options.layout,
-          metadata: { ...options.metadata, schema: options.schema, record: options.record, readonly: options.readonly },
+          metadata: withMetadata && {
+            ...(options.metadata || {}),
+            schema: options.schema,
+            record: options.record,
+            readonly: options.readonly,
+          },
           viewer: options.viewer === false ? false : { ...options.viewer, images: options.images },
+          annotation: options.annotation,
           inspector: options.inspector,
+          settings: options.settings,
+          theme: options.theme,
         })
       : options.preset || null;
 
@@ -138,7 +168,9 @@ export function createArchiveEditor(target: HTMLElement | string, options: Edito
   const ready = kernel.use([preset, options.plugins ?? null]);
   const unmount = mountWorkbench(el, kernel, { icons: options.icons, class: options.class });
 
-  const metadata = (): MetadataService => kernel.services.get(METADATA_SERVICE);
+  // 著录信息为可选插件：未启用时读取返回空值、写入忽略
+  const metadata = (): MetadataService | undefined => kernel.services.tryGet(METADATA_SERVICE);
+  const annotation = () => kernel.services.tryGet(ANNOTATION_SERVICE);
   const layoutCommand = (region: 'left' | 'right') => (region === 'left' ? 'layout.toggleLeft' : 'layout.toggleRight');
   const run = (command: string, ...args: unknown[]) => {
     if (kernel.commands.has(command)) void kernel.execute(command, ...args);
@@ -157,15 +189,19 @@ export function createArchiveEditor(target: HTMLElement | string, options: Edito
     getState: () => kernel.getState(),
     subscribe: (listener) => kernel.store.subscribe((state) => listener(state)),
 
-    getRecord: () => metadata().getRecord(),
-    setRecord: (record) => metadata().setRecord(record),
-    getValues: () => metadata().getRecord().values,
-    setValue: (key, value, label) => metadata().setValue(key, value, label),
-    setValues: (values, label) => metadata().setValues(values, label),
-    setSchema: (schema) => metadata().setSchema(schema),
+    getRecord: () => metadata()?.getRecord() ?? { values: {} },
+    setRecord: (record) => metadata()?.setRecord(record),
+    getValues: () => metadata()?.getRecord().values ?? {},
+    setValue: (key, value, label) => metadata()?.setValue(key, value, label),
+    setValues: (values, label) => metadata()?.setValues(values, label),
+    setSchema: (schema) => metadata()?.setSchema(schema),
     setImages: (images) => kernel.services.tryGet(VIEWER_SERVICE)?.setImages(images) ?? Promise.resolve(),
-    setReadonly: (readonly) => metadata().setReadonly(readonly),
-    validate: () => metadata().validate(),
+    setReadonly: (readonly) => metadata()?.setReadonly(readonly),
+    getAnnotations: () => annotation()?.getAnnotations(),
+    setAnnotations: (doc) => annotation()?.setAnnotations(doc),
+    exportAnnotations: ((format: 'json' | 'yolo') =>
+      format === 'yolo' ? annotation()?.exportYolo() : annotation()?.exportJson()) as ArchiveEditor['exportAnnotations'],
+    validate: () => metadata()?.validate() ?? { valid: true, errors: {} },
     save: async () => ((await kernel.execute<SaveResult>('kabel.save')) ?? { ok: false }),
     undo: () => void kernel.history.undo(),
     redo: () => void kernel.history.redo(),

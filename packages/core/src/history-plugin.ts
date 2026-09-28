@@ -5,6 +5,8 @@ import { definePlugin } from './plugin';
 export const historyPlugin = () =>
   definePlugin({
     name: 'kabel:history',
+    title: '撤销与重做',
+    builtin: true,
     setup(ctx) {
       ctx.registerCommand({
         id: 'kabel.undo',

@@ -108,6 +108,8 @@ export interface MetadataState {
   saving: boolean;
   savedAt: number | null;
   saveError: string | null;
+  /** AI 填充进行中 */
+  filling: boolean;
 }
 
 export interface ValidationResult {
@@ -134,5 +136,7 @@ declare module '@kabel/core' {
     'save:error': { error: unknown };
     validate: ValidationResult;
     'field:focus': { key: string };
+    /** 在元数据设置中修改了著录项方案，宿主可据此持久化 */
+    'schema:change': { schema: MetadataSchema };
   }
 }

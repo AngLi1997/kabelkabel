@@ -95,6 +95,21 @@ export function breakpointOf(width: number): Breakpoint {
   return 'lg';
 }
 
+/** 订阅媒体查询；enabled 为 false 时不监听并返回 false */
+export function useMediaQuery(query: string, enabled = true): boolean {
+  const get = () => enabled && typeof matchMedia === 'function' && matchMedia(query).matches;
+  const [matches, setMatches] = useState(get);
+  useEffect(() => {
+    setMatches(get());
+    if (!enabled || typeof matchMedia !== 'function') return;
+    const list = matchMedia(query);
+    const onChange = () => setMatches(list.matches);
+    list.addEventListener('change', onChange);
+    return () => list.removeEventListener('change', onChange);
+  }, [query, enabled]);
+  return matches;
+}
+
 export function useEvent<K extends string>(type: K, handler: (payload: any) => void): void {
   const kernel = useKernel();
   const ref = useRef(handler);

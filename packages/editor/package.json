@@ -27,13 +27,14 @@
     "**/*.css"
   ],
   "scripts": {
-    "build": "tsup && node ../../scripts/build-css.mjs dist/style.css ../ui/src/styles/tokens.css ../ui/src/styles/base.css ../ui/src/styles/components.css ../ui/src/styles/shell.css ../plugin-metadata/src/style.css ../plugin-viewer/src/style.css ../plugin-inspector/src/style.css"
+    "build": "tsup && node ../../scripts/build-css.mjs dist/style.css ../ui/src/styles/tokens.css ../ui/src/styles/base.css ../ui/src/styles/components.css ../ui/src/styles/shell.css ../ui/src/styles/settings.css ../ui/src/styles/themes.css ../plugin-metadata/src/style.css ../plugin-viewer/src/style.css ../plugin-inspector/src/style.css ../plugin-annotation/src/style.css"
   },
   "dependencies": {
     "@kabel/core": "workspace:*",
     "@kabel/ui": "workspace:*",
     "@kabel/plugin-metadata": "workspace:*",
     "@kabel/plugin-viewer": "workspace:*",
-    "@kabel/plugin-inspector": "workspace:*"
+    "@kabel/plugin-inspector": "workspace:*",
+    "@kabel/plugin-annotation": "workspace:*"
   }
 }
