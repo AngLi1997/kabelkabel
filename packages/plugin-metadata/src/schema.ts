@@ -3,6 +3,7 @@ import type {
   ArchiveRecord,
   FieldSchema,
   GroupSchema,
+  MetadataSchema,
   NormalizedField,
   NormalizedSchema,
   OptionItem,
@@ -77,6 +78,23 @@ export function normalizeSchema(input: SchemaInput | undefined): NormalizedSchem
     labelWidth: meta.labelWidth ?? 96,
     groups: normalizedGroups,
     fields,
+  };
+}
+
+/** 归一化 Schema 还原为完整 Schema 写法（可再次 normalize，可序列化为 JSON；自定义 validator 保留在对象中但无法序列化） */
+export function toSchemaInput(schema: NormalizedSchema): MetadataSchema {
+  return {
+    id: schema.id,
+    title: schema.title,
+    columns: schema.columns,
+    labelWidth: schema.labelWidth,
+    groups: schema.groups.map((g) => ({
+      key: g.key,
+      title: g.title,
+      columns: g.columns,
+      collapsed: g.collapsed,
+      fields: g.fields.map(({ group: _group, options, ...field }) => (options.length ? { ...field, options } : field)),
+    })),
   };
 }
 

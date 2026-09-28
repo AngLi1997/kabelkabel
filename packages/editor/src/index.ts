@@ -10,3 +10,4 @@ export * from '@kabel/ui';
 export * from '@kabel/plugin-metadata';
 export * from '@kabel/plugin-viewer';
 export * from '@kabel/plugin-inspector';
+export * from '@kabel/plugin-annotation';

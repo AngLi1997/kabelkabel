@@ -60,9 +60,9 @@ declare module '@kabel/core' {
 }
 
 export const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
-  left: { title: '影像', size: 380, min: 220, max: 760, collapsed: false, mode: 'tabs', collapsible: true },
-  main: { title: '著录信息', size: 0, min: 360, max: Infinity, collapsed: false, mode: 'tabs', collapsible: false },
-  right: { title: '辅助信息', size: 300, min: 240, max: 560, collapsed: false, mode: 'stack', collapsible: true },
+  left: { title: '目录', size: 280, min: 200, max: 560, collapsed: false, mode: 'tabs', collapsible: true },
+  main: { title: '影像', size: 0, min: 360, max: Infinity, collapsed: false, mode: 'tabs', collapsible: false },
+  right: { title: '标记与著录', size: 360, min: 260, max: 640, collapsed: false, mode: 'tabs', collapsible: true },
 };
 
 export function resolveLayoutConfig(options: LayoutOptions = {}): LayoutConfig {
@@ -187,6 +187,8 @@ export const layoutActions = createLayoutSlice(DEFAULT_LAYOUT_CONFIG).actions;
 export const layoutPlugin = (options: LayoutOptions = {}) =>
   definePlugin({
     name: 'kabel:layout',
+    title: '布局',
+    builtin: true,
     setup(ctx) {
       const config = resolveLayoutConfig(options);
       const slice = createLayoutSlice(config);
@@ -232,6 +234,16 @@ export const layoutPlugin = (options: LayoutOptions = {}) =>
         id: 'layout.reveal',
         title: '显示区域',
         run: (k, region: RegionId) => k.dispatch(slice.actions.reveal(region)),
+      });
+      ctx.registerCommand({
+        id: 'layout.showPanel',
+        title: '显示面板',
+        run: (k, panelId: string) => {
+          const panel = k.extensions.get(ExtensionPoints.panels).get(panelId);
+          if (!panel) return;
+          k.dispatch(slice.actions.reveal(panel.region));
+          k.dispatch(slice.actions.setActive({ region: panel.region, panelId }));
+        },
       });
       ctx.registerCommand({
         id: 'layout.reset',

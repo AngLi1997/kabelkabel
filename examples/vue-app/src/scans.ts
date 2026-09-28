@@ -19,19 +19,19 @@ ${lines}
 
 const toBase64 = (text: string) => btoa(String.fromCharCode(...new TextEncoder().encode(text)));
 
-/** 同一套影像以四种不同的参数格式传入，演示多种数据源 */
+/** 同一套影像以四种不同的参数格式传入，演示多种数据源；group 为所属目录，缩略图按目录分组 */
 export function sampleImages(title: string): ImageSourceInput[] {
   return [
     // 1. URL（静态资源）
-    { url: '/scans/page-1.svg', name: '0001.svg' },
-    // 2. 纯 base64 字符串（无 data: 前缀，自动识别 MIME）
-    toBase64(makePageSvg(2, title)),
+    { url: '/scans/page-1.svg', name: '0001.svg', group: '正文' },
+    // 2. base64（无 data: 前缀，自动识别 MIME；也可直接传纯 base64 字符串）
+    { base64: toBase64(makePageSvg(2, title)), name: '0002.svg', group: '正文' },
     // 3. Blob
-    { blob: new Blob([makePageSvg(3, title)], { type: 'image/svg+xml' }), name: '0003.svg' },
+    { blob: new Blob([makePageSvg(3, title)], { type: 'image/svg+xml' }), name: '0003.svg', group: '附件' },
     // 4. 异步加载器（如需鉴权下载的影像）
     async () => {
       const res = await fetch('/scans/page-4.svg');
-      return { blob: await res.blob(), name: '0004.svg' };
+      return { blob: await res.blob(), name: '0004.svg', group: '处理单' };
     },
   ];
 }

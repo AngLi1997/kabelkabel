@@ -18,6 +18,8 @@ export interface FieldViewProps {
 export interface FieldTypeContribution {
   /** 字段类型名，即 Schema 中的 `type` */
   id: string;
+  /** 显示名称（元数据设置中使用） */
+  title?: string;
   order?: number;
   view: View<FieldViewProps>;
   /** 类型级校验，例如日期格式 */
@@ -154,15 +156,16 @@ const isValidDate = (value: unknown, field: NormalizedField) => {
 };
 
 export const builtinFieldTypes: FieldTypeContribution[] = [
-  { id: 'text', view: TextField },
-  { id: 'textarea', view: TextareaField },
-  { id: 'number', view: NumberField },
+  { id: 'text', title: '文本', view: TextField },
+  { id: 'textarea', title: '多行文本', view: TextareaField },
+  { id: 'number', title: '数字', view: NumberField },
   {
     id: 'date',
+    title: '日期',
     view: DateField,
     validate: (value, field) => (isValidDate(value, field) ? null : `${field.label}日期格式不正确`),
   },
-  { id: 'select', view: SelectField },
-  { id: 'radio', view: RadioField },
-  { id: 'checkbox', view: CheckboxField },
+  { id: 'select', title: '下拉选择', view: SelectField },
+  { id: 'radio', title: '单选', view: RadioField },
+  { id: 'checkbox', title: '多选', view: CheckboxField },
 ];

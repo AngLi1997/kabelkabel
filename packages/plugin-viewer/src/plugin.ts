@@ -1,5 +1,5 @@
 import { createServiceToken, definePlugin, ExtensionPoints, isPromiseLike, type PanelContribution } from '@kabel/core';
-import { currentScale, viewerActions, viewerSlice, ZOOM_STEP } from './slice';
+import { currentScale, pagePosition, viewerActions, viewerSlice, ZOOM_STEP } from './slice';
 import { browserUrlFactory, resolveImage, type ImageItem, type ImageSourceInput, type UrlFactory } from './sources';
 import { ViewerPanel } from './ViewerPanel';
 
@@ -27,6 +27,8 @@ export const VIEWER_PLUGIN = 'kabel:viewer';
 export const viewerPlugin = (options: ViewerPluginOptions = {}) =>
   definePlugin({
     name: VIEWER_PLUGIN,
+    title: '影像查看',
+    builtin: true,
     setup(ctx) {
       const { kernel } = ctx;
       const urls = options.urlFactory ?? browserUrlFactory;
@@ -111,7 +113,7 @@ export const viewerPlugin = (options: ViewerPluginOptions = {}) =>
 
       ctx.contribute(ExtensionPoints.panels, {
         id: 'viewer.images',
-        region: options.panel?.region ?? 'left',
+        region: options.panel?.region ?? 'main',
         title: options.panel?.title ?? '原文影像',
         order: options.panel?.order ?? 10,
         view: ViewerPanel,
@@ -125,7 +127,9 @@ export const viewerPlugin = (options: ViewerPluginOptions = {}) =>
         text: (s) => {
           const v = s.viewer;
           if (!v?.images.length) return null;
-          return `第 ${v.index + 1}/${v.images.length} 页 · ${Math.round(currentScale(v) * 100)}%`;
+          const p = pagePosition(v);
+          const page = p.group ? `${p.group} ${p.groupPage}/${p.groupTotal} · 共 ${p.total} 页` : `第 ${p.page}/${p.total} 页`;
+          return `${page} · ${Math.round(currentScale(v) * 100)}%`;
         },
       });
 

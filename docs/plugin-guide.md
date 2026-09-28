@@ -1,6 +1,6 @@
 # 插件开发指南
 
-本指南从一个最小插件开始，逐步覆盖状态、命令、界面贡献、服务、字段类型、Vue 视图、运行期注册和单元测试。完整示例见 `examples/plugins/`。
+本指南从一个最小插件开始，逐步覆盖状态、命令、界面贡献、服务、字段类型、Vue 视图、运行期注册和单元测试。完整示例见 [`examples/plugins/`](../examples/plugins/README.md)，内置插件的用法见 `packages/plugin-*/README.md`。
 
 ## 1. 最小插件
 
@@ -29,7 +29,7 @@ editor.unuse('acme:hello');                                  // 卸载，按钮�
 约定：
 
 - `name` 全局唯一，建议 `scope:name`；命令 id 建议 `模块.动作`。
-- 需要配置的插件写成工厂函数 `(options) => definePlugin(...)`。
+- 需要配置的插件写成工厂函数 `(options) => definePlugin(...)`；设置 `title` 作为 设置 › 插件管理 中的显示名称。
 - 通过 `ctx` 注册的一切在卸载时自动释放，**不要**直接调用 `kernel.commands.register` 等底层 API（除非你自己管理释放）。
 
 ## 2. 插件上下文 `ctx`
@@ -55,7 +55,8 @@ definePlugin({ name: 'acme:x', dependencies: ['kabel:metadata', 'kabel:viewer'],
 
 - 同批注册时按依赖拓扑排序，与书写顺序无关；缺失或循环依赖会报错。
 - 卸载被依赖的插件时，依赖方会先被卸载。
-- 内置插件名：`kabel:layout`、`kabel:history`、`kabel:metadata`、`kabel:viewer`、`kabel:inspector`（亦可使用常量 `METADATA_PLUGIN`、`VIEWER_PLUGIN`）。
+- 内置插件名：`kabel:layout`、`kabel:history`、`kabel:metadata`、`kabel:viewer`、`kabel:inspector`、`kabel:annotation`、`kabel:settings`、`kabel:theme`（亦可使用常量 `METADATA_PLUGIN`、`VIEWER_PLUGIN`、`ANNOTATION_PLUGIN`）。
+- `title` 为设置 › 插件管理中的显示名称；`builtin: true` 表示 baseline 内置插件：不可在运行期停用，也不在插件管理中显示（布局、撤销与重做、影像查看、设置、主题）。插件管理以树形列表显示：依赖其他插件的插件缩进列在被依赖者之下。
 
 ## 4. 状态
 
@@ -94,6 +95,9 @@ setup(ctx) {
 
 ## 5. 命令与快捷键
 
+无修饰键的快捷键（如数字、字母、`Delete`）在输入框、下拉框内不会触发，可放心使用。
+
+
 ```ts
 ctx.registerCommand({
   id: 'tags.clear',
@@ -119,7 +123,7 @@ ctx.registerCommand({
   icon?, label?, showLabel?, primary?, tooltip?, command?, args?, onClick?, when?, view? }
 ```
 
-内置排序参考：保存 10，撤销/重做 20–21，校验 30，布局按钮 900+。
+内置排序参考：保存 10，撤销/重做 20–21，校验 30，（示例）生成档号 31，标记类型 59–60（分隔符 + 标记类型条），布局按钮 900+，设置 1000（`group: 'end'`）。
 
 ### 状态栏 `ExtensionPoints.statusbar`
 
@@ -137,9 +141,30 @@ ctx.registerCommand({
   actions?: PanelAction[], weight?, when? }
 ```
 
-- 区域内多个面板：左/中区域默认**标签页**，右区域默认**上下堆叠**（可折叠、可拖拽调整高度，`weight` 为初始高度比例）。可通过 `layout.regions.<id>.mode` 修改。
-- `actions` 显示在区域/面板头部：`{ id, icon, tooltip, command? | onClick?, active? }`。
-- `view` 收到 `{ kernel, panelId, region }`。
+- 区域内多个面板默认以**标签页**组织；可通过 `layout.regions.<id>.mode = 'stack'` 改为上下堆叠（可折叠、可拖拽调整高度，`weight` 为初始高度比例）。
+- 右侧区域的内置排序：标记 10、著录信息 20、校验结果 30、操作记录 40。
+- `actions` 显示在区域标题栏（标签页模式下显示当前标签的操作）：`{ id, icon, tooltip, command? | onClick?, active? }`。右侧标签较多时标题栏空间有限，可像文书著录那样在面板内放一条工具条，用 `@kabel/ui` 的 `<PanelActions actions={...} />` 渲染。
+- `view` 收到 `{ kernel, panelId, region }`。定位到面板：`kernel.execute('layout.showPanel', panelId)`。
+
+### 影像覆盖层与工具条 `ViewerExtensions.overlays / tools`
+
+由 `@kabel/plugin-viewer` 提供（依赖 `kabel:viewer`）：
+
+```ts
+ctx.contribute(ViewerExtensions.overlays, { id, order?, view });   // view 收到 { kernel, image, width, height, scale, rotation, toScreen, toImage }
+ctx.contribute(ViewerExtensions.tools, { id, icon, tooltip, command, order? });   // 侧边工具条按钮，选中态取命令 checked
+```
+
+覆盖层铺满舞台、默认不拦截指针事件；未处理（未 `stopPropagation`）的指针事件冒泡到舞台用于平移。`toScreen` / `toImage` 在图片像素坐标与舞台坐标间换算（已考虑缩放、旋转、平移）。`@kabel/plugin-annotation` 即基于这两个扩展点实现。
+
+### 设置页 `ExtensionPoints.settings`
+
+```ts
+{ id, title, icon?, order?, view, when? }
+```
+
+- 工具栏右侧设置按钮打开设置弹窗，左侧为分类导航，右侧渲染当前分类的 `view`（收到 `{ kernel }`）。已有分类：`metadata`（著录项，文书著录贡献，order 5）、`plugins`（插件管理，order 10）、`theme`（主题，order 20）。
+- 命令：`settings.open`（可传分类 id）、`settings.close`。
 
 ### 覆盖内置贡献
 
@@ -218,7 +243,9 @@ ctx.services.tryGet(TAG_SERVICE)?.add('档案');   // 可选依赖
 | --- | --- |
 | `METADATA_SERVICE` | `getSchema/setSchema/getRecord/setRecord/getValue/setValue/setValues/setReadonly/validate/focusField` |
 | `VIEWER_SERVICE` | `setImages/getImages/current/goto` |
+| `ANNOTATION_SERVICE` | `getLabels/getAnnotations/setAnnotations/exportJson/exportYolo` |
 | `LAYOUT_CONFIG` | 解析后的布局配置（只读） |
+| `THEME_ACCENTS` | 可选主题色列表 |
 
 ## 9. 自定义字段类型
 
@@ -251,7 +278,7 @@ ctx.bus.emit('tags:changed', { tags });
 ctx.on('record:change', ({ record }) => ...);
 ```
 
-内置事件：`ready`、`error`、`plugin:registered`、`plugin:unregistered`、`command:before`、`command:after`、`record:change`、`save`（可异步否决）、`saved`、`save:error`、`validate`、`field:focus`、`viewer:change`。
+内置事件：`ready`、`error`、`plugin:registered`、`plugin:unregistered`、`command:before`、`command:after`、`record:change`、`save`（可异步否决）、`saved`、`save:error`、`validate`、`field:focus`、`schema:change`、`viewer:change`、`annotation:change`。
 
 ## 11. 单元测试
 
@@ -280,13 +307,31 @@ it('生成档号', async () => {
 
 | 示例 | 演示点 |
 | --- | --- |
-| `examples/plugins/archive-code.ts` | 编译期注册、配置项、依赖、命令 + 快捷键、工具栏 + 状态栏、服务调用、事件扩充、单测 |
-| `examples/plugins/ocr-assist.ts` | 运行期懒加载、异步 setup、私有切片、跨插件服务（影像 + 元数据）、批量写入为一条历史 |
+| [`examples/plugins/archive-code`](../examples/plugins/archive-code/README.md) | 编译期注册、配置项、依赖、命令 + 快捷键、工具栏 + 状态栏、服务调用、事件扩充、单测 |
+| [`packages/plugin-annotation`](../packages/plugin-annotation/README.md) | 基于影像覆盖层扩展点的交互插件：拖拽绘制、坐标换算、数字快捷键、导出 |
 | `examples/vue-app` 中的 `<KabelPanel>` | 用 Vue 模板声明面板（件目录） |
 
-## 13. 检查清单
+## 13. 目录与分发
 
-- [ ] `name` 唯一，声明了 `dependencies`
+独立分发的插件建议与 `packages/plugin-*` 保持一致的结构：
+
+```
+my-plugin/
+├── package.json      peerDependencies: @kabel/editor（或 @kabel/core + 所依赖的插件包）
+├── README.md         功能、集成方式、配置、命令、服务、事件、样式
+├── src/
+│   ├── index.ts      唯一对外入口
+│   ├── plugin.ts     definePlugin 工厂函数
+│   └── style.css     可选，类名自有前缀，使用 --kb-* 令牌
+└── test/
+```
+
+Kabel 相关依赖声明为 **peerDependencies**，由宿主提供，避免重复安装内核与渲染层。
+
+## 14. 检查清单
+
+- [ ] `name` 唯一，设置了 `title`，声明了 `dependencies`
+- [ ] 插件目录下有 README.md（功能与集成方式）
 - [ ] 所有注册都通过 `ctx`，卸载后无残留（可写一个 `kernel.unuse` 的测试）
 - [ ] reducer 纯函数、不可变更新；需要撤销的切片设置 `history: true`，并为 action 提供 `label`
 - [ ] 命令提供 `enabled`，按钮禁用态才能正确反映

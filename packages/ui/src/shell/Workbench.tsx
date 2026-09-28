@@ -2,7 +2,7 @@ import { clamp, ExtensionPoints, matchKeybinding, type Kernel, type PanelContrib
 import { useEffect, useMemo, useRef } from 'preact/hooks';
 import { Resizer } from '../components/Resizer';
 import { KernelContext, UiConfigContext, type UiConfig } from '../context';
-import { breakpointOf, useContributions, useElementSize, useKernel, useSelector } from '../hooks';
+import { breakpointOf, useContributions, useElementSize, useKernel, useMediaQuery, useSelector } from '../hooks';
 import {
   createInitialLayout,
   DEFAULT_LAYOUT_CONFIG,
@@ -11,6 +11,8 @@ import {
   LAYOUT_CONFIG,
   layoutActions,
 } from '../layout/layout-plugin';
+import { SettingsDialog } from '../settings/SettingsDialog';
+import { themeRootProps } from '../theme/theme-plugin';
 import { cx } from '../utils';
 import { Region } from './Region';
 import { StatusBar } from './StatusBar';
@@ -36,10 +38,15 @@ const RAIL_WIDTH = 28;
 const REGIONS: RegionId[] = ['left', 'main', 'right'];
 const fallbackLayout = createInitialLayout(DEFAULT_LAYOUT_CONFIG);
 
-/** 执行匹配快捷键的命令，返回是否已处理 */
+const isEditable = (target: EventTarget | null) =>
+  target instanceof Element && (target.matches('input, textarea, select') || (target as HTMLElement).isContentEditable);
+
+/** 执行匹配快捷键的命令，返回是否已处理。输入框内不响应无修饰键的快捷键（如数字、Delete）。 */
 function dispatchKeybinding(kernel: Kernel, event: KeyboardEvent): boolean {
+  const editing = isEditable(event.target);
   for (const command of kernel.commands.list()) {
-    const bindings = command.keybinding ? [command.keybinding].flat() : [];
+    let bindings = command.keybinding ? [command.keybinding].flat() : [];
+    if (editing) bindings = bindings.filter((b) => /(^|\+)(mod|ctrl|control|cmd|meta|alt|option)\+/i.test(b));
     if (!bindings.some((b) => matchKeybinding(event, b))) continue;
     if (!kernel.commands.isEnabled(command.id)) continue;
     event.preventDefault();
@@ -58,6 +65,8 @@ function Shell({ class: className }: { class?: string }) {
   const config = kernel.services.tryGet(LAYOUT_CONFIG) ?? DEFAULT_LAYOUT_CONFIG;
   const layout = useSelector((s) => s.layout ?? fallbackLayout);
   const hasLayout = useSelector((s) => !!s.layout);
+  const theme = useSelector((s) => s.theme);
+  const prefersDark = useMediaQuery('(prefers-color-scheme: dark)', theme?.scheme === 'system');
 
   const allPanels = useContributions(ExtensionPoints.panels);
   const visibleKey = useSelector((s) => allPanels.filter((p) => !p.when || p.when(s, kernel)).map((p) => p.id).join('|'));
@@ -153,7 +162,12 @@ function Shell({ class: className }: { class?: string }) {
   );
 
   return (
-    <div ref={root} class={cx('kb-root', className, maximized && 'is-maximized')} data-size={breakpoint}>
+    <div
+      ref={root}
+      class={cx('kb-root', className, maximized && 'is-maximized')}
+      data-size={breakpoint}
+      {...themeRootProps(theme, prefersDark)}
+    >
       <Toolbar breakpoint={breakpoint} />
       {compact && (
         <div class="kb-switcher" role="tablist">
@@ -179,6 +193,7 @@ function Shell({ class: className }: { class?: string }) {
         {present('right') && region('right')}
       </div>
       <StatusBar />
+      <SettingsDialog />
     </div>
   );
 }

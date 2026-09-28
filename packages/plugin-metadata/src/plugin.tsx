@@ -1,10 +1,19 @@
-import { definePlugin, ExtensionPoints, shallowEqual, type Kernel, type PanelContribution } from '@kabel/core';
+import {
+  definePlugin,
+  ExtensionPoints,
+  shallowEqual,
+  type Kernel,
+  type PanelAction,
+  type PanelContribution,
+  type PanelViewProps,
+} from '@kabel/core';
 import { builtinFieldTypes, FieldTypes } from './field-types';
 import { fieldDomId, MetadataForm } from './MetadataForm';
-import { normalizeRecord, normalizeSchema } from './schema';
+import { normalizeRecord, normalizeSchema, toSchemaInput } from './schema';
+import { SchemaSettings } from './SchemaSettings';
 import { METADATA_SERVICE, type MetadataService } from './service';
 import { createMetadataState, metadataActions, metadataSlice, recordActions, recordSlice } from './slices';
-import type { RecordInput, SchemaInput, ValidationResult } from './types';
+import type { RecordInput, RecordValues, SchemaInput, ValidationResult } from './types';
 import { requiredProgress, validateAll, type TypeValidator } from './validate';
 
 export interface MetadataPluginOptions {
@@ -13,6 +22,11 @@ export interface MetadataPluginOptions {
   readonly?: boolean;
   /** 存在校验错误时是否仍允许保存，默认 false */
   allowInvalidSave?: boolean;
+  /**
+   * AI 填充：返回要写入的著录值（以一条历史记录写入）。可通过 kernel 获取影像等上下文；
+   * 未提供时面板上的「AI 填充」按钮不可用。
+   */
+  aiFill?: (kernel: Kernel) => Promise<RecordValues | null | undefined> | RecordValues | null | undefined;
   /** 覆盖著录面板的标题、所在区域、排序 */
   panel?: Partial<Pick<PanelContribution, 'title' | 'region' | 'order'>>;
 }
@@ -22,6 +36,7 @@ export const METADATA_PLUGIN = 'kabel:metadata';
 export const metadataPlugin = (options: MetadataPluginOptions = {}) =>
   definePlugin({
     name: METADATA_PLUGIN,
+    title: '文书著录',
     setup(ctx) {
       const { kernel } = ctx;
       const schema = normalizeSchema(options.schema);
@@ -69,7 +84,7 @@ export const metadataPlugin = (options: MetadataPluginOptions = {}) =>
         const { metadata } = state();
         const field = metadata.schema.fields[key];
         if (!field) return;
-        if (kernel.commands.has('layout.reveal')) void kernel.execute('layout.reveal', 'main');
+        if (kernel.commands.has('layout.showPanel')) void kernel.execute('layout.showPanel', 'metadata.form');
         kernel.dispatch(metadataActions.setGroupCollapsed({ key: field.group, collapsed: false }));
         // 等待分组展开后的渲染
         setTimeout(() => {
@@ -143,6 +158,37 @@ export const metadataPlugin = (options: MetadataPluginOptions = {}) =>
         run: save,
       });
       ctx.registerCommand({ id: 'metadata.validate', title: '校验', icon: 'validate', run: () => validate() });
+      ctx.registerCommand({
+        id: 'metadata.aiFill',
+        title: 'AI 填充',
+        enabled: (k) => !!options.aiFill && !k.getState().metadata.readonly && !k.getState().metadata.filling,
+        run: async (k) => {
+          if (!options.aiFill) return;
+          k.dispatch(metadataActions.setFilling(true));
+          try {
+            const values = await options.aiFill(k);
+            if (values && Object.keys(values).length) service.setValues(values, 'AI 填充');
+          } finally {
+            k.dispatch(metadataActions.setFilling(false));
+          }
+        },
+      });
+      ctx.registerCommand({
+        id: 'metadata.openSettings',
+        title: '元数据设置',
+        enabled: (k) => k.commands.has('settings.open'),
+        run: (k) => k.execute('settings.open', 'metadata'),
+      });
+      const initialSchema = toSchemaInput(schema);
+      ctx.registerCommand({
+        id: 'metadata.resetSchema',
+        title: '恢复初始著录项方案',
+        run: (k) => {
+          service.setSchema(initialSchema);
+          k.bus.emit('schema:change', { schema: initialSchema });
+        },
+      });
+      ctx.contribute(ExtensionPoints.settings, { id: 'metadata', title: '著录项', icon: 'sliders', order: 5, view: SchemaSettings });
       ctx.registerCommand({ id: 'metadata.focusField', title: '定位字段', run: (_k, key: string) => focusField(key) });
       ctx.registerCommand({
         id: 'metadata.toggleAllGroups',
@@ -161,20 +207,24 @@ export const metadataPlugin = (options: MetadataPluginOptions = {}) =>
         { id: 'metadata.validate', icon: 'validate', label: '校验', command: 'metadata.validate', order: 30 },
       );
 
+      // 著录面板顶部右侧的操作按钮（放在面板内而非区域标题栏，避免与右侧多个标签页争抢空间）
+      const panelActions: PanelAction[] = [
+        {
+          id: 'metadata.aiFill',
+          icon: 'sparkles',
+          tooltip: options.aiFill ? 'AI 填充' : 'AI 填充（暂未开放）',
+          command: 'metadata.aiFill',
+          active: (s) => s.metadata.filling,
+        },
+        { id: 'metadata.openSettings', icon: 'sliders', tooltip: '元数据设置', command: 'metadata.openSettings' },
+        { id: 'metadata.toggleAllGroups', icon: 'fold', tooltip: '展开/收起全部分组', command: 'metadata.toggleAllGroups' },
+      ];
       ctx.contribute(ExtensionPoints.panels, {
         id: 'metadata.form',
-        region: options.panel?.region ?? 'main',
+        region: options.panel?.region ?? 'right',
         title: options.panel?.title ?? '著录信息',
-        order: options.panel?.order ?? 10,
-        view: MetadataForm,
-        actions: [
-          {
-            id: 'metadata.toggleAllGroups',
-            icon: 'fold',
-            tooltip: '展开/收起全部分组',
-            command: 'metadata.toggleAllGroups',
-          },
-        ],
+        order: options.panel?.order ?? 20,
+        view: (props: PanelViewProps) => <MetadataForm {...props} actions={panelActions} />,
       });
 
       const time = (t: number) => new Date(t).toTimeString().slice(0, 5);
@@ -185,6 +235,7 @@ export const metadataPlugin = (options: MetadataPluginOptions = {}) =>
           order: 10,
           text: (s) => {
             if (!s.metadata) return null;
+            if (s.metadata.filling) return 'AI 填充中…';
             if (s.metadata.saving) return '保存中…';
             if (s.metadata.saveError) return `保存失败：${s.metadata.saveError}`;
             if (s.history.dirty) return '已修改';

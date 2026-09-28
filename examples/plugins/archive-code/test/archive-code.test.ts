@@ -1,7 +1,7 @@
 import { historyPlugin, metadataPlugin } from '@kabel/editor';
 import { setupPlugins } from '@kabel/core/testing';
 import { describe, expect, it, vi } from 'vitest';
-import { archiveCodePlugin, computeArchiveCode } from './archive-code';
+import { archiveCodePlugin, computeArchiveCode } from '../src';
 
 const schema = ['fonds', 'year', 'retention', 'itemNo', 'archiveCode'].map((key) => ({ key, label: key }));
 

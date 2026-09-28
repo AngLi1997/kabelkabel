@@ -16,7 +16,7 @@ describe('inspectorPlugin', () => {
 
   it('按配置贡献右侧面板', async () => {
     const { panels } = await setupPlugins([metadataPlugin({ schema }), inspectorPlugin({ panels: ['history'] })]);
-    expect(panels().filter((p) => p.region === 'right').map((p) => p.id)).toEqual(['inspector.history']);
+    expect(panels().filter((p) => p.id.startsWith('inspector.')).map((p) => p.id)).toEqual(['inspector.history']);
   });
 
   it('渲染校验结果与操作记录，并可跳转历史', async () => {

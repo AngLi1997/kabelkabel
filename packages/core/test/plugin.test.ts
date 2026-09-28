@@ -146,3 +146,41 @@ describe('historyPlugin', () => {
     expect(toolbar().map((t) => t.id)).toContain('history.undo');
   });
 });
+
+describe('插件停用与启用', () => {
+  const base = definePlugin({ name: 'base', setup: (ctx) => ctx.registerCommand({ id: 'base.run', run: () => 1 }) });
+  const child = definePlugin({ name: 'child', dependencies: ['base'] });
+  const core = definePlugin({ name: 'core', builtin: true });
+
+  it('停用时一并停用依赖方，保留定义；启用时一并启用依赖', async () => {
+    const { kernel } = await setupPlugins([base, child, core]);
+    const events = vi.fn();
+    kernel.bus.on('plugin:unregistered', events);
+    expect(kernel.plugins.disable('base')).toEqual(['child', 'base']);
+    expect(kernel.commands.has('base.run')).toBe(false);
+    expect(kernel.plugins.listDisabled().map((p) => p.name).sort()).toEqual(['base', 'child']);
+    expect(events).toHaveBeenCalledWith({ name: 'base', disabled: true });
+
+    await kernel.plugins.enable('child');
+    expect(kernel.plugins.has('base') && kernel.plugins.has('child')).toBe(true);
+    expect(kernel.plugins.listDisabled()).toEqual([]);
+    expect(kernel.commands.has('base.run')).toBe(true);
+  });
+
+  it('内置插件不可停用；卸载后不再保留', async () => {
+    const { kernel } = await setupPlugins([base, core]);
+    expect(kernel.plugins.disable('core')).toEqual([]);
+    expect(kernel.plugins.has('core')).toBe(true);
+    kernel.plugins.disable('base');
+    kernel.unuse('base');
+    expect(kernel.plugins.isDisabled('base')).toBe(false);
+  });
+
+  it('依赖已卸载时启用失败，仍保留在停用列表', async () => {
+    const { kernel } = await setupPlugins([base, child]);
+    kernel.plugins.disable('child');
+    kernel.unuse('base');
+    await expect(kernel.plugins.enable('child')).rejects.toThrow(/requires "base"/);
+    expect(kernel.plugins.isDisabled('child')).toBe(true);
+  });
+});

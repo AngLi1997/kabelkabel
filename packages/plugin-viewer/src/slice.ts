@@ -62,8 +62,40 @@ export const viewerSlice = createSlice({
     setFitScale: (s: ViewerState, fitScale: number) => (Math.abs(s.fitScale - fitScale) < 1e-4 ? s : { ...s, fitScale }),
     rotate: (s: ViewerState, delta: number) => ({ ...s, rotation: (((s.rotation + delta) % 360) + 360) % 360 }),
     toggleThumbnails: (s: ViewerState) => ({ ...s, thumbnails: !s.thumbnails }),
-    setThumbSize: (s: ViewerState, size: number) => ({ ...s, thumbSize: Math.round(clamp(size, 56, 200)) }),
+    setThumbSize: (s: ViewerState, size: number) => ({ ...s, thumbSize: Math.round(clamp(size, 56, 240)) }),
   },
 });
 
 export const viewerActions = viewerSlice.actions;
+
+export interface ImageGroup {
+  /** 目录名；未分组的影像为空字符串 */
+  name: string;
+  /** 在影像列表中的起始下标 */
+  start: number;
+  items: ImageItem[];
+}
+
+/** 按目录把影像分段（相邻同名目录合并为一段，保持原顺序） */
+export function groupImages(images: readonly ImageItem[]): ImageGroup[] {
+  const groups: ImageGroup[] = [];
+  images.forEach((image, i) => {
+    const name = image.group ?? '';
+    const last = groups[groups.length - 1];
+    if (last && last.name === name) last.items.push(image);
+    else groups.push({ name, start: i, items: [image] });
+  });
+  return groups;
+}
+
+/** 当前页位置：目录名、目录内序号与页数 */
+export function pagePosition(s: Pick<ViewerState, 'images' | 'index'>) {
+  const group = groupImages(s.images).find((g) => s.index >= g.start && s.index < g.start + g.items.length);
+  return {
+    total: s.images.length,
+    page: s.images.length ? s.index + 1 : 0,
+    group: group?.name ?? '',
+    groupPage: group ? s.index - group.start + 1 : 0,
+    groupTotal: group?.items.length ?? 0,
+  };
+}

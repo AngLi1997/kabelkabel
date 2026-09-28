@@ -31,7 +31,7 @@ importers:
         version: 3.5.43(typescript@5.9.3)
 
   examples/plugins:
-    dependencies:
+    devDependencies:
       '@kabel/editor':
         specifier: workspace:*
         version: link:../../packages/editor
@@ -71,6 +71,9 @@ importers:
       '@kabel/core':
         specifier: workspace:*
         version: link:../core
+      '@kabel/plugin-annotation':
+        specifier: workspace:*
+        version: link:../plugin-annotation
       '@kabel/plugin-inspector':
         specifier: workspace:*
         version: link:../plugin-inspector
@@ -83,6 +86,21 @@ importers:
       '@kabel/ui':
         specifier: workspace:*
         version: link:../ui
+
+  packages/plugin-annotation:
+    dependencies:
+      '@kabel/core':
+        specifier: workspace:*
+        version: link:../core
+      '@kabel/plugin-viewer':
+        specifier: workspace:*
+        version: link:../plugin-viewer
+      '@kabel/ui':
+        specifier: workspace:*
+        version: link:../ui
+      preact:
+        specifier: ^10.29.0
+        version: 10.29.8
 
   packages/plugin-inspector:
     dependencies:

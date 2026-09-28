@@ -1,0 +1,64 @@
+/*
+ * 主题插件在根节点上设置的属性：
+ *   data-accent + --kb-accent  自定义主题色（派生悬停/按下/浅色与焦点环）
+ *   data-scheme="dark"         深色配色
+ *   data-density               界面密度
+ */
+.kb-root[data-accent] {
+  --kb-color-primary: var(--kb-accent);
+  --kb-color-primary-hover: color-mix(in srgb, var(--kb-accent) 88%, #fff);
+  --kb-color-primary-active: color-mix(in srgb, var(--kb-accent) 85%, #000);
+  --kb-color-primary-soft: color-mix(in srgb, var(--kb-accent) 10%, #fff);
+  --kb-focus-ring: 0 0 0 2px color-mix(in srgb, var(--kb-accent) 20%, transparent);
+}
+
+.kb-root[data-scheme='dark'] {
+  color-scheme: dark;
+  --kb-color-primary: color-mix(in srgb, var(--kb-accent, #1f4e8c) 72%, #fff);
+  --kb-color-primary-hover: color-mix(in srgb, var(--kb-accent, #1f4e8c) 62%, #fff);
+  --kb-color-primary-active: color-mix(in srgb, var(--kb-accent, #1f4e8c) 82%, #fff);
+  --kb-color-primary-soft: color-mix(in srgb, var(--kb-accent, #1f4e8c) 28%, #1f2328);
+  --kb-color-danger: #e0675e;
+  --kb-color-danger-soft: #3a2323;
+  --kb-color-warning: #d69a3c;
+  --kb-color-warning-soft: #3a2f1e;
+  --kb-color-success: #5bb07c;
+  --kb-color-success-soft: #1e3326;
+
+  --kb-color-text: #dfe3e8;
+  --kb-color-text-2: #a9b0ba;
+  --kb-color-text-disabled: #626a75;
+  --kb-color-icon: #b3bac4;
+
+  --kb-color-bg: #15181c;
+  --kb-color-surface: #1f2328;
+  --kb-color-surface-2: #262b31;
+  --kb-color-hover: #2d333a;
+  --kb-color-border: #373e47;
+  --kb-color-border-strong: #4c555f;
+  --kb-color-divider: #30363d;
+  --kb-color-canvas: #101215;
+
+  --kb-shadow-overlay: 0 8px 28px rgba(0, 0, 0, 0.5);
+  --kb-focus-ring: 0 0 0 2px color-mix(in srgb, var(--kb-color-primary) 35%, transparent);
+}
+
+.kb-root[data-scheme='dark'] .kb-settings {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.kb-root[data-density='compact'] {
+  --kb-control-height: 24px;
+  --kb-control-height-sm: 22px;
+  --kb-toolbar-height: 34px;
+  --kb-header-height: 28px;
+  --kb-statusbar-height: 24px;
+}
+
+.kb-root[data-density='comfortable'] {
+  --kb-control-height: 32px;
+  --kb-control-height-sm: 26px;
+  --kb-toolbar-height: 46px;
+  --kb-header-height: 36px;
+  --kb-statusbar-height: 28px;
+}
