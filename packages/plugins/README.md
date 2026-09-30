@@ -2,6 +2,8 @@
 
 **后续扩展的业务插件统一放在这个目录下**（如文书著录、图片标记、OCR 识别…）。底座只含布局、工作台等公共能力，业务功能都以插件形式接入；插件之间只通过服务令牌、扩展点和命令 id 协作，不直接 import 彼此实现。
 
+> 框选 `@kabel/plugin-region-select`（`region-select/`）是能力插件的参考写法：它只依赖工作台，通过舞台工具租约占用指针，用扩展点开放形状，用事件与服务把结果交给下游。
+
 > 内置的工作台 `@kabel/plugin-workspace`（`workspace/`）也在此目录，可作为写法参考；它是 `builtin` 插件，由 `@kabel/editor` 的 baseline 预设默认注册。**所有业务插件都应只依赖它**：`dependencies: ['kabel:workspace']`，通过 `WORKSPACE_SERVICE` 与 `WorkspaceExtensions` 与内容协作，不 import 其他业务插件。
 
 ## 目录与命名

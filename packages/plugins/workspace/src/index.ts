@@ -12,6 +12,6 @@ export {
 } from './documents/slice';
 export { FileList } from './documents/FileList';
 export { ContentPanel } from './documents/ContentPanel';
-export { stageSlice, stageActions, currentScale, initialStageState, MIN_ZOOM, MAX_ZOOM, ZOOM_STEP, type StageState } from './stage';
+export { stageSlice, stageActions, currentScale, initialStageState, MIN_ZOOM, MAX_ZOOM, ZOOM_STEP, type StageState, type ActiveStageTool } from './stage';
 export { ImageRenderer } from './ImageRenderer';
 export { workspacePlugin, WORKSPACE_PLUGIN, WORKSPACE_SERVICE, type WorkspaceService, type WorkspacePluginOptions } from './plugin';

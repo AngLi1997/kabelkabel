@@ -123,4 +123,26 @@ describe('文件目录', () => {
     await kernel.execute('workspace.goto', 2);
     expect(documentPosition(kernel.getState().documents)).toEqual({ total: 3, page: 3, group: '附件', groupPage: 1, groupTotal: 1 });
   });
+
+  it('acquireTool：同一时刻只有一个工具，新租约抢占旧租约并广播 stage:tool-change', async () => {
+    const { kernel } = await setup();
+    const workspace = kernel.services.get(WORKSPACE_SERVICE);
+    const changes: unknown[] = [];
+    kernel.bus.on('stage:tool-change', (e) => void changes.push(e));
+
+    const a = workspace.acquireTool('a', { cursor: 'copy' });
+    expect(kernel.getState().stage.tool).toEqual({ id: 'a', cursor: 'copy' });
+    const b = workspace.acquireTool('b');
+    expect(kernel.getState().stage.tool?.id).toBe('b');
+    // 已被抢占的租约归还不影响新租约
+    a.dispose();
+    expect(kernel.getState().stage.tool?.id).toBe('b');
+    b.dispose();
+    expect(kernel.getState().stage.tool).toBeNull();
+    expect(changes).toEqual([
+      { active: 'a', previous: null },
+      { active: 'b', previous: 'a' },
+      { active: null, previous: 'b' },
+    ]);
+  });
 });

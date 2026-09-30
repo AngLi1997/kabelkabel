@@ -20,6 +20,8 @@ export interface StageOverlayProps {
   toScreen(x: number, y: number): Point;
   /** 舞台坐标 → 图片像素坐标（可能超出图片范围） */
   toImage(x: number, y: number): Point;
+  /** 本覆盖层所属工具（`StageOverlay.tool`）是否为当前占用舞台的工具 */
+  interactive: boolean;
 }
 
 /**
@@ -29,6 +31,11 @@ export interface StageOverlayProps {
 export interface StageOverlay {
   id: string;
   order?: number;
+  /**
+   * 所属交互工具 id（与 `WorkspaceService.acquireTool` 的 id 一致）。
+   * 只有该工具当前占用舞台时，覆盖层才接收指针事件；未声明则始终不拦截。
+   */
+  tool?: string;
   view: View<StageOverlayProps>;
 }
 

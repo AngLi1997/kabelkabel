@@ -1,4 +1,4 @@
-import { createServiceToken, definePlugin, ExtensionPoints, isPromiseLike, NOTIFY_SERVICE, type PanelContribution } from '@kabel/core';
+import { createServiceToken, definePlugin, toDisposable, type Disposable, ExtensionPoints, isPromiseLike, NOTIFY_SERVICE, type PanelContribution } from '@kabel/core';
 import { ContentPanel } from './documents/ContentPanel';
 import { FileList } from './documents/FileList';
 import { documentPosition, documentsActions, documentsSlice, initialDocumentsState } from './documents/slice';
@@ -41,8 +41,25 @@ export interface WorkspaceService {
   getImages(): ImageItem[];
   goto(index: number): void;
   setLoading(loading: boolean): void;
-  /** 影像舞台状态快照（缩放、旋转、适应窗口比例） */
+  /** 影像舞台状态快照（缩放、旋转、适应窗口比例、当前交互工具） */
   getStage(): StageState;
+  /**
+   * 租用舞台指针：同一时刻只有一个交互工具，租用期间左键交给该工具的覆盖层，
+   * 平移改为 空格 + 左键（或中键）。新租约抢占旧租约，旧租约的持有者会收到 `stage:tool-change`
+   * 并应自行退出。返回的 Disposable 用于归还；已被抢占的租约归还时无副作用。
+   * 插件应 `ctx.onDispose(lease)`，卸载时自动归还。
+   */
+  acquireTool(id: string, options?: { cursor?: string }): Disposable;
+}
+
+declare module '@kabel/core' {
+  interface KabelEvents {
+    /**
+     * 舞台交互工具变化（占用、归还或被抢占）。
+     * @mode emit
+     */
+    'stage:tool-change': { active: string | null; previous: string | null };
+  }
 }
 
 export const WORKSPACE_SERVICE = createServiceToken<WorkspaceService>('kabel.workspace');
@@ -145,6 +162,7 @@ export const workspacePlugin = (options: WorkspacePluginOptions = {}) =>
         }
       };
 
+      let lease: symbol | null = null;
       const service: WorkspaceService = {
         setImages,
         setDocuments: (items) => {
@@ -159,6 +177,19 @@ export const workspacePlugin = (options: WorkspacePluginOptions = {}) =>
         goto: (index) => kernel.dispatch(documentsActions.goto(index)),
         setLoading,
         getStage: () => kernel.getState().stage,
+        acquireTool: (id, toolOptions) => {
+          const previous = kernel.getState().stage.tool?.id ?? null;
+          const token = Symbol(id);
+          lease = token;
+          kernel.dispatch(stageActions.setTool({ id, cursor: toolOptions?.cursor }));
+          if (previous !== id) ctx.bus.emit('stage:tool-change', { active: id, previous });
+          return toDisposable(() => {
+            if (lease !== token) return;
+            lease = null;
+            kernel.dispatch(stageActions.setTool(null));
+            ctx.bus.emit('stage:tool-change', { active: null, previous: id });
+          });
+        },
       };
       ctx.provide(WORKSPACE_SERVICE, service);
 

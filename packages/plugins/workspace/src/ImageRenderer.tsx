@@ -42,7 +42,12 @@ export function ImageRenderer({ document }: DocumentRendererProps) {
   const natural = loaded && loaded.src === image?.src ? loaded : null;
   const failed = !!image && failedSrc === image.src;
   const [pan, setPan] = useState({ x: 0, y: 0 });
-  const drag = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
+  const drag = useRef<{ x: number; y: number; px: number; py: number; button: number; moved: boolean } | null>(null);
+  const [panning, setPanning] = useState(false);
+  // 右键拖动平移后抑制随后的 contextmenu，避免拖完弹出右键菜单
+  const suppressMenu = useRef(false);
+  const hovering = useRef(false);
+  const [space, setSpace] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
 
   const measure = (img: HTMLImageElement) => {
@@ -68,6 +73,31 @@ export function ImageRenderer({ document }: DocumentRendererProps) {
     const fit = Math.min((size.width - STAGE_PADDING * 2) / w, (size.height - STAGE_PADDING * 2) / h);
     if (fit > 0) kernel.dispatch(stageActions.setFitScale(fit));
   }, [natural, size.width, size.height, rotation]);
+
+  // 空格按住状态：仅在指针位于舞台内或焦点在舞台内时生效，输入控件中的空格不受影响
+  useEffect(() => {
+    const typing = (t: EventTarget | null) =>
+      t instanceof HTMLElement && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
+    const down = (event: KeyboardEvent) => {
+      if (event.code !== 'Space' || typing(event.target)) return;
+      const el = stage.current;
+      if (!hovering.current && !(el && el.contains(globalThis.document.activeElement))) return;
+      event.preventDefault();
+      setSpace(true);
+    };
+    const up = (event: KeyboardEvent) => {
+      if (event.code === 'Space') setSpace(false);
+    };
+    const release = () => setSpace(false);
+    window.addEventListener('keydown', down);
+    window.addEventListener('keyup', up);
+    window.addEventListener('blur', release);
+    return () => {
+      window.removeEventListener('keydown', down);
+      window.removeEventListener('keyup', up);
+      window.removeEventListener('blur', release);
+    };
+  }, []);
 
   // 滚轮缩放（非被动监听，才能阻止页面滚动）
   useEffect(() => {
@@ -104,23 +134,50 @@ export function ImageRenderer({ document }: DocumentRendererProps) {
       const dy = y - cy0;
       return { x: (dx * cos + dy * sin) / scale + natural.w / 2, y: (-dx * sin + dy * cos) / scale + natural.h / 2 };
     },
+    interactive: false,
   };
 
-  // 左键或中键拖动平移（覆盖层已处理的事件不会冒泡到这里）
-  const onPointerDown = (event: JSX.TargetedPointerEvent<HTMLDivElement>) => {
-    if ((event.button !== 0 && event.button !== 1) || !image) return;
+  // 平移规则（全局鼠标对图片类操作的约定）：
+  // - 无交互工具：左 / 中 / 右键拖动均平移（在冒泡阶段处理，覆盖层可 stopPropagation 自行接管）；
+  // - 有交互工具：左键交给工具，空格 + 左键、中键拖动平移（在捕获阶段强制处理，工具收不到该事件）。
+  const tool = view.tool;
+  const startPan = (event: JSX.TargetedPointerEvent<HTMLDivElement>) => {
     // 阻止中键自动滚动
     if (event.button === 1) event.preventDefault();
+    suppressMenu.current = false;
     event.currentTarget.setPointerCapture?.(event.pointerId);
-    drag.current = { x: event.clientX, y: event.clientY, px: pan.x, py: pan.y };
+    drag.current = { x: event.clientX, y: event.clientY, px: pan.x, py: pan.y, button: event.button, moved: false };
+    setPanning(true);
+  };
+  const onPointerDownCapture = (event: JSX.TargetedPointerEvent<HTMLDivElement>) => {
+    if (!image) return;
+    if (event.button === 1 || (event.button === 0 && space)) {
+      event.stopPropagation();
+      startPan(event);
+    }
+  };
+  const onPointerDown = (event: JSX.TargetedPointerEvent<HTMLDivElement>) => {
+    if (!image || tool || event.button > 2) return;
+    startPan(event);
   };
   const onPointerMove = (event: JSX.TargetedPointerEvent<HTMLDivElement>) => {
     const d = drag.current;
     if (!d) return;
-    setPan({ x: d.px + event.clientX - d.x, y: d.py + event.clientY - d.y });
+    const dx = event.clientX - d.x;
+    const dy = event.clientY - d.y;
+    if (!d.moved && Math.hypot(dx, dy) > 3) d.moved = true;
+    setPan({ x: d.px + dx, y: d.py + dy });
   };
   const endDrag = () => {
+    if (drag.current?.button === 2 && drag.current.moved) suppressMenu.current = true;
     drag.current = null;
+    setPanning(false);
+  };
+  const onContextMenuCapture = (event: JSX.TargetedMouseEvent<HTMLDivElement>) => {
+    if (!suppressMenu.current) return;
+    suppressMenu.current = false;
+    event.preventDefault();
+    event.stopPropagation();
   };
 
   const onKeyDown = (event: JSX.TargetedKeyboardEvent<HTMLDivElement>) => {
@@ -179,10 +236,19 @@ export function ImageRenderer({ document }: DocumentRendererProps) {
       <div
         ref={stage}
         class={cx('kb-stage__canvas', image && 'is-ready')}
+        style={{ cursor: image ? stageCursor(!!tool, tool?.cursor, space, panning) : undefined }}
         tabIndex={0}
         aria-label="影像区域"
         data-kb-context="stage"
+        onPointerDownCapture={onPointerDownCapture}
         onPointerDown={onPointerDown}
+        onPointerEnter={() => {
+          hovering.current = true;
+        }}
+        onPointerLeave={() => {
+          hovering.current = false;
+        }}
+        onContextMenuCapture={onContextMenuCapture}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
@@ -211,13 +277,20 @@ export function ImageRenderer({ document }: DocumentRendererProps) {
         )}
         {image && !failed && overlayProps && size.width > 0 &&
           overlays.map((overlay) => (
-            <div key={overlay.id} class="kb-stage__overlay">
-              <ViewHost view={overlay.view} props={{ ...overlayProps, image }} />
+            <div key={overlay.id} class={cx('kb-stage__overlay', !!overlay.tool && overlay.tool === tool?.id && 'is-interactive')}>
+              <ViewHost view={overlay.view} props={{ ...overlayProps, image, interactive: !!overlay.tool && overlay.tool === tool?.id }} />
             </div>
           ))}
       </div>
     </div>
   );
+}
+
+/** 舞台光标：平移中 grabbing；工具激活且未按空格为工具光标；其余（含按住空格）为 grab */
+function stageCursor(hasTool: boolean, toolCursor: string | undefined, space: boolean, panning: boolean) {
+  if (panning) return 'grabbing';
+  if (hasTool && !space) return toolCursor ?? 'crosshair';
+  return 'grab';
 }
 
 /** 其他插件贡献到侧边工具条的按钮 */

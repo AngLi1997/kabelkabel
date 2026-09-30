@@ -156,7 +156,7 @@ ctx.contribute(WorkspaceExtensions.overlays, { id, order?, view });   // view �
 ctx.contribute(WorkspaceExtensions.tools, { id, icon, tooltip, command, order? });   // 侧边工具条按钮，选中态取命令 checked
 ```
 
-覆盖层铺满舞台、默认不拦截指针事件；未处理（未 `stopPropagation`）的指针事件冒泡到舞台用于平移。`toScreen` / `toImage` 在图片像素坐标与舞台坐标间换算（已考虑缩放、旋转、平移）。可用它们实现标注、测量、水印等叠加在影像上的交互。
+覆盖层铺满舞台、默认不拦截指针事件。需要指针的交互（框选、绘制…）先 `ctx.onDispose(workspace.acquireTool('acme:draw'))` 租用舞台，并在覆盖层声明 `tool: 'acme:draw'`：租用期间左键 / 右键交给该覆盖层，平移改为**空格 + 左键**（或中键）；被其他工具抢占时会收到事件 `stage:tool-change`，据此退出。没有交互工具时左 / 右 / 中键拖动都是平移。规则由工作台统一执行，详见工作台 README「舞台鼠标规则」。`toScreen` / `toImage` 在图片像素坐标与舞台坐标间换算（已考虑缩放、旋转、平移）。可用它们实现标注、测量、水印等叠加在影像上的交互。
 
 ### 右键菜单 `ExtensionPoints.contextMenu`
 
@@ -319,6 +319,7 @@ it('贡献右侧面板', async () => {
 | 示例 | 演示点 |
 | --- | --- |
 | [`packages/plugins/workspace`](../packages/plugins/workspace/README.md) | 内置插件：切片、命令、服务、面板与状态栏贡献、扩展点开放（覆盖层 / 工具条） |
+| [`packages/plugins/region-select`](../packages/plugins/region-select/README.md) | 能力插件：舞台工具租约、可扩展的形状扩展点、事件广播、可替换的服务提供者（裁剪器） |
 | `examples/vue-app` 中的 `<KabelPanel>` | 用 Vue 模板声明右侧面板，读取当前文件 |
 
 ## 13. 目录与分发

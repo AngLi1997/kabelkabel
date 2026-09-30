@@ -102,7 +102,7 @@
 | --- | --- | --- |
 | `history` | — | `canUndo, canRedo, dirty, past[], future[]` |
 | `documents` | | `items, index, loading` |
-| `stage` | | `zoom, fitScale, rotation, thumbnails, thumbSize`（影像舞台） |
+| `stage` | | `zoom, fitScale, rotation, thumbnails, thumbSize, tool`（影像舞台；`tool` 为当前交互工具） |
 | `mode` | | `readonly` |
 | `save` | | `saving, savedAt, error` |
 | `feedback` | | `toasts, confirm` |

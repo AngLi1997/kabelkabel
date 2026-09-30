@@ -166,7 +166,15 @@ Vue 组件通过 `vueView(Component)` 转为 DomView；`<KabelPanel>` 则直接�
 
 ## 影像舞台与覆盖层
 
-工作台开放两个舞台扩展点：`WorkspaceExtensions.overlays`（铺满舞台的覆盖层，提供图片像素坐标与舞台坐标的换算 `toScreen` / `toImage`，已考虑缩放、旋转、平移）与 `WorkspaceExtensions.tools`（侧边工具条按钮）。覆盖层默认不拦截指针事件，未处理的事件冒泡到舞台用于平移。业务插件（如标注）只需基于这两个扩展点实现，不必修改工作台内部。
+工作台开放两个舞台扩展点：`WorkspaceExtensions.overlays`（铺满舞台的覆盖层，提供图片像素坐标与舞台坐标的换算 `toScreen` / `toImage`，已考虑缩放、旋转、平移）与 `WorkspaceExtensions.tools`（侧边工具条按钮）。覆盖层默认不拦截指针事件。业务插件（如标注、框选）只需基于这两个扩展点实现，不必修改工作台内部。
+
+### 舞台输入规则（全局鼠标对图片类操作的约定）
+
+舞台的指针归属是一条**能力缝**：工作台是定义者与提供者，工具插件是消费者，规则由工作台统一执行、插件不各自实现。
+
+- 没有交互工具：左 / 右 / 中键拖动均平移，滚轮缩放。
+- 有交互工具（`WORKSPACE_SERVICE.acquireTool` 租约，同一时刻只有一个，新租约抢占旧租约并广播 `stage:tool-change`）：左键、右键交给工具的覆盖层（`StageOverlay.tool`），**空格 + 左键**或中键拖动平移。平移在捕获阶段接管，工具收不到这些事件，草稿不会被打断。
+- 工具之间的互斥靠租约与 `stage:tool-change` 事件，插件互不知道对方存在。
 
 ## 设置与主题
 

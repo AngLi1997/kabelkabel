@@ -14,14 +14,6 @@
   outline: none;
 }
 
-.kb-stage__canvas.is-ready {
-  cursor: grab;
-}
-
-.kb-stage__canvas.is-ready:active {
-  cursor: grabbing;
-}
-
 .kb-stage__canvas .kb-empty {
   color: #c9ced6;
 }
@@ -46,6 +38,11 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
+}
+
+/* 所属交互工具正占用舞台时接收指针事件 */
+.kb-stage__overlay.is-interactive {
+  pointer-events: auto;
 }
 
 .kb-stage__thumbs {

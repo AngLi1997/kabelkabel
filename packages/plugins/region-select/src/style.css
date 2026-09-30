@@ -1,0 +1,33 @@
+/* ---------- Region select ---------- */
+.kb-root .kb-rsel {
+  position: absolute;
+  inset: 0;
+}
+
+.kb-root .kb-rsel__svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.kb-root .kb-rsel__shape {
+  fill: color-mix(in srgb, var(--kb-color-primary) 14%, transparent);
+  stroke: var(--kb-color-primary);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+.kb-root .kb-rsel__shape.is-draft {
+  stroke-dasharray: 5 3;
+}
+
+.kb-root .kb-rsel__vertex {
+  fill: #fff;
+  stroke: var(--kb-color-primary);
+  stroke-width: 1.5;
+}
+
+.kb-root .kb-rsel__vertex.is-first {
+  fill: var(--kb-color-primary);
+}

@@ -1,7 +1,7 @@
 {
-  "name": "@kabel/editor",
+  "name": "@kabel/plugin-region-select",
   "version": "0.1.0",
-  "description": "Kabel 档案著录工具主包：baseline 底座（工具栏 + 左右扩展面板 + 内容区 + 状态栏、文件目录与工作台）与宿主 API",
+  "description": "Kabel 框选插件：在影像舞台上框选区域（矩形、多边形，形状可扩展），并把原图与裁剪图通过事件交给下游",
   "type": "module",
   "license": "MIT",
   "main": "./dist/index.cjs",
@@ -27,11 +27,12 @@
     "**/*.css"
   ],
   "scripts": {
-    "build": "tsup && node ../../scripts/build-css.mjs dist/style.css ../ui/src/styles/tokens.css ../ui/src/styles/base.css ../ui/src/styles/components.css ../ui/src/styles/shell.css ../ui/src/styles/settings.css ../ui/src/styles/overlays.css ../ui/src/styles/themes.css ../plugins/workspace/src/style.css ../plugins/region-select/src/style.css"
+    "build": "tsup && node ../../../scripts/build-css.mjs dist/style.css src/style.css"
   },
   "dependencies": {
     "@kabel/core": "workspace:*",
+    "@kabel/plugin-workspace": "workspace:*",
     "@kabel/ui": "workspace:*",
-    "@kabel/plugin-workspace": "workspace:*"
+    "preact": "^10.29.0"
   }
 }
