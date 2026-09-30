@@ -2,6 +2,7 @@ import { ExtensionPoints, formatKeybinding, type ToolbarItem } from '@kabel/core
 import { Button } from '../components/Button';
 import { ViewHost } from '../components/ViewHost';
 import { useCommandsVersion, useContributions, useKernel, useStoreState, type Breakpoint } from '../hooks';
+import { commandBindings } from '../keymap/bindings';
 import { runAction } from './run';
 
 /** 去掉首尾及连续的分隔符 */
@@ -20,6 +21,7 @@ export function Toolbar({ breakpoint = 'lg' }: { breakpoint?: Breakpoint }) {
   const kernel = useKernel();
   const state = useStoreState();
   const items = useContributions(ExtensionPoints.toolbar);
+  useContributions(ExtensionPoints.panels); // 面板增减会影响区域开关按钮的可见性
   useCommandsVersion();
   const visible = items.filter((item) => !item.when || item.when(state, kernel));
   const start = tidy(visible.filter((i) => (i.group ?? 'start') === 'start'));
@@ -40,7 +42,7 @@ function ToolbarEntry({ item, breakpoint }: { item: ToolbarItem; breakpoint: Bre
   const command = item.command ? kernel.commands.get(item.command) : undefined;
   const enabled = item.command ? kernel.commands.isEnabled(item.command) : true;
   const checked = command?.checked ? kernel.commands.isChecked(item.command!) : undefined;
-  const keys = command?.keybinding ? [command.keybinding].flat()[0] : undefined;
+  const keys = command ? commandBindings(command, kernel.getState())[0] : undefined;
   const label = item.label ?? command?.title;
   const tooltip = [item.tooltip ?? label, keys && `(${formatKeybinding(keys)})`].filter(Boolean).join(' ');
   const wanted = item.showLabel ?? !!item.label;

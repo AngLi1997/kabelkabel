@@ -1,4 +1,4 @@
-import type { Contribution, ExtensionPoint, KabelState, Kernel } from '@kabel/core';
+import { isReadonly, type Contribution, type ExtensionPoint, type KabelState, type Kernel } from '@kabel/core';
 import type { RefObject } from 'preact';
 import { useContext, useEffect, useLayoutEffect, useReducer, useRef, useState } from 'preact/hooks';
 import { KernelContext, UiConfigContext } from './context';
@@ -36,6 +36,11 @@ export function useSelector<T>(selector: (state: KabelState) => T, equals: (a: T
     [kernel],
   );
   return value;
+}
+
+/** 当前是否为只读模式 */
+export function useReadonly(): boolean {
+  return useSelector((s) => isReadonly(s));
 }
 
 /** 任意状态变化都重新渲染，适用于基于谓词函数求值的小型组件（工具栏、状态栏） */

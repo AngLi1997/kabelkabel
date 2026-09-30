@@ -166,7 +166,7 @@
   letter-spacing: 2px;
 }
 
-/* 中等宽度：右侧区域以浮层形式展开，不挤占著录区域 */
+/* 中等宽度：右侧区域以浮层形式展开，不挤占内容区域 */
 .kb-body.is-overlay-right > .kb-region--right:not(.is-collapsed):not(.is-maximized) {
   position: absolute;
   top: var(--kb-space-2);

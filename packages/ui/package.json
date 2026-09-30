@@ -33,7 +33,7 @@
     "**/*.css"
   ],
   "scripts": {
-    "build": "tsup && node ../../scripts/build-css.mjs dist/style.css src/styles/tokens.css src/styles/base.css src/styles/components.css src/styles/shell.css src/styles/settings.css src/styles/themes.css"
+    "build": "tsup && node ../../scripts/build-css.mjs dist/style.css src/styles/tokens.css src/styles/base.css src/styles/components.css src/styles/shell.css src/styles/settings.css src/styles/overlays.css src/styles/themes.css"
   },
   "dependencies": {
     "@kabel/core": "workspace:*",

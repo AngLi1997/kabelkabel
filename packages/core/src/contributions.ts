@@ -102,10 +102,34 @@ export interface SettingsPage {
   when?: StatePredicate;
 }
 
+export interface ContextMenuContext {
+  /** 触发右键菜单的区域标识，来自元素的 `data-kb-context` 属性，如 `document`、`stage` */
+  target: string;
+  /** 元素的 `data-kb-context-data` 属性，如文件在列表中的下标 */
+  data?: string;
+}
+
+/** 右键菜单项：按 `target` 匹配区域，同一 `group` 内相邻，组间以分隔线隔开 */
+export interface ContextMenuItem {
+  id: string;
+  order?: number;
+  /** 出现在哪些区域的右键菜单中；缺省或 `'*'` 表示所有区域 */
+  target?: string | string[];
+  group?: string;
+  label: string;
+  icon?: string;
+  /** 执行的命令；enabled 与快捷键提示取自命令定义 */
+  command?: string;
+  args?: unknown[];
+  onClick?: (kernel: Kernel, context: ContextMenuContext) => unknown;
+  when?: (state: KabelState, kernel: Kernel, context: ContextMenuContext) => boolean;
+}
+
 /** 内置扩展点 */
 export const ExtensionPoints = {
   toolbar: defineExtensionPoint<ToolbarItem>('kabel.toolbar'),
   statusbar: defineExtensionPoint<StatusItem>('kabel.statusbar'),
   panels: defineExtensionPoint<PanelContribution>('kabel.panels'),
   settings: defineExtensionPoint<SettingsPage>('kabel.settings'),
+  contextMenu: defineExtensionPoint<ContextMenuItem>('kabel.contextMenu'),
 } as const;

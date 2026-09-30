@@ -17,6 +17,17 @@ export interface KabelEvents {
   'plugin:unregistered': { name: string; disabled?: boolean };
   'command:before': { id: string; args: unknown[] };
   'command:after': { id: string; args: unknown[]; result: unknown };
+  /** 保存流程：处理器可返回 Promise，全部完成后才标记为已保存；reject 表示保存失败 */
+  save: SavePayload;
+  saved: SavePayload;
+  'save:error': { error: unknown };
+  /** 只读模式切换 */
+  'mode:change': { readonly: boolean };
+}
+
+export interface SavePayload {
+  /** 触发来源，默认 `manual` */
+  reason?: string;
 }
 
 export type EventName<E> = keyof E | (string & {});

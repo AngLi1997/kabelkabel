@@ -1,4 +1,5 @@
 import { clamp, ExtensionPoints, matchKeybinding, type Kernel, type PanelContribution, type RegionId } from '@kabel/core';
+import type { JSX } from 'preact';
 import { useEffect, useMemo, useRef } from 'preact/hooks';
 import { Resizer } from '../components/Resizer';
 import { KernelContext, UiConfigContext, type UiConfig } from '../context';
@@ -11,6 +12,11 @@ import {
   LAYOUT_CONFIG,
   layoutActions,
 } from '../layout/layout-plugin';
+import { ContextMenu, menuItemsFor } from '../contextmenu/ContextMenu';
+import { contextMenuActions } from '../contextmenu/contextmenu-plugin';
+import { FeedbackHost } from '../feedback/FeedbackHost';
+import { commandBindings } from '../keymap/bindings';
+import { CommandPalette } from '../palette/CommandPalette';
 import { SettingsDialog } from '../settings/SettingsDialog';
 import { themeRootProps } from '../theme/theme-plugin';
 import { cx } from '../utils';
@@ -44,8 +50,9 @@ const isEditable = (target: EventTarget | null) =>
 /** 执行匹配快捷键的命令，返回是否已处理。输入框内不响应无修饰键的快捷键（如数字、Delete）。 */
 function dispatchKeybinding(kernel: Kernel, event: KeyboardEvent): boolean {
   const editing = isEditable(event.target);
+  const state = kernel.getState();
   for (const command of kernel.commands.list()) {
-    let bindings = command.keybinding ? [command.keybinding].flat() : [];
+    let bindings = commandBindings(command, state);
     if (editing) bindings = bindings.filter((b) => /(^|\+)(mod|ctrl|control|cmd|meta|alt|option)\+/i.test(b));
     if (!bindings.some((b) => matchKeybinding(event, b))) continue;
     if (!kernel.commands.isEnabled(command.id)) continue;
@@ -130,6 +137,20 @@ function Shell({ class: className }: { class?: string }) {
     return clamp(sizes[r], config[r].min, Math.max(config[r].min, Math.min(config[r].max, room)));
   };
 
+  // 右键菜单：命中 [data-kb-context] 区域且有匹配菜单项时接管，否则保留浏览器原生菜单
+  const onContextMenu = (event: JSX.TargetedMouseEvent<HTMLDivElement>) => {
+    const el = root.current;
+    const target = event.target as Element;
+    if (!el || isEditable(target) || event.defaultPrevented) return;
+    const host = target.closest<HTMLElement>('[data-kb-context]');
+    const context = { target: host?.dataset.kbContext ?? 'workbench', data: host?.dataset.kbContextData };
+    const items = menuItemsFor(kernel.extensions.get(ExtensionPoints.contextMenu).getAll(), kernel.getState(), kernel, context);
+    if (!items.length) return;
+    event.preventDefault();
+    const box = el.getBoundingClientRect();
+    kernel.dispatch(contextMenuActions.show({ ...context, x: event.clientX - box.left, y: event.clientY - box.top }));
+  };
+
   const resizeStart = useRef(0);
   const resizer = (side: 'left' | 'right') => (
     <Resizer
@@ -166,6 +187,7 @@ function Shell({ class: className }: { class?: string }) {
       ref={root}
       class={cx('kb-root', className, maximized && 'is-maximized')}
       data-size={breakpoint}
+      onContextMenu={onContextMenu}
       {...themeRootProps(theme, prefersDark)}
     >
       <Toolbar breakpoint={breakpoint} />
@@ -180,7 +202,7 @@ function Shell({ class: className }: { class?: string }) {
               class={cx('kb-switcher__item', r === compactRegion && 'is-active')}
               onClick={() => kernel.dispatch(layoutActions.setCompactRegion(r))}
             >
-              {config[r].title}
+              {panelsByRegion[r].length === 1 ? panelsByRegion[r][0]!.title : config[r].title}
             </button>
           ))}
         </div>
@@ -194,6 +216,9 @@ function Shell({ class: className }: { class?: string }) {
       </div>
       <StatusBar />
       <SettingsDialog />
+      <CommandPalette />
+      <ContextMenu />
+      <FeedbackHost />
     </div>
   );
 }

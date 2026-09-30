@@ -13,6 +13,7 @@ export const historyPlugin = () =>
         title: '撤销',
         icon: 'undo',
         keybinding: 'Mod+Z',
+        mutates: true,
         enabled: (k) => k.getState().history.canUndo,
         run: (k) => k.history.undo(),
       });
@@ -21,6 +22,7 @@ export const historyPlugin = () =>
         title: '重做',
         icon: 'redo',
         keybinding: ['Mod+Shift+Z', 'Mod+Y'],
+        mutates: true,
         enabled: (k) => k.getState().history.canRedo,
         run: (k) => k.history.redo(),
       });

@@ -7,13 +7,10 @@
       "@kabel/core": ["./packages/core/src/index.ts"],
       "@kabel/core/testing": ["./packages/core/src/testing.ts"],
       "@kabel/ui": ["./packages/ui/src/index.ts"],
-      "@kabel/plugin-metadata": ["./packages/plugin-metadata/src/index.ts"],
-      "@kabel/plugin-viewer": ["./packages/plugin-viewer/src/index.ts"],
-      "@kabel/plugin-inspector": ["./packages/plugin-inspector/src/index.ts"],
-      "@kabel/plugin-annotation": ["./packages/plugin-annotation/src/index.ts"],
+      "@kabel/plugin-*": ["./packages/plugins/*/src/index.ts"],
       "@kabel/editor": ["./packages/editor/src/index.ts"],
       "@kabel/vue": ["./packages/vue/src/index.ts"]
     }
   },
-  "include": ["packages/*/src", "packages/*/test", "examples/plugins"]
+  "include": ["packages/*/src", "packages/*/test", "packages/plugins/*/src", "packages/plugins/*/test"]
 }

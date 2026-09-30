@@ -36,9 +36,11 @@ export function Region({ region, config, panels, compact, collapsed, hidden, sty
   const canCollapse = !compact && config.collapsible;
   const canMaximize = !compact;
 
+  // 区域内只有一个面板时，折叠条与按钮提示直接使用面板标题
+  const name = panels.length === 1 ? panels[0]!.title : config.title;
   const toggle = () => kernel.execute(region === 'left' ? 'layout.toggleLeft' : 'layout.toggleRight');
   const collapseButton = canCollapse && (
-    <IconButton icon={region === 'left' ? 'fold-left' : 'fold-right'} title={`收起${config.title}`} onClick={toggle} />
+    <IconButton icon={region === 'left' ? 'fold-left' : 'fold-right'} title={`收起${name}`} onClick={toggle} />
   );
 
   let heading;
@@ -61,9 +63,9 @@ export function Region({ region, config, panels, compact, collapsed, hidden, sty
       data-region={region}
     >
       {collapsed && (
-        <button type="button" class="kb-region__rail" title={`展开${config.title}`} onClick={toggle}>
+        <button type="button" class="kb-region__rail" title={`展开${name}`} onClick={toggle}>
           <Icon name={region === 'left' ? 'fold-right' : 'fold-left'} />
-          <span class="kb-region__rail-title">{config.title}</span>
+          <span class="kb-region__rail-title">{name}</span>
         </button>
       )}
       <div class="kb-region__inner" hidden={collapsed}>

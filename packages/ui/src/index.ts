@@ -25,3 +25,8 @@ export { SettingsDialog } from './settings/SettingsDialog';
 export { PluginsPage, pluginTree, type PluginRow } from './settings/PluginsPage';
 export * from './theme/theme-plugin';
 export { ThemePage } from './theme/ThemePage';
+export * from './feedback/feedback-plugin';
+export * from './palette/palette-plugin';
+export * from './keymap/keymap-plugin';
+export { commandBindings, findConflicts, listedCommands, type KeyConflict } from './keymap/bindings';
+export * from './contextmenu/contextmenu-plugin';

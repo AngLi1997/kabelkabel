@@ -2,12 +2,16 @@ import type { Kernel } from './kernel';
 import { toDisposable, type Disposable, type Unsubscribe } from './utils';
 
 export interface CommandDefinition<A extends unknown[] = any[]> {
-  /** 全局唯一，建议 `命名空间.动作`，如 `viewer.zoomIn` */
+  /** 全局唯一，建议 `命名空间.动作`，如 `workspace.zoomIn` */
   id: string;
   title?: string;
   icon?: string;
-  /** 例如 `Mod+S`、`Mod+Shift+Z` */
+  /** 例如 `Mod+S`、`Mod+Shift+Z`；用户可在 设置 › 快捷键 中改绑 */
   keybinding?: string | string[];
+  /** 会修改内容的命令：只读模式下自动禁用 */
+  mutates?: boolean;
+  /** 不在命令面板与快捷键设置中列出（需要参数或仅供内部调用的命令） */
+  hidden?: boolean;
   /** 是否可执行，基于状态计算；UI 会在状态变化时重新求值 */
   enabled?: (kernel: Kernel) => boolean;
   /** 是否处于选中/激活状态（切换类按钮） */
@@ -54,6 +58,7 @@ export class CommandRegistry {
   isEnabled(id: string): boolean {
     const def = this.get(id);
     if (!def) return false;
+    if (def.mutates && this.kernel.getState().mode?.readonly) return false;
     try {
       return def.enabled ? def.enabled(this.kernel) : true;
     } catch {

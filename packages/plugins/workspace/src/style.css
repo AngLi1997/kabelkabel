@@ -1,0 +1,302 @@
+/* ---------- Image viewer ---------- */
+.kb-stage {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+}
+
+.kb-stage__canvas {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--kb-color-canvas);
+  outline: none;
+}
+
+.kb-stage__canvas.is-ready {
+  cursor: grab;
+}
+
+.kb-stage__canvas.is-ready:active {
+  cursor: grabbing;
+}
+
+.kb-stage__canvas .kb-empty {
+  color: #c9ced6;
+}
+
+.kb-stage__canvas .kb-empty .kb-icon {
+  color: #7b828d;
+}
+
+.kb-stage__image {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  max-width: none;
+  transform-origin: center center;
+  background: #fff;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.kb-stage__overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.kb-stage__thumbs {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 6px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border-right: 1px solid var(--kb-color-divider);
+  background: var(--kb-color-surface-2);
+}
+
+.kb-stage__thumbs + .kb-resizer {
+  margin: 0 -4px;
+}
+
+.kb-stage__thumb {
+  position: relative;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  padding: 2px;
+  border: 1px solid var(--kb-color-border);
+  border-radius: var(--kb-radius);
+  background: var(--kb-color-surface);
+}
+.kb-stage__thumb img {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  object-fit: contain;
+}
+
+.kb-stage__thumb span {
+  flex: none;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--kb-color-text-2);
+}
+
+.kb-stage__thumb:hover {
+  border-color: var(--kb-color-border-strong);
+}
+
+.kb-stage__thumb.is-active {
+  border-color: var(--kb-color-primary);
+  box-shadow: inset 0 0 0 1px var(--kb-color-primary);
+}
+
+.kb-stage__thumb.is-active span {
+  color: var(--kb-color-primary);
+  font-weight: 600;
+}
+
+.kb-stage__bar {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 34px;
+  padding: 4px 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  border-right: 1px solid var(--kb-color-border);
+  background: var(--kb-color-surface);
+}
+
+.kb-stage__sep {
+  flex: none;
+  width: 16px;
+  height: 1px;
+  margin: 4px 0;
+  background: var(--kb-color-divider);
+}
+
+.kb-stage__zoom {
+  width: 100%;
+  font-size: 11px;
+  line-height: 14px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--kb-color-text-2);
+}
+
+/* 页码：分数式竖排，当前页在上、总页数在下，中间为分数线 */
+.kb-stage__page {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  width: 28px;
+  padding: 2px 0;
+  font-variant-numeric: tabular-nums;
+  line-height: 14px;
+  text-align: center;
+  cursor: default;
+}
+
+.kb-stage__page-current {
+  font-size: var(--kb-font-size-sm);
+  font-weight: 600;
+  color: var(--kb-color-primary);
+}
+
+.kb-stage__page-total {
+  min-width: 16px;
+  margin-top: 1px;
+  padding-top: 1px;
+  border-top: 1px solid var(--kb-color-border-strong);
+  font-size: 11px;
+  color: var(--kb-color-text-2);
+}
+
+/* ---------- 缩略图目录分组 ---------- */
+.kb-stage__group {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.kb-stage__group + .kb-stage__group {
+  margin-top: 4px;
+}
+
+.kb-stage__group-header {
+  position: sticky;
+  top: -8px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 24px;
+  margin: 0 -6px;
+  padding: 0 6px 0 2px;
+  border: 0;
+  border-bottom: 1px solid var(--kb-color-divider);
+  background: var(--kb-color-surface-2);
+  color: var(--kb-color-text-2);
+  font-size: var(--kb-font-size-sm);
+  text-align: left;
+}
+
+.kb-stage__group-header .kb-icon {
+  width: 14px;
+  height: 14px;
+  color: var(--kb-color-icon);
+}
+
+.kb-stage__group-header:hover {
+  color: var(--kb-color-text);
+}
+
+.kb-stage__group-header.is-current {
+  color: var(--kb-color-primary);
+  font-weight: 600;
+}
+
+.kb-stage__group-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.kb-stage__group-count {
+  flex: none;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 文件目录（默认左侧面板） ---------- */
+.kb-files {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 4px 0;
+  overflow: auto;
+}
+
+.kb-files__group {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+}
+
+.kb-files__folder,
+.kb-files__item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  height: 28px;
+  padding: 0 10px 0 6px;
+  border: 0;
+  background: transparent;
+  color: var(--kb-color-text);
+  font-size: var(--kb-font-size);
+  text-align: left;
+  cursor: pointer;
+}
+
+.kb-files__item.is-nested {
+  padding-left: 30px;
+}
+
+.kb-files__folder .kb-icon,
+.kb-files__item .kb-icon {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  color: var(--kb-color-icon);
+}
+
+.kb-files__folder:hover,
+.kb-files__item:hover {
+  background: var(--kb-color-hover);
+}
+
+.kb-files__folder.is-current {
+  color: var(--kb-color-primary);
+  font-weight: 600;
+}
+
+.kb-files__item.is-active {
+  background: var(--kb-color-primary-soft);
+  color: var(--kb-color-primary);
+  font-weight: 600;
+}
+
+.kb-files__item.is-active .kb-icon {
+  color: var(--kb-color-primary);
+}
+
+.kb-files__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.kb-files__count {
+  flex: none;
+  color: var(--kb-color-text-2);
+  font-variant-numeric: tabular-nums;
+}

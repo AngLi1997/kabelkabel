@@ -11,7 +11,7 @@ import { DisposableStore, isPromiseLike, type Disposable } from './utils';
 export type Teardown = () => void;
 
 export interface KabelPlugin {
-  /** 全局唯一名称，建议 `scope:name`，如 `kabel:viewer` */
+  /** 全局唯一名称，建议 `scope:name`，如 `kabel:workspace` */
   name: string;
   version?: string;
   /** 显示名称，用于设置中的插件管理 */

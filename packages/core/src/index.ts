@@ -11,3 +11,7 @@ export * from './plugin';
 export * from './kernel';
 export * from './contributions';
 export { historyPlugin } from './history-plugin';
+export { modePlugin, modeActions, isReadonly, type ModeState, type ModePluginOptions } from './mode';
+export { savePlugin, saveActions, type SaveState, type SaveResult, type SavePluginOptions } from './save';
+
+export * from './feedback';

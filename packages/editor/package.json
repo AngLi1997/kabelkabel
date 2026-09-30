@@ -1,7 +1,7 @@
 {
   "name": "@kabel/editor",
   "version": "0.1.0",
-  "description": "Kabel 档案著录工具主包：baseline 预设（三栏工作台 + 元数据编辑器 + 影像查看 + 辅助面板）与宿主 API",
+  "description": "Kabel 档案著录工具主包：baseline 底座（工具栏 + 左右扩展面板 + 内容区 + 状态栏、文件目录与工作台）与宿主 API",
   "type": "module",
   "license": "MIT",
   "main": "./dist/index.cjs",
@@ -27,14 +27,11 @@
     "**/*.css"
   ],
   "scripts": {
-    "build": "tsup && node ../../scripts/build-css.mjs dist/style.css ../ui/src/styles/tokens.css ../ui/src/styles/base.css ../ui/src/styles/components.css ../ui/src/styles/shell.css ../ui/src/styles/settings.css ../ui/src/styles/themes.css ../plugin-metadata/src/style.css ../plugin-viewer/src/style.css ../plugin-inspector/src/style.css ../plugin-annotation/src/style.css"
+    "build": "tsup && node ../../scripts/build-css.mjs dist/style.css ../ui/src/styles/tokens.css ../ui/src/styles/base.css ../ui/src/styles/components.css ../ui/src/styles/shell.css ../ui/src/styles/settings.css ../ui/src/styles/overlays.css ../ui/src/styles/themes.css ../plugins/workspace/src/style.css"
   },
   "dependencies": {
     "@kabel/core": "workspace:*",
     "@kabel/ui": "workspace:*",
-    "@kabel/plugin-metadata": "workspace:*",
-    "@kabel/plugin-viewer": "workspace:*",
-    "@kabel/plugin-inspector": "workspace:*",
-    "@kabel/plugin-annotation": "workspace:*"
+    "@kabel/plugin-workspace": "workspace:*"
   }
 }

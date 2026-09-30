@@ -5,56 +5,43 @@ import {
   type EventPayload,
   type HistoryOptions,
   type KabelEvents,
+  type ConfirmOptions,
   type KabelState,
   type Kernel,
+  type NotifyOptions,
+  NOTIFY_SERVICE,
+  isReadonly,
   type PluginInput,
   type RegionId,
+  type SaveResult,
   type StorageInput,
   type Unsubscribe,
 } from '@kabel/core';
+import { WORKSPACE_SERVICE, type DocumentItem, type ImageItem, type ImageSourceInput, type WorkspacePluginOptions } from '@kabel/plugin-workspace';
 import {
-  ANNOTATION_SERVICE,
-  type AnnotationDocument,
-  type AnnotationPluginOptions,
-} from '@kabel/plugin-annotation';
-import type { InspectorPluginOptions } from '@kabel/plugin-inspector';
-import {
-  METADATA_SERVICE,
-  type ArchiveRecord,
-  type MetadataPluginOptions,
-  type MetadataService,
-  type RecordInput,
-  type RecordValues,
-  type SchemaInput,
-  type ValidationResult,
-} from '@kabel/plugin-metadata';
-import { VIEWER_SERVICE, type ImageSourceInput, type ViewerPluginOptions } from '@kabel/plugin-viewer';
-import { mountWorkbench, type IconConfig, type LayoutOptions, type ThemeOptions } from '@kabel/ui';
-import { createBaselinePreset } from './preset';
+  mountWorkbench,
+  type IconConfig,
+  type LayoutOptions,
+  type ThemeOptions,
+} from '@kabel/ui';
+import { createBaselinePreset, type BaselineOptions } from './preset';
 
 export type EventListeners = { [K in keyof KabelEvents]?: EventHandler<KabelEvents[K]> };
 
 export interface EditorOptions {
-  /** 著录项 Schema，支持多种写法（完整 Schema / 字段数组 / 分组数组 / JSON） */
-  schema?: SchemaInput;
-  /** 档案数据：`{ id, values }`、纯值对象或 JSON */
-  record?: RecordInput;
-  /** 影像：URL、base64、Blob、ArrayBuffer、对象或异步加载器 */
+  /** 当前打开的文件（影像）：URL、base64、Blob、ArrayBuffer、对象或异步加载器；显示在文件目录与内容区域 */
   images?: readonly ImageSourceInput[];
-  readonly?: boolean;
   /** 追加的插件（编译期注册） */
   plugins?: PluginInput;
   /** 替换默认 baseline 预设；`false` 表示不使用任何预设 */
   preset?: PluginInput | false;
   layout?: LayoutOptions;
-  /**
-   * 著录信息（右侧面板）。传入 schema / record 或本配置对象时启用，`false` 强制关闭。
-   */
-  metadata?: Omit<MetadataPluginOptions, 'schema' | 'record' | 'readonly'> | false;
-  viewer?: Omit<ViewerPluginOptions, 'images'> | false;
-  /** 图片标记：标记类型、导出文件名等；`false` 关闭 */
-  annotation?: AnnotationPluginOptions | false;
-  inspector?: InspectorPluginOptions | false;
+  /** 初始只读：声明了 `mutates` 的命令（保存、撤销、重做…）被禁用 */
+  readonly?: boolean;
+  /** 保存契约：`{ confirmLeave? }`；`false` 关闭 */
+  save?: BaselineOptions['save'];
+  /** 工作台：`{ items?, thumbnails?, directory?, content?, urlFactory? }`；`false` 不注册 */
+  workspace?: Omit<WorkspacePluginOptions, 'images'> | false;
   /** `false` 关闭工具栏右侧的设置入口 */
   settings?: false;
   theme?: ThemeOptions | false;
@@ -72,8 +59,6 @@ export interface EditorOptions {
   setup?: (kernel: Kernel) => void;
 }
 
-export type SaveResult = { ok: true } | { ok: false; errors?: Record<string, string>; error?: unknown };
-
 export interface ArchiveEditor {
   readonly kernel: Kernel;
   /** 所有插件（含异步插件）就绪 */
@@ -89,23 +74,23 @@ export interface ArchiveEditor {
   getState(): KabelState;
   subscribe(listener: (state: KabelState) => void): Unsubscribe;
 
-  getRecord(): ArchiveRecord;
-  setRecord(record: RecordInput): void;
-  getValues(): RecordValues;
-  setValue(key: string, value: unknown, label?: string): void;
-  setValues(values: RecordValues, label?: string): void;
-  setSchema(schema: SchemaInput): void;
+  /** 打开一组影像；包含异步加载器时，Promise 在全部加载后完成 */
   setImages(images: readonly ImageSourceInput[]): Promise<void>;
-  setReadonly(readonly: boolean): void;
-  /** 当前影像的全部标记（JSON 导出格式） */
-  getAnnotations(): AnnotationDocument | undefined;
-  /** 载入标记；可在 setImages 之后立即调用，影像就绪后生效 */
-  setAnnotations(doc: AnnotationDocument | null): void;
-  /** 导出标记：json 返回文档对象，yolo 返回 `路径 → 文本` 的文件集合 */
-  exportAnnotations(format: 'json'): AnnotationDocument | undefined;
-  exportAnnotations(format: 'yolo'): Record<string, string> | undefined;
-  validate(): ValidationResult;
+  /** 当前打开的全部影像 */
+  getImages(): ImageItem[];
+  /** 直接设置已解析的文件列表（用于非图片类型，需有对应渲染器） */
+  setDocuments(items: DocumentItem[]): void;
+  getDocuments(): DocumentItem[];
+  getCurrentDocument(): DocumentItem | undefined;
+  goto(index: number): void;
+  /** 保存：依次等待 `save` 事件处理器，成功后标记为已保存 */
   save(): Promise<SaveResult>;
+  setReadonly(readonly: boolean): void;
+  isReadonly(): boolean;
+  /** 显示一条提示 */
+  notify(message: string, options?: NotifyOptions): void;
+  /** 弹出确认框 */
+  confirm(options: ConfirmOptions | string): Promise<boolean>;
   undo(): void;
   redo(): void;
   isDirty(): boolean;
@@ -130,30 +115,22 @@ function resolveTarget(target: HTMLElement | string): HTMLElement {
 }
 
 /**
- * 创建档案著录工具并挂载到容器。
+ * 创建档案工具并挂载到容器。
  *
  * ```ts
- * const editor = createArchiveEditor('#app', { schema, record, images });
- * editor.on('save', async ({ record }) => api.save(record));
+ * const editor = createArchiveEditor('#app', { images });
+ * editor.use(myPlugin());   // 向左侧 / 右侧面板、工具栏、状态栏贡献内容
  * ```
  */
 export function createArchiveEditor(target: HTMLElement | string, options: EditorOptions = {}): ArchiveEditor {
   const el = resolveTarget(target);
-  const withMetadata =
-    options.metadata !== false && (options.schema !== undefined || options.record !== undefined || options.metadata !== undefined);
   const preset =
     options.preset === undefined
       ? createBaselinePreset({
           layout: options.layout,
-          metadata: withMetadata && {
-            ...(options.metadata || {}),
-            schema: options.schema,
-            record: options.record,
-            readonly: options.readonly,
-          },
-          viewer: options.viewer === false ? false : { ...options.viewer, images: options.images },
-          annotation: options.annotation,
-          inspector: options.inspector,
+          readonly: options.readonly,
+          save: options.save,
+          workspace: options.workspace === false ? false : { ...options.workspace, images: options.images },
           settings: options.settings,
           theme: options.theme,
         })
@@ -168,9 +145,6 @@ export function createArchiveEditor(target: HTMLElement | string, options: Edito
   const ready = kernel.use([preset, options.plugins ?? null]);
   const unmount = mountWorkbench(el, kernel, { icons: options.icons, class: options.class });
 
-  // 著录信息为可选插件：未启用时读取返回空值、写入忽略
-  const metadata = (): MetadataService | undefined => kernel.services.tryGet(METADATA_SERVICE);
-  const annotation = () => kernel.services.tryGet(ANNOTATION_SERVICE);
   const layoutCommand = (region: 'left' | 'right') => (region === 'left' ? 'layout.toggleLeft' : 'layout.toggleRight');
   const run = (command: string, ...args: unknown[]) => {
     if (kernel.commands.has(command)) void kernel.execute(command, ...args);
@@ -189,20 +163,17 @@ export function createArchiveEditor(target: HTMLElement | string, options: Edito
     getState: () => kernel.getState(),
     subscribe: (listener) => kernel.store.subscribe((state) => listener(state)),
 
-    getRecord: () => metadata()?.getRecord() ?? { values: {} },
-    setRecord: (record) => metadata()?.setRecord(record),
-    getValues: () => metadata()?.getRecord().values ?? {},
-    setValue: (key, value, label) => metadata()?.setValue(key, value, label),
-    setValues: (values, label) => metadata()?.setValues(values, label),
-    setSchema: (schema) => metadata()?.setSchema(schema),
-    setImages: (images) => kernel.services.tryGet(VIEWER_SERVICE)?.setImages(images) ?? Promise.resolve(),
-    setReadonly: (readonly) => metadata()?.setReadonly(readonly),
-    getAnnotations: () => annotation()?.getAnnotations(),
-    setAnnotations: (doc) => annotation()?.setAnnotations(doc),
-    exportAnnotations: ((format: 'json' | 'yolo') =>
-      format === 'yolo' ? annotation()?.exportYolo() : annotation()?.exportJson()) as ArchiveEditor['exportAnnotations'],
-    validate: () => metadata()?.validate() ?? { valid: true, errors: {} },
+    setImages: (images) => kernel.services.tryGet(WORKSPACE_SERVICE)?.setImages(images) ?? Promise.resolve(),
+    getImages: () => kernel.services.tryGet(WORKSPACE_SERVICE)?.getImages() ?? [],
+    setDocuments: (items) => kernel.services.tryGet(WORKSPACE_SERVICE)?.setDocuments(items),
+    getDocuments: () => kernel.services.tryGet(WORKSPACE_SERVICE)?.getDocuments() ?? [],
+    getCurrentDocument: () => kernel.services.tryGet(WORKSPACE_SERVICE)?.current(),
+    goto: (index) => kernel.services.tryGet(WORKSPACE_SERVICE)?.goto(index),
     save: async () => ((await kernel.execute<SaveResult>('kabel.save')) ?? { ok: false }),
+    setReadonly: (readonly) => void kernel.execute('kabel.setReadonly', readonly),
+    isReadonly: () => isReadonly(kernel.getState()),
+    notify: (message, options) => void kernel.services.tryGet(NOTIFY_SERVICE)?.notify(message, options),
+    confirm: (opts) => kernel.services.tryGet(NOTIFY_SERVICE)?.confirm(opts) ?? Promise.resolve(false),
     undo: () => void kernel.history.undo(),
     redo: () => void kernel.history.redo(),
     isDirty: () => kernel.history.isDirty(),

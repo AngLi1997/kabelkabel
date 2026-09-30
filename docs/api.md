@@ -8,17 +8,13 @@
 
 | 选项 | 说明 |
 | --- | --- |
-| `schema` | `SchemaInput` |
-| `record` | `RecordInput` |
-| `images` | `ImageSourceInput[]` |
-| `readonly` | 只读 |
+| `images` | 当前打开的文件 `ImageSourceInput[]`，显示在左侧文件目录与内容区域 |
+| `readonly` | 初始只读：声明了 `mutates` 的命令（保存、撤销、重做…）被禁用 |
+| `save` | 保存契约：`{ confirmLeave? }`；`false` 关闭（同时没有 `Mod+S`、保存按钮与离开确认） |
 | `plugins` | 追加插件 |
 | `preset` | 替换 baseline；`false` 不使用预设（baseline 组成见 [架构设计](architecture.md#baseline-与插件分类)） |
 | `layout` | `LayoutOptions` |
-| `metadata` | 文书著录，见 [plugin-metadata](../packages/plugin-metadata/README.md)：`{ allowInvalidSave?, aiFill?, panel? } \| false`；`aiFill(kernel)` 返回要写入的著录值，未提供时「AI 填充」按钮不可用；传入 `schema` / `record` 或本配置时启用著录信息（右侧） |
-| `annotation` | 图片标记，见 [plugin-annotation](../packages/plugin-annotation/README.md)：`{ labels?: (string \| { id?, name, color? })[], fileName?, panel? } \| false` |
-| `viewer` | 影像查看，见 [plugin-viewer](../packages/plugin-viewer/README.md)：`{ thumbnails?, panel?, urlFactory? } \| false`（关闭时图片标记一并关闭） |
-| `inspector` | 辅助信息，见 [plugin-inspector](../packages/plugin-inspector/README.md)：`{ panels?: ('validation' \| 'history')[] } \| false`（仅在启用文书著录时生效） |
+| `workspace` | 工作台，见 [plugin-workspace](../packages/plugins/workspace/README.md)：`{ items?, thumbnails?, directory?, content?, urlFactory? } \| false`；`directory: false` 不注册文件目录；`false` 整个工作台不注册（没有文件目录与内容） |
 | `settings` | `false` 关闭工具栏右侧的设置入口 |
 | `theme` | `{ defaults?: Partial<ThemeState>, accents?: { title, color }[], persist? } \| false` |
 | `instanceId` | 持久化命名空间，默认 `default` |
@@ -40,50 +36,15 @@
 | `use(plugin) / unuse(name)` | 运行期注册 / 卸载 |
 | `kernel.plugins.disable(name) / enable(name)` | 停用（保留定义，依赖方一并停用）/ 重新启用（已停用的依赖一并启用）；`builtin`（内置）插件不可停用 |
 | `getState() / subscribe(fn)` | 状态 |
-| `getRecord() / setRecord(r)` | 档案；`setRecord` 会清空撤销栈并标记已保存 |
-| `getValues() / setValue(k, v, label?) / setValues(obj, label?)` | 著录值（进入撤销栈） |
-| `setSchema(s) / setImages(list) / setReadonly(b)` | 未启用著录信息时元数据方法静默忽略 |
-| `getAnnotations() / setAnnotations(doc)` | 标记（JSON 导出格式）；替换影像时标记清空，`setAnnotations` 可在 `setImages` 后立即调用，影像就绪后生效 |
-| `exportAnnotations('json' \| 'yolo')` | JSON 文档，或 YOLO 文件集合（`classes.txt`、`data.yaml`、`labels/*.txt`） |
-| `validate()` | `{ valid, errors }` |
-| `save()` | `Promise<{ ok: true } \| { ok: false, errors?, error? }>` |
+| `setImages(list) / getImages()` | 打开一组影像（写入文档模型）/ 读取当前影像 |
+| `setDocuments(items) / getDocuments() / getCurrentDocument() / goto(index)` | 直接操作文档模型（已解析的 `DocumentItem`，用于非图片类型） |
+| `save()` | 依次等待 `save` 事件处理器，成功后标记为已保存：`Promise<{ ok: true } \| { ok: false, error? }>` |
+| `setReadonly(b) / isReadonly()` | 只读模式 |
+| `notify(message, { type?, duration? }) / confirm(options)` | 消息提示 / 确认对话框（`Promise<boolean>`） |
 | `undo() / redo() / isDirty()` | |
 | `layout.collapse/expand/toggle(region)` | `'left' \| 'right'` |
 | `layout.maximize(region) / restore() / reset()` | |
 | `destroy()` | 卸载并释放所有插件 |
-
-## 参数格式
-
-### `SchemaInput`
-
-```ts
-// 1. 完整结构
-{ id?, title?, columns?: 2, labelWidth?: 96, groups: [{ key?, title, columns?, collapsed?, fields: FieldSchema[] }] }
-// 2. 分组数组        [{ title, fields }]
-// 3. 字段数组        [{ key, label, ... }]        → 单个“基本信息”分组
-// 4. { fields }
-// 5. 以上任意结构的 JSON 字符串
-```
-
-`FieldSchema`：
-
-| 字段 | 说明 |
-| --- | --- |
-| `key` / `label` | 必填 |
-| `type` | `text`（默认）/ `textarea` / `number` / `date` / `select` / `radio` / `checkbox` / 自定义 |
-| `required` / `readonly` / `hidden` | |
-| `placeholder` / `defaultValue` | |
-| `span` | 占用列数或 `'full'` |
-| `options` | `['永久','30年']` / `[{ label, value }]` / `{ Y: '永久' }` |
-| `min` / `max` / `maxLength` / `pattern` / `message` | 内置校验 |
-| `validator(value, values, field)` | 返回错误信息或空 |
-| `props` | 透传给字段视图，如 `textarea` 的 `rows`，`date` 的 `valueFormat: 'YYYYMMDD'` |
-
-表单列数会随容器宽度自动减少（单字段最小约 300px）。
-
-### `RecordInput`
-
-`{ id?, values }`（当 `values` 为对象时视为结构化档案）、纯值对象 `{ title: '...' }`、或 JSON 字符串。缺省值按 Schema 的 `defaultValue` 填充。
 
 ### `ImageSourceInput`
 
@@ -96,7 +57,7 @@
 | 对象 | `{ id?, name?, group?, url? \| src? \| base64? \| blob? \| file? \| data?, mime?, thumbnail? }` |
 | 异步加载器 | `async () => (await fetch(url, { headers })).blob()` |
 
-影像对象可带 `group`（所属目录，如“正文”“附件”）：缩略图按目录分组、可折叠，页码与状态栏显示目录内位置。
+影像对象可带 `group`（所属目录，如“正文”“附件”）：文件目录按目录分组、可折叠，页码与状态栏显示目录内位置。
 
 为 Blob / 二进制创建的 object URL 在替换影像或卸载插件时自动释放；并发 `setImages` 以最后一次为准。
 
@@ -104,33 +65,25 @@
 
 | 命令 | 参数 / 快捷键 | 说明 |
 | --- | --- | --- |
-| `kabel.save` | `Mod+S` | 校验 → `emitAsync('save')` → 标记已保存 |
-| `kabel.undo` / `kabel.redo` | `Mod+Z` / `Mod+Shift+Z`、`Mod+Y` | |
-| `metadata.validate` | | 整体校验 |
-| `metadata.focusField` | `key` | 定位字段（显示面板、展开分组、聚焦） |
-| `metadata.focusFirstError` | | |
-| `metadata.toggleAllGroups` | | |
-| `metadata.aiFill` | | AI 填充（需 `metadata.aiFill` 选项） |
-| `metadata.openSettings` / `metadata.resetSchema` | | 打开 设置 › 著录项 / 恢复初始著录项方案 |
-| `viewer.prev / next / goto` | `goto(index)` | 翻页 |
-| `viewer.zoomIn / zoomOut / fit / actual` | | 缩放 |
-| `viewer.rotateLeft / rotateRight` | | 旋转 |
-| `viewer.toggleThumbnails` | | |
-| `annotation.label.1` … `.9` | `1` … `9` | 切换标记类型（有选中时同时修改其类型） |
-| `annotation.setLabel` | `labelId` | 同上 |
-| `annotation.tool.draw` / `annotation.tool.pan` | `R` / `H` | 框选 / 拖动（按住空格临时拖动） |
-| `annotation.delete` / `annotation.deselect` | `Delete`、`Backspace` / `Escape` | |
-| `annotation.exportJson` / `annotation.exportYolo` | | 下载导出文件 |
+| `kabel.save` | `Mod+S` | 保存契约：等待 `save` 事件处理器 → 标记已保存 → `saved`；失败 → `save:error` 并提示 |
+| `kabel.undo` / `kabel.redo` | `Mod+Z` / `Mod+Shift+Z`、`Mod+Y` | 只读时禁用 |
+| `palette.open` | `Mod+Shift+P` | 命令面板（macOS ⌘⇧P，其他平台 Ctrl+Shift+P） |
+| `workspace.prev / next / goto` | `goto(index)` | 切换当前文件 |
+| `kabel.setReadonly` | `readonly?: boolean` | 切换只读（不带参数为取反） |
+| `workspace.prev / next / goto` | `goto(index)` | 切换当前文件 |
+| `workspace.zoomIn / zoomOut / fit / actual` | | 缩放（当前文件是影像时可用） |
+| `workspace.rotateLeft / rotateRight` | | 旋转 |
+| `workspace.toggleThumbnails` | | 缩略图开关 |
 | `layout.toggleLeft / toggleRight` | `collapsed?: boolean` | |
 | `layout.maximize` | `region` | 切换最大化 |
 | `layout.restore` | `Escape` | |
 | `layout.reveal` | `region` | 确保区域可见 |
 | `layout.showPanel` | `panelId` | 显示面板所在区域并激活其标签 |
 | `layout.reset` | | 重置布局 |
-| `settings.open` / `settings.close` | `pageId?` | 打开设置（`metadata` / `plugins` / `theme`） |
+| `settings.open` / `settings.close` | `pageId?` | 打开设置（`plugins` / `shortcuts` / `theme`） |
 | `theme.set` / `theme.reset` | `Partial<ThemeState>` | 修改 / 恢复主题 |
 
-无修饰键的快捷键在输入框内不触发。
+无修饰键的快捷键在输入框内不触发。用户可在 设置 › 快捷键 中改绑（持久化）；命令声明 `hidden: true` 后不出现在命令面板与快捷键设置中，声明 `mutates: true` 后只读时自动禁用。
 
 ## 事件
 
@@ -139,22 +92,22 @@
 | `ready` / `error` | `{ instanceId }` / `{ error, source? }` | 编辑器 / 任意插件 |
 | `plugin:registered` / `plugin:unregistered` | `{ name }` / `{ name, disabled? }` | 内核 |
 | `command:before` / `command:after` | `{ id, args }` / `{ id, args, result }` | 内核 |
-| `record:change` / `validate` / `field:focus` | | 文书著录 |
-| `save`（可异步否决）/ `saved` / `save:error` | `SavePayload` / `SavePayload` / `{ error }` | 文书著录 |
-| `schema:change` | `{ schema }` | 文书著录（设置 › 著录项中的修改） |
-| `viewer:change` | `{ index, image }` | 影像查看 |
-| `annotation:change` | `{ annotations }` | 图片标记 |
+| `document:change` | `{ index, document }` | 工作台（当前文件变化） |
+| `save`（可异步否决）/ `saved` / `save:error` | `{ reason? }` / `{ reason? }` / `{ error }` | 保存契约 |
+| `mode:change` | `{ readonly }` | 只读模式 |
 
 ## 状态切片
 
 | 切片 | 撤销 | 内容 |
 | --- | --- | --- |
 | `history` | — | `canUndo, canRedo, dirty, past[], future[]` |
-| `record` | ✓ | `{ id?, values }` |
-| `metadata` | | `schema, readonly, collapsed, touched, errors, validatedAt, saving, savedAt, saveError, filling` |
-| `annotations` | ✓ | `{ [imageId]: { id, label, x, y, w, h }[] }` |
-| `annotator` | | `labels, active, selected, hovered, tool, sizes` |
-| `viewer` | | `images, index, zoom, fitScale, rotation, thumbnails, thumbSize, loading` |
+| `documents` | | `items, index, loading` |
+| `stage` | | `zoom, fitScale, rotation, thumbnails, thumbSize`（影像舞台） |
+| `mode` | | `readonly` |
+| `save` | | `saving, savedAt, error` |
+| `feedback` | | `toasts, confirm` |
+| `keymap` | | `overrides`（命令 id → 快捷键列表，持久化） |
+| `palette` / `contextmenu` | | 命令面板 / 右键菜单的打开状态 |
 | `layout` | | `sizes, collapsed, maximized, active, weights, folded, compactRegion, breakpoint, overlay` |
 | `settings` | | `open, page` |
 | `theme` | | `scheme, accent, density, fontSize`（持久化） |
@@ -168,10 +121,14 @@
 | `createSlice` / `Store` / `Action` / `ActionMeta` | 状态 |
 | `History` / `HistoryState` | 撤销/重做 |
 | `EventBus` / `KabelEvents` | 事件 |
-| `CommandRegistry` / `CommandDefinition` | 命令 |
+| `CommandRegistry` / `CommandDefinition`（`mutates`、`hidden`） | 命令 |
 | `createServiceToken` / `ServiceRegistry` | 服务 |
-| `defineExtensionPoint` / `ExtensionPoints`（`toolbar` / `statusbar` / `panels` / `settings`）/ `ContributionRegistry` | 扩展点 |
-| `ToolbarItem` / `StatusItem` / `PanelContribution` / `SettingsPage` / `View` / `DomView` | 贡献项类型 |
+| `defineExtensionPoint` / `ExtensionPoints`（`toolbar` / `statusbar` / `panels` / `settings` / `contextMenu`）/ `ContributionRegistry` | 扩展点 |
+| `ToolbarItem` / `StatusItem` / `PanelContribution` / `SettingsPage` / `ContextMenuItem` / `View` / `DomView` | 贡献项类型 |
+| `modePlugin` / `isReadonly` | 只读模式（内置） |
+| `savePlugin` / `SaveResult` | 保存契约（内置） |
+| `NOTIFY_SERVICE` / `NotifyService` | 消息与确认对话框的服务令牌（实现在 ui 的 `feedbackPlugin`） |
+| `eventToKeybinding` / `sameKeybinding` | 快捷键工具 |
 | `kernel.plugins.list / listDisabled / disable / enable / isDisabled` | 插件管理 |
 | `resolveStorage` / `createMemoryStorage` / `ScopedStorage` | 存储 |
 | `parseKeybinding` / `matchKeybinding` / `formatKeybinding` | 快捷键 |
@@ -186,18 +143,32 @@
 | `Workbench` / `Region` / `PanelStack` / `Toolbar` / `StatusBar` | 外壳组件 |
 | `layoutPlugin(options)` / `LAYOUT_CONFIG` / `layoutActions` | 布局插件（内置） |
 | `settingsPlugin()` / `settingsActions` / `SettingsDialog` / `PluginsPage` / `pluginTree` | 设置插件（内置） |
+| `feedbackPlugin()` | 消息提示与确认对话框（内置） |
+| `palettePlugin()` | 命令面板（内置） |
+| `keymapPlugin()` / `keymapActions` / `commandBindings` / `findConflicts` | 快捷键改绑与冲突检测（内置） |
+| `contextMenuPlugin()` | 右键菜单（内置，菜单项来自 `ExtensionPoints.contextMenu`） |
 | `themePlugin(options)` / `themeActions` / `THEME_ACCENTS` / `DEFAULT_ACCENTS` | 主题插件（内置） |
-| `useKernel` / `useSelector` / `useStoreState` / `useContributions` / `useElementSize` / `useMediaQuery` / `useEvent` | hooks |
+| `useKernel` / `useSelector` / `useReadonly` / `useStoreState` / `useContributions` / `useElementSize` / `useMediaQuery` / `useEvent` | hooks |
 | `Button` / `IconButton` / `Tabs` / `Empty` / `Resizer` / `Section` / `ViewHost` / `Icon` / `PanelActions` | 通用组件 |
-| `Input` / `Textarea` / `NumberInput` / `Select` / `RadioGroup` / `CheckboxGroup` / `Switch` / `Segmented` | 表单控件（IME 组合输入安全） |
+| `Input` / `Textarea` / `NumberInput` / `Select` / `RadioGroup` / `CheckboxGroup` / `Switch` / `Segmented` | 表单控件（IME 组合输入安全），供功能插件复用 |
 | `cx` / `downloadFile` / `runAction` | 工具函数 |
 | `@kabel/ui/style.css` / `@kabel/ui/tailwind-preset` | 样式 / Tailwind 预设 |
 
-## 功能插件
+## `@kabel/plugin-workspace`
 
-各插件的配置、命令、服务、事件与扩展点见其 README：
+| 导出 | 说明 |
+| --- | --- |
+| `workspacePlugin(options)` / `WORKSPACE_PLUGIN` | 工作台插件（内置）：文档模型、文件目录、内容面板、影像舞台 |
+| `WORKSPACE_SERVICE` / `WorkspaceService` | `setImages / setDocuments / getDocuments / getImages / current / goto / setLoading / getStage` |
+| `WorkspaceExtensions` | 扩展点：`renderers`（文件渲染器）、`overlays`（舞台覆盖层）、`tools`（舞台工具条） |
+| `DocumentItem` / `DocumentRenderer` / `StageOverlayProps` / `StageTool` | 类型 |
+| `useDocuments` / `useCurrentDocument` / `useStage` | hooks |
+| `groupDocuments` / `documentPosition` / `documentsActions` / `stageActions` | 文件分组与位置、状态动作 |
+| `resolveImage` / `ImageSourceInput` / `ImageItem` | 图片来源解析与类型 |
+| `FileList` / `ContentPanel` / `ImageRenderer` | 内置视图，可单独复用 |
 
-- [影像查看 `@kabel/plugin-viewer`](../packages/plugin-viewer/README.md)
-- [图片标记 `@kabel/plugin-annotation`](../packages/plugin-annotation/README.md)
-- [文书著录 `@kabel/plugin-metadata`](../packages/plugin-metadata/README.md)
-- [辅助信息 `@kabel/plugin-inspector`](../packages/plugin-inspector/README.md)
+## 内置与功能插件
+
+底座只内置布局、撤销重做、工作台、设置、主题等公共能力；其余功能以插件形式提供（见[插件开发指南](plugin-guide.md)）。工作台的配置、命令、服务、事件与扩展点见其 README：
+
+- [工作台 `@kabel/plugin-workspace`](../packages/plugins/workspace/README.md)

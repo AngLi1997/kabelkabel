@@ -113,6 +113,7 @@ export const themePlugin = (options: ThemeOptions = {}) =>
 
       ctx.registerCommand({
         id: 'theme.set',
+        hidden: true,
         title: '设置主题',
         run: (k, patch: Partial<ThemeState>) => k.dispatch(slice.actions.set(patch)),
       });

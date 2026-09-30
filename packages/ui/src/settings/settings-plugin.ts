@@ -42,6 +42,7 @@ export const settingsPlugin = () =>
       });
       ctx.registerCommand({
         id: 'settings.close',
+        hidden: true,
         title: '关闭设置',
         run: (k) => k.dispatch(settingsActions.close()),
       });

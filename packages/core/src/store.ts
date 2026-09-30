@@ -1,4 +1,6 @@
 import type { HistoryState } from './history';
+import type { ModeState } from './mode';
+import type { SaveState } from './save';
 import { toDisposable, type Disposable, type Unsubscribe } from './utils';
 
 /**
@@ -6,12 +8,16 @@ import { toDisposable, type Disposable, type Unsubscribe } from './utils';
  *
  * ```ts
  * declare module '@kabel/core' {
- *   interface KabelState { viewer: ViewerState }
+ *   interface KabelState { stage: StageState }
  * }
  * ```
  */
 export interface KabelState {
   history: HistoryState;
+  /** 只读模式（由 modePlugin 提供） */
+  mode?: ModeState;
+  /** 保存状态（由 savePlugin 提供） */
+  save?: SaveState;
   [slice: string]: unknown;
 }
 

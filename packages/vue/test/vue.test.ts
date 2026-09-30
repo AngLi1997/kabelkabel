@@ -4,7 +4,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { defineComponent, h, inject, nextTick, ref } from 'vue';
 import { KabelEditor, KabelPanel, KabelToolbarButton, useKabelState, vueView } from '../src';
 
-const schema = [{ key: 'title', label: '题名', required: true }];
 const flush = async () => {
   for (let i = 0; i < 3; i += 1) {
     await new Promise((r) => setTimeout(r));
@@ -21,48 +20,47 @@ const mountTracked: typeof mount = ((...args: Parameters<typeof mount>) => {
 }) as typeof mount;
 
 describe('<KabelEditor>', () => {
-  it('挂载工作台并通过 v-model:record 回传修改', async () => {
-    const onUpdate = vi.fn();
+  it('挂载工作台：左侧文件目录 + 内容区影像', async () => {
     const wrapper = mountTracked(KabelEditor, {
       attachTo: document.body,
-      props: { schema, record: { title: '原' }, storage: 'memory', 'onUpdate:record': onUpdate },
+      props: { storage: 'memory', images: [{ url: '/1.jpg', name: '0001.jpg' }] },
     });
     await flush();
     expect(wrapper.find('.kb-root').exists()).toBe(true);
-    const editor = (wrapper.vm as unknown as { getEditor(): import('@kabel/editor').ArchiveEditor }).getEditor();
-    editor.setValue('title', '新');
-    expect(onUpdate).toHaveBeenLastCalledWith({ values: { title: '新' } });
+    expect(wrapper.find('[data-region="left"] .kb-files__item').text()).toBe('0001.jpg');
+    expect(wrapper.find('[data-region="main"] .kb-stage').exists()).toBe(true);
   });
 
-  it('@save 返回的 Promise 被等待', async () => {
+  it('@save 返回的 Promise 被等待；readonly 属性同步到编辑器', async () => {
     let resolveSave!: () => void;
     const onSave = vi.fn(() => new Promise<void>((r) => (resolveSave = r)));
     const onSaved = vi.fn();
-    const wrapper = mountTracked(KabelEditor, {
-      attachTo: document.body,
-      props: { schema, record: { title: 'x' }, storage: 'memory', onSave, onSaved },
-    });
+    const wrapper = mountTracked(KabelEditor, { attachTo: document.body, props: { storage: 'memory', onSave, onSaved } });
     await flush();
-    const pending = (wrapper.vm as unknown as { save(): Promise<{ ok: boolean }> }).save();
+    const api = wrapper.vm as unknown as { save(): Promise<{ ok: boolean }>; getEditor(): import('@kabel/editor').ArchiveEditor };
+    const pending = api.save();
     await flush();
     expect(onSave).toHaveBeenCalled();
     expect(onSaved).not.toHaveBeenCalled();
     resolveSave();
     await expect(pending).resolves.toEqual({ ok: true });
     expect(onSaved).toHaveBeenCalled();
+    await wrapper.setProps({ readonly: true });
+    expect(api.getEditor().isReadonly()).toBe(true);
   });
 
-  it('外部修改 record 时同步到编辑器', async () => {
-    const wrapper = mountTracked(KabelEditor, { attachTo: document.body, props: { schema, record: { title: 'a' }, storage: 'memory' } });
+  it('images 变化时同步到编辑器', async () => {
+    const wrapper = mountTracked(KabelEditor, { attachTo: document.body, props: { storage: 'memory', images: ['/a.jpg'] } });
     await flush();
-    await wrapper.setProps({ record: { id: '2', values: { title: 'b' } } });
+    await wrapper.setProps({ images: ['/a.jpg', '/b.jpg'] });
+    await flush();
     const editor = (wrapper.vm as unknown as { getEditor(): import('@kabel/editor').ArchiveEditor }).getEditor();
-    expect(editor.getRecord()).toEqual({ id: '2', values: { title: 'b' } });
+    expect(editor.getImages()).toHaveLength(2);
   });
 });
 
 describe('<KabelPanel> / <KabelToolbarButton> / vueView', () => {
-  it('Vue 插槽内容 Teleport 到右侧区域，并保留宿主 provide', async () => {
+  it('Vue 插槽内容 Teleport 到右侧扩展区域，并保留宿主 provide', async () => {
     const onClick = vi.fn();
     const Child = defineComponent({
       setup() {
@@ -76,7 +74,7 @@ describe('<KabelPanel> / <KabelToolbarButton> / vueView', () => {
       setup() {
         const count = ref(0);
         return () =>
-          h(KabelEditor, { schema, storage: 'memory', inspector: false }, () => [
+          h(KabelEditor, { storage: 'memory' }, () => [
             h(KabelPanel, { id: 'host.panel', region: 'right', title: '关联文件' }, () => [h(Child), h('span', { class: 'count' }, count.value)]),
             h(KabelToolbarButton, { id: 'host.submit', label: '提交审核', icon: 'submit', onClick }),
           ]);
@@ -105,7 +103,7 @@ describe('<KabelPanel> / <KabelToolbarButton> / vueView', () => {
         ctx.contribute(ExtensionPoints.panels, { id: 'host.view', region: 'left', title: 'Vue 面板', view: vueView(Panel) });
       },
     });
-    const wrapper = mountTracked(KabelEditor, { attachTo: document.body, props: { schema, storage: 'memory', viewer: false, plugins: plugin } });
+    const wrapper = mountTracked(KabelEditor, { attachTo: document.body, props: { storage: 'memory', workspace: false, plugins: plugin } });
     await flush();
     expect(wrapper.find('.vue-view').text()).toBe('host.view');
   });

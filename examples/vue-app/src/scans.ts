@@ -19,7 +19,7 @@ ${lines}
 
 const toBase64 = (text: string) => btoa(String.fromCharCode(...new TextEncoder().encode(text)));
 
-/** 同一套影像以四种不同的参数格式传入，演示多种数据源；group 为所属目录，缩略图按目录分组 */
+/** 同一套影像以四种不同的参数格式传入，演示多种数据源；group 为所属目录，文件目录按目录分组 */
 export function sampleImages(title: string): ImageSourceInput[] {
   return [
     // 1. URL（静态资源）

@@ -7,10 +7,11 @@ import {
   ExtensionPoints,
   type Kernel,
   type RegionId,
+  type StatePredicate,
 } from '@kabel/core';
 
 export interface RegionConfig {
-  /** 区域标题（堆叠模式或无面板时显示） */
+  /** 区域名称：折叠条、按钮提示与窄屏切换标签使用；面板标题由面板自身提供 */
   title: string;
   /** 默认宽度（px），仅左右区域有效 */
   size: number;
@@ -60,9 +61,9 @@ declare module '@kabel/core' {
 }
 
 export const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
-  left: { title: '目录', size: 280, min: 200, max: 560, collapsed: false, mode: 'tabs', collapsible: true },
-  main: { title: '影像', size: 0, min: 360, max: Infinity, collapsed: false, mode: 'tabs', collapsible: false },
-  right: { title: '标记与著录', size: 360, min: 260, max: 640, collapsed: false, mode: 'tabs', collapsible: true },
+  left: { title: '左侧面板', size: 280, min: 200, max: 560, collapsed: false, mode: 'tabs', collapsible: true },
+  main: { title: '内容', size: 0, min: 360, max: Infinity, collapsed: false, mode: 'tabs', collapsible: false },
+  right: { title: '右侧面板', size: 360, min: 260, max: 640, collapsed: false, mode: 'tabs', collapsible: true },
 };
 
 export function resolveLayoutConfig(options: LayoutOptions = {}): LayoutConfig {
@@ -88,7 +89,7 @@ export function createInitialLayout(config: LayoutConfig): LayoutState {
   };
 }
 
-/** 中等宽度下右侧区域不挤占著录区，改为浮层 */
+/** 中等宽度下右侧区域不挤占内容区，改为浮层 */
 export const isOverlayMode = (s: LayoutState) => s.breakpoint === 'md';
 
 /** 区域在当前断点下是否处于收起状态 */
@@ -206,7 +207,7 @@ export const layoutPlugin = (options: LayoutOptions = {}) =>
       const layout = (k: Kernel) => k.getState().layout;
       const toggleCommand = (side: Side) => ({
         id: side === 'left' ? 'layout.toggleLeft' : 'layout.toggleRight',
-        title: side === 'left' ? '左侧区域' : '右侧区域',
+        title: `显示/隐藏${config[side].title}`,
         enabled: () => config[side].collapsible,
         checked: (k: Kernel) => !isRegionCollapsed(layout(k), side, config),
         run: (k: Kernel, collapsed?: boolean) =>
@@ -220,6 +221,7 @@ export const layoutPlugin = (options: LayoutOptions = {}) =>
       ctx.registerCommand(toggleCommand('right'));
       ctx.registerCommand({
         id: 'layout.maximize',
+        hidden: true,
         title: '最大化',
         run: (k, region: RegionId) => k.dispatch(slice.actions.toggleMaximize(region)),
       });
@@ -232,11 +234,13 @@ export const layoutPlugin = (options: LayoutOptions = {}) =>
       });
       ctx.registerCommand({
         id: 'layout.reveal',
+        hidden: true,
         title: '显示区域',
         run: (k, region: RegionId) => k.dispatch(slice.actions.reveal(region)),
       });
       ctx.registerCommand({
         id: 'layout.showPanel',
+        hidden: true,
         title: '显示面板',
         run: (k, panelId: string) => {
           const panel = k.extensions.get(ExtensionPoints.panels).get(panelId);
@@ -251,10 +255,13 @@ export const layoutPlugin = (options: LayoutOptions = {}) =>
         run: (k) => k.dispatch(slice.actions.reset()),
       });
 
+      // 区域内没有任何面板时整个区域不渲染，对应的开关按钮也一并隐藏
+      const hasPanels = (side: Side): StatePredicate => (s, k) =>
+        k.extensions.get(ExtensionPoints.panels).getAll().some((p) => p.region === side && (!p.when || p.when(s, k)));
       ctx.contribute(
         ExtensionPoints.toolbar,
-        { id: 'layout.toggleLeft', group: 'end', icon: 'panel-left', tooltip: `显示/隐藏${config.left.title}`, command: 'layout.toggleLeft', order: 900 },
-        { id: 'layout.toggleRight', group: 'end', icon: 'panel-right', tooltip: `显示/隐藏${config.right.title}`, command: 'layout.toggleRight', order: 910 },
+        { id: 'layout.toggleLeft', group: 'end', icon: 'panel-left', tooltip: `显示/隐藏${config.left.title}`, command: 'layout.toggleLeft', order: 900, when: hasPanels('left') },
+        { id: 'layout.toggleRight', group: 'end', icon: 'panel-right', tooltip: `显示/隐藏${config.right.title}`, command: 'layout.toggleRight', order: 910, when: hasPanels('right') },
         { id: 'layout.reset', group: 'end', icon: 'layout', tooltip: '重置布局', command: 'layout.reset', order: 920 },
       );
     },

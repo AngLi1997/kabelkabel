@@ -30,17 +30,8 @@ importers:
         specifier: ^3.5.43
         version: 3.5.43(typescript@5.9.3)
 
-  examples/plugins:
-    devDependencies:
-      '@kabel/editor':
-        specifier: workspace:*
-        version: link:../../packages/editor
-
   examples/vue-app:
     dependencies:
-      '@kabel-examples/plugins':
-        specifier: workspace:*
-        version: link:../plugins
       '@kabel/editor':
         specifier: workspace:*
         version: link:../../packages/editor
@@ -71,72 +62,21 @@ importers:
       '@kabel/core':
         specifier: workspace:*
         version: link:../core
-      '@kabel/plugin-annotation':
+      '@kabel/plugin-workspace':
         specifier: workspace:*
-        version: link:../plugin-annotation
-      '@kabel/plugin-inspector':
-        specifier: workspace:*
-        version: link:../plugin-inspector
-      '@kabel/plugin-metadata':
-        specifier: workspace:*
-        version: link:../plugin-metadata
-      '@kabel/plugin-viewer':
-        specifier: workspace:*
-        version: link:../plugin-viewer
+        version: link:../plugins/workspace
       '@kabel/ui':
         specifier: workspace:*
         version: link:../ui
 
-  packages/plugin-annotation:
+  packages/plugins/workspace:
     dependencies:
       '@kabel/core':
         specifier: workspace:*
-        version: link:../core
-      '@kabel/plugin-viewer':
-        specifier: workspace:*
-        version: link:../plugin-viewer
+        version: link:../../core
       '@kabel/ui':
         specifier: workspace:*
-        version: link:../ui
-      preact:
-        specifier: ^10.29.0
-        version: 10.29.8
-
-  packages/plugin-inspector:
-    dependencies:
-      '@kabel/core':
-        specifier: workspace:*
-        version: link:../core
-      '@kabel/plugin-metadata':
-        specifier: workspace:*
-        version: link:../plugin-metadata
-      '@kabel/ui':
-        specifier: workspace:*
-        version: link:../ui
-      preact:
-        specifier: ^10.29.0
-        version: 10.29.8
-
-  packages/plugin-metadata:
-    dependencies:
-      '@kabel/core':
-        specifier: workspace:*
-        version: link:../core
-      '@kabel/ui':
-        specifier: workspace:*
-        version: link:../ui
-      preact:
-        specifier: ^10.29.0
-        version: 10.29.8
-
-  packages/plugin-viewer:
-    dependencies:
-      '@kabel/core':
-        specifier: workspace:*
-        version: link:../core
-      '@kabel/ui':
-        specifier: workspace:*
-        version: link:../ui
+        version: link:../../ui
       preact:
         specifier: ^10.29.0
         version: 10.29.8
