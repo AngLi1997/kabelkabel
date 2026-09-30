@@ -2,14 +2,14 @@
 import { KabelEditor, KabelPanel, KabelToolbarButton, type SavePayload } from '@kabel/vue';
 import { ref, shallowRef } from 'vue';
 import CurrentFile from './components/CurrentFile.vue';
-import RegionResults from './components/RegionResults.vue';
+import { fileLoaderPlugin } from '@kabel/plugin-file-loader';
 import { regionSelectPlugin } from '@kabel/plugin-region-select';
 import { sampleImages } from './scans';
 
 const images = shallowRef(sampleImages('关于档案工作的通知'));
 const editor = ref<InstanceType<typeof KabelEditor>>();
 const readonly = ref(false);
-const plugins = [regionSelectPlugin()];
+const plugins = [fileLoaderPlugin(), regionSelectPlugin()];
 const reload = () => (images.value = sampleImages('关于档案工作的通知'));
 
 /** 宿主保存：返回 Promise，编辑器会等待其完成；抛出异常即保存失败 */
@@ -37,9 +37,6 @@ async function onSave(_payload: SavePayload) {
         <!-- 右侧是通用扩展区域：宿主或插件贡献面板后才会出现 -->
         <KabelPanel id="host.current" region="right" title="当前文件" :order="10">
           <CurrentFile />
-        </KabelPanel>
-        <KabelPanel id="host.regions" region="right" title="框选结果" :order="20">
-          <RegionResults />
         </KabelPanel>
       </KabelEditor>
     </main>

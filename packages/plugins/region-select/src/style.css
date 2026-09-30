@@ -31,3 +31,42 @@
 .kb-root .kb-rsel__vertex.is-first {
   fill: var(--kb-color-primary);
 }
+
+/* 框选结果面板 */
+.kb-root .kb-rsel-results {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+}
+
+.kb-root .kb-rsel-results__bar,
+.kb-root .kb-rsel-results__item figcaption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.kb-root .kb-rsel-results__item {
+  margin: 0;
+  border: 1px solid var(--kb-color-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.kb-root .kb-rsel-results__item img {
+  display: block;
+  max-width: 100%;
+  margin: 0 auto;
+  background: repeating-conic-gradient(#eee 0 25%, #fff 0 50%) 0 0 / 12px 12px;
+}
+
+.kb-root .kb-rsel-results__item figcaption {
+  padding: 2px 4px 2px 8px;
+  border-top: 1px solid var(--kb-color-border);
+}
+
+.kb-root .kb-rsel-results__item figcaption span {
+  flex: 1;
+}

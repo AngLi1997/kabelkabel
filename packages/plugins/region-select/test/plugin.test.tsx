@@ -1,4 +1,4 @@
-import { definePlugin, historyPlugin, NOTIFY_SERVICE } from '@kabel/core';
+import { definePlugin, ExtensionPoints, historyPlugin, NOTIFY_SERVICE } from '@kabel/core';
 import { createTestKernel } from '@kabel/core/testing';
 import { WORKSPACE_SERVICE, workspacePlugin } from '@kabel/plugin-workspace';
 import { contextMenuPlugin, feedbackPlugin, layoutPlugin, Workbench } from '@kabel/ui';
@@ -281,6 +281,30 @@ describe('框选插件', () => {
     // 矩形仍然正常
     const crop = await region.crop(image, { type: 'rect', x: 1.2, y: 2, width: 10, height: 10 }, { mime: 'image/jpeg' });
     expect(crop).toMatchObject({ mime: 'image/jpeg', bbox: { x: 1, y: 2, width: 11, height: 10 } });
+  });
+
+  it('自带右侧“框选结果”面板：只列用户框选；停用后面板消失；panel: false 不注册', async () => {
+    const { kernel } = await mount();
+    const panels = () => kernel.extensions.get(ExtensionPoints.panels).getAll().filter((p) => p.id === 'regionSelect.results');
+    expect(panels()).toMatchObject([{ region: 'right', title: '框选结果' }]);
+
+    await run(kernel, 'regionSelect.tool.rect');
+    dragRect([100, 100], [300, 250]);
+    await vi.waitFor(() => expect(host.querySelectorAll('.kb-rsel-results__item')).toHaveLength(1));
+    expect(host.querySelector('.kb-rsel-results__item figcaption')!.textContent).toContain('200×150');
+
+    // pick() 的结果由请求方处理，不进面板
+    let picked!: Promise<unknown>;
+    await act(async () => void (picked = kernel.services.get(REGION_SERVICE).pick({ origin: 'acme:ocr' })));
+    dragRect([100, 100], [300, 250]);
+    await picked;
+    expect(host.querySelectorAll('.kb-rsel-results__item')).toHaveLength(1);
+
+    await kernel.plugins.disable('kabel:region-select');
+    expect(panels()).toEqual([]);
+
+    const off = await mount({ panel: false });
+    expect(off.kernel.extensions.get(ExtensionPoints.panels).getAll().some((p) => p.id === 'regionSelect.results')).toBe(false);
   });
 
   it('卸载后释放：命令、覆盖层、工具租约都被清理', async () => {

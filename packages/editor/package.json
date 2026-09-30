@@ -27,7 +27,7 @@
     "**/*.css"
   ],
   "scripts": {
-    "build": "tsup && node ../../scripts/build-css.mjs dist/style.css ../ui/src/styles/tokens.css ../ui/src/styles/base.css ../ui/src/styles/components.css ../ui/src/styles/shell.css ../ui/src/styles/settings.css ../ui/src/styles/overlays.css ../ui/src/styles/themes.css ../plugins/workspace/src/style.css ../plugins/region-select/src/style.css"
+    "build": "tsup && node ../../scripts/build-css.mjs dist/style.css ../ui/src/styles/tokens.css ../ui/src/styles/base.css ../ui/src/styles/components.css ../ui/src/styles/shell.css ../ui/src/styles/settings.css ../ui/src/styles/overlays.css ../ui/src/styles/themes.css ../plugins/workspace/src/style.css ../plugins/region-select/src/style.css ../plugins/file-loader/src/style.css"
   },
   "dependencies": {
     "@kabel/core": "workspace:*",

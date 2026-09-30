@@ -1,0 +1,38 @@
+{
+  "name": "@kabel/plugin-file-loader",
+  "version": "0.1.0",
+  "description": "Kabel 文件加载插件：从 MinIO 桶+路径、本地目录、URL 列表批量加载影像，并自动显示到影像舞台",
+  "type": "module",
+  "license": "MIT",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./style.css": "./dist/style.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "scripts": {
+    "build": "tsup && node ../../../scripts/build-css.mjs dist/style.css src/style.css"
+  },
+  "dependencies": {
+    "@kabel/core": "workspace:*",
+    "@kabel/plugin-workspace": "workspace:*",
+    "@kabel/ui": "workspace:*",
+    "preact": "^10.29.0"
+  }
+}

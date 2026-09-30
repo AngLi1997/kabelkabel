@@ -1,6 +1,6 @@
 # @kabel/plugin-region-select · 框选
 
-在影像舞台上框选区域（内置矩形、多边形，形状可扩展），完成后触发事件，把**原始图片、裁剪图（Blob）、bbox、形状**交给下游。插件本身不保存、不识别、不维护列表，结果怎么用由下游业务代码决定；其他插件也可以通过服务直接取得裁剪版图像。
+在影像舞台上框选区域（内置矩形、多边形，形状可扩展），完成后触发事件，把**原始图片、裁剪图（Blob）、bbox、形状**交给下游。插件本身不保存、不识别，结果怎么用由下游业务代码决定；其他插件也可以通过服务直接取得裁剪版图像。
 
 插件名 `kabel:region-select`，只依赖 `kabel:workspace`。
 
@@ -21,6 +21,11 @@ createArchiveEditor(el, { images, plugins: [regionSelectPlugin()] });
 | `autoExit` | `true` | 框选完成后自动退出工具；`false` 可连续框选 |
 | `shapes` | `['rect', 'polygon']` | 启用的内置形状 |
 | `crop` | `{}` | 默认裁剪参数：`mime`（默认 `image/png`）、`quality`、`background` |
+| `panel` | 右侧“框选结果” | 面板 `{ region, title, order, limit }`（`limit` 默认 20）；`false` 不注册 |
+
+## 框选结果面板
+
+插件自带右侧面板“框选结果”，列出最近的**用户框选**（`origin === 'user'`）的裁剪图，可下载、移除、清空；`pick()` 的结果由请求方处理，不进面板。面板是插件的贡献项，插件停用或卸载时随之消失。它只是内存中的展示列表（object URL 在移除、清空、卸载时释放），不是结果存储，下游仍应订阅 `region:select`。
 
 ## 交互
 

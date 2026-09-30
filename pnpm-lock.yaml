@@ -35,6 +35,9 @@ importers:
       '@kabel/editor':
         specifier: workspace:*
         version: link:../../packages/editor
+      '@kabel/plugin-file-loader':
+        specifier: workspace:*
+        version: link:../../packages/plugins/file-loader
       '@kabel/plugin-region-select':
         specifier: workspace:*
         version: link:../../packages/plugins/region-select
@@ -71,6 +74,21 @@ importers:
       '@kabel/ui':
         specifier: workspace:*
         version: link:../ui
+
+  packages/plugins/file-loader:
+    dependencies:
+      '@kabel/core':
+        specifier: workspace:*
+        version: link:../../core
+      '@kabel/plugin-workspace':
+        specifier: workspace:*
+        version: link:../workspace
+      '@kabel/ui':
+        specifier: workspace:*
+        version: link:../../ui
+      preact:
+        specifier: ^10.29.0
+        version: 10.29.8
 
   packages/plugins/region-select:
     dependencies:

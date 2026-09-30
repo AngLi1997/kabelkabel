@@ -1,4 +1,4 @@
-import { definePlugin, NOTIFY_SERVICE, type Disposable, type PluginContext } from '@kabel/core';
+import { definePlugin, ExtensionPoints, NOTIFY_SERVICE, type Disposable, type PluginContext } from '@kabel/core';
 import { WORKSPACE_PLUGIN, WORKSPACE_SERVICE, WorkspaceExtensions, type ImageItem } from '@kabel/plugin-workspace';
 import {
   REGION_CROPPER,
@@ -20,6 +20,8 @@ import {
 import { createCanvasCropper } from './cropper';
 import { snapBBox } from './geometry';
 import { RegionOverlay, type OverlayController } from './overlay';
+import { createResultList } from './results';
+import { ResultsPanel } from './ResultsPanel';
 import { regionSelectActions, regionSelectSlice } from './slice';
 import { builtinShapes } from './shapes';
 
@@ -32,6 +34,8 @@ export interface RegionSelectOptions {
   shapes?: RegionShapeType[];
   /** 默认裁剪参数（输出格式、质量） */
   crop?: CropOptions;
+  /** 右侧“框选结果”面板（列出最近的用户框选）；`false` 不注册 */
+  panel?: { region?: 'left' | 'right'; title?: string; order?: number; limit?: number } | false;
 }
 
 /**
@@ -262,6 +266,23 @@ export const regionSelectPlugin = (options: RegionSelectOptions = {}) =>
         tool: REGION_TOOL_ID,
         view: (props) => <RegionOverlay {...props} controller={controller} />,
       });
+
+      if (options.panel !== false) {
+        const results = createResultList(options.panel?.limit ?? 20);
+        ctx.onDispose(() => results.clear());
+        // 只收用户手动框选的；pick() 的结果由请求方自己处理
+        ctx.on('region:select', (selection) => {
+          if (selection.origin === 'user') results.add(selection);
+        });
+        ctx.contribute(ExtensionPoints.panels, {
+          id: 'regionSelect.results',
+          region: options.panel?.region ?? 'right',
+          title: options.panel?.title ?? '框选结果',
+          icon: 'box',
+          order: options.panel?.order ?? 50,
+          view: () => <ResultsPanel results={results} />,
+        });
+      }
 
       for (const def of builtinShapes) if (enabledShapes.includes(def.type)) contributeShape(ctx, def);
 

@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@kabel/editor": "workspace:*",
+    "@kabel/plugin-file-loader": "workspace:*",
     "@kabel/plugin-region-select": "workspace:*",
     "@kabel/vue": "workspace:*",
     "vue": "^3.5.0"
