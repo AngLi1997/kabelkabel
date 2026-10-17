@@ -1,12 +1,20 @@
 <script setup lang="ts">
-import { loadAddedPlugins, scenes, type SceneId } from './scenes';
+import { loadAddedPlugins, loadManagedPlugins, scenes, type DemoScene, type SceneId } from './scenes';
 
 const emit = defineEmits<{ enter: [id: SceneId] }>();
 
-function pluginText(id: SceneId, label: string, allowAdd: boolean): string {
-  if (!allowAdd) return label;
-  const count = loadAddedPlugins(id).length;
-  return count ? `${label}（已添加 ${count} 个）` : label;
+function pluginText(scene: DemoScene): string {
+  if (scene.catalog) {
+    const count = loadManagedPlugins(
+      scene.id,
+      scene.defaultPluginIds ?? [],
+      scene.catalog.map((item) => item.id),
+    ).length;
+    return `${scene.pluginsLabel}（当前 ${count} 个）`;
+  }
+  if (!scene.allowAdd) return scene.pluginsLabel;
+  const count = loadAddedPlugins(scene.id).length;
+  return count ? `${scene.pluginsLabel}（已添加 ${count} 个）` : scene.pluginsLabel;
 }
 </script>
 
@@ -25,7 +33,7 @@ function pluginText(id: SceneId, label: string, allowAdd: boolean): string {
         <tbody>
           <tr v-for="scene in scenes" :key="scene.id" @click="emit('enter', scene.id)">
             <td>{{ scene.title }}</td>
-            <td>{{ pluginText(scene.id, scene.pluginsLabel, scene.allowAdd) }}</td>
+            <td>{{ pluginText(scene) }}</td>
             <td class="scene-table__action">
               <button type="button" @click.stop="emit('enter', scene.id)">进入</button>
             </td>
