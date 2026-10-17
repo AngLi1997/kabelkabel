@@ -16,7 +16,7 @@
 | `layout` | `LayoutOptions` |
 | `workspace` | 工作台，见 [plugin-workspace](../packages/plugins/workspace/README.md)：`{ items?, thumbnails?, directory?, content?, urlFactory? } \| false`；`directory: false` 不注册文件目录；`false` 整个工作台不注册（没有文件目录与内容） |
 | `settings` | `false` 关闭工具栏右侧的设置入口 |
-| `theme` | `{ defaults?: Partial<ThemeState>, accents?: { title, color }[], presets?: { id, title, accent }[], persist? } \| false` |
+| `theme` | `{ defaults?: Partial<ThemeState>, accents?: { title, color }[], presets?: { id, title, accent, defaults? }[], persist? } \| false` |
 | `instanceId` | 持久化命名空间，默认 `default` |
 | `storage` | `StorageAdapter \| 'local' \| 'session' \| 'memory' \| false` |
 | `history` | `{ limit?: number = 100, coalesceWindow?: number = 1000 }` |

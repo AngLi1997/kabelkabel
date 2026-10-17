@@ -1,46 +1,10 @@
 /*
  * 主题插件在根节点上设置的属性：
- *   data-theme                 主题预设（未设置为标准主题，即 tokens.css）
+ *   data-theme                 主题预设（未设置为标准主题，即 tokens.css；档案主题见 theme-archive.css）
  *   data-accent + --kb-accent  自定义主题色（派生悬停/按下/浅色与焦点环）
  *   data-scheme="dark"         深色配色
  *   data-density               界面密度
  */
-/*
- * 档案主题：参照业务系统 kaifang-lab 的视觉风格——绛红主色、暖纸色底、暖灰文字与描边，
- * 悬停/按下取更深的同色（与其 naive-ui 主题覆盖一致）。需写在 data-accent 之前，
- * 使用户自选的主题色仍可覆盖预设主色。
- */
-.kb-root[data-theme='archive'] {
-  --kb-color-primary: #8f2428;
-  --kb-color-primary-hover: #7a1f23;
-  --kb-color-primary-active: #681a1e;
-  --kb-color-primary-soft: #f5ebea;
-  --kb-color-danger: #c0283f;
-  --kb-color-danger-soft: #fbedef;
-  --kb-color-warning: #b26f0e;
-  --kb-color-warning-soft: #fdf4e4;
-  --kb-color-success: #18834b;
-  --kb-color-success-soft: #e9f5ee;
-
-  --kb-color-text: #2a2725;
-  --kb-color-text-2: #57514e;
-  --kb-color-text-disabled: #b3aba6;
-  --kb-color-icon: #706965;
-
-  --kb-color-bg: #f5f4f2;
-  --kb-color-surface: #ffffff;
-  --kb-color-surface-2: #faf8f6;
-  --kb-color-hover: #f1efed;
-  --kb-color-border: #e8e2de;
-  --kb-color-border-strong: #d3cac4;
-  --kb-color-divider: #eee9e5;
-  --kb-color-canvas: #3a3532;
-
-  --kb-radius: 3px;
-  --kb-shadow-overlay: 0 8px 28px rgba(48, 37, 33, 0.14);
-  --kb-focus-ring: 0 0 0 2px rgba(143, 36, 40, 0.18);
-}
-
 .kb-root[data-accent] {
   --kb-color-primary: var(--kb-accent);
   --kb-color-primary-hover: color-mix(in srgb, var(--kb-accent) 88%, #fff);
@@ -98,26 +62,4 @@
   --kb-toolbar-height: 46px;
   --kb-header-height: 36px;
   --kb-statusbar-height: 28px;
-}
-
-/* 档案主题的深色配色：中性暗底（同 kaifang-lab 深色模式），主色由绛红提亮 */
-.kb-root[data-theme='archive'][data-scheme='dark'] {
-  --kb-color-primary: color-mix(in srgb, var(--kb-accent, #8f2428) 60%, #fff);
-  --kb-color-primary-hover: color-mix(in srgb, var(--kb-accent, #8f2428) 50%, #fff);
-  --kb-color-primary-active: color-mix(in srgb, var(--kb-accent, #8f2428) 72%, #fff);
-  --kb-color-primary-soft: color-mix(in srgb, var(--kb-accent, #8f2428) 30%, #18181c);
-
-  --kb-color-text: #e6e3e1;
-  --kb-color-text-2: #b0aaa6;
-  --kb-color-text-disabled: #6a6461;
-  --kb-color-icon: #bdb6b2;
-
-  --kb-color-bg: #101014;
-  --kb-color-surface: #18181c;
-  --kb-color-surface-2: #202024;
-  --kb-color-hover: #2a2a2f;
-  --kb-color-border: #333338;
-  --kb-color-border-strong: #48484e;
-  --kb-color-divider: #2a2a2f;
-  --kb-color-canvas: #0c0c0f;
 }

@@ -1,0 +1,531 @@
+/*
+ * 档案主题（data-theme="archive"）：参照业务系统 kaifang-lab（naive-ui）的视觉风格。
+ *   配色：绛红主色、暖纸色底、暖灰文字与描边，悬停/按下取更深的同色
+ *   尺寸：控件 34px、圆角 3px、14px 字号（由预设默认设置给出）、表格行 48px、
+ *         面板为 8px 圆角的白色卡片、弹窗 24px 内边距、开关 40×22、标签式页签
+ * 本文件须在 themes.css 之前拼接：自选主题色（data-accent）与界面密度的通用规则写在后面，
+ * 同优先级时覆盖这里的预设值；档案主题自己的密度与深色配色用更高优先级的组合选择器。
+ */
+.kb-root[data-theme='archive'] {
+  --kb-color-primary: #8f2428;
+  --kb-color-primary-hover: #7a1f23;
+  --kb-color-primary-active: #681a1e;
+  --kb-color-primary-soft: #f5ebea;
+  --kb-color-danger: #c0283f;
+  --kb-color-danger-soft: #fbedef;
+  --kb-color-warning: #b26f0e;
+  --kb-color-warning-soft: #fdf4e4;
+  --kb-color-success: #18834b;
+  --kb-color-success-soft: #e9f5ee;
+
+  --kb-color-text: #2a2725;
+  --kb-color-text-2: #57514e;
+  --kb-color-text-disabled: #b3aba6;
+  --kb-color-icon: #706965;
+
+  --kb-color-bg: #f5f4f2;
+  --kb-color-surface: #ffffff;
+  --kb-color-surface-2: #faf9f8;
+  --kb-color-hover: #f3f1ef;
+  --kb-color-border: #e3ddd9;
+  --kb-color-border-strong: #cfc6c0;
+  --kb-color-divider: #efebe8;
+  --kb-color-canvas: #3a3532;
+
+  --kb-radius: 3px;
+  --kb-radius-lg: 8px;
+  --kb-control-height: 34px;
+  --kb-control-height-sm: 28px;
+  --kb-toolbar-height: 52px;
+  --kb-header-height: 46px;
+  --kb-statusbar-height: 30px;
+  --kb-label-width: 100px;
+  --kb-gutter: 12px;
+
+  --kb-mask: rgba(0, 0, 0, 0.36);
+  --kb-shadow-overlay: 0 6px 16px -9px rgba(0, 0, 0, 0.08), 0 9px 28px 0 rgba(0, 0, 0, 0.05),
+    0 12px 48px 16px rgba(0, 0, 0, 0.03);
+  --kb-focus-ring: 0 0 0 2px rgba(143, 36, 40, 0.18);
+}
+
+.kb-root[data-theme='archive'][data-density='compact'] {
+  --kb-control-height: 28px;
+  --kb-control-height-sm: 24px;
+  --kb-toolbar-height: 42px;
+  --kb-header-height: 38px;
+  --kb-statusbar-height: 26px;
+  --kb-gutter: 8px;
+}
+
+.kb-root[data-theme='archive'][data-density='comfortable'] {
+  --kb-control-height: 38px;
+  --kb-control-height-sm: 30px;
+  --kb-toolbar-height: 60px;
+  --kb-header-height: 52px;
+  --kb-statusbar-height: 32px;
+  --kb-gutter: 16px;
+}
+
+/* 深色配色：中性暗底（同 kaifang-lab 深色模式），主色由绛红提亮 */
+.kb-root[data-theme='archive'][data-scheme='dark'] {
+  --kb-color-primary: color-mix(in srgb, var(--kb-accent, #8f2428) 60%, #fff);
+  --kb-color-primary-hover: color-mix(in srgb, var(--kb-accent, #8f2428) 50%, #fff);
+  --kb-color-primary-active: color-mix(in srgb, var(--kb-accent, #8f2428) 72%, #fff);
+  --kb-color-primary-soft: color-mix(in srgb, var(--kb-accent, #8f2428) 30%, #18181c);
+
+  --kb-color-text: #e6e3e1;
+  --kb-color-text-2: #b0aaa6;
+  --kb-color-text-disabled: #6a6461;
+  --kb-color-icon: #bdb6b2;
+
+  --kb-color-bg: #101014;
+  --kb-color-surface: #18181c;
+  --kb-color-surface-2: #202024;
+  --kb-color-hover: #2a2a2f;
+  --kb-color-border: #333338;
+  --kb-color-border-strong: #48484e;
+  --kb-color-divider: #2a2a2f;
+  --kb-color-canvas: #0c0c0f;
+
+  --kb-mask: rgba(0, 0, 0, 0.6);
+}
+
+/* ---------- 按钮与表单控件 ---------- */
+.kb-root[data-theme='archive'] .kb-btn {
+  gap: 6px;
+  padding: 0 14px;
+}
+
+.kb-root[data-theme='archive'] .kb-btn--sm {
+  padding: 0 10px;
+}
+
+.kb-root[data-theme='archive'] .kb-btn--icon {
+  padding: 0;
+}
+
+.kb-root[data-theme='archive'] .kb-input {
+  padding: 0 12px;
+}
+
+.kb-root[data-theme='archive'] .kb-textarea {
+  padding: 6px 12px;
+}
+
+.kb-root[data-theme='archive'] .kb-select {
+  padding-right: 32px;
+  background-position: right 10px center;
+}
+
+.kb-root[data-theme='archive'] .kb-choice-group {
+  gap: 4px 20px;
+}
+
+.kb-root[data-theme='archive'] .kb-choice {
+  gap: 8px;
+}
+
+.kb-root[data-theme='archive'] .kb-choice input {
+  width: 16px;
+  height: 16px;
+}
+
+.kb-root[data-theme='archive'] .kb-switch {
+  width: 40px;
+  height: 22px;
+  border-radius: 11px;
+}
+
+.kb-root[data-theme='archive'] .kb-switch__thumb {
+  width: 18px;
+  height: 18px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.kb-root[data-theme='archive'] .kb-switch.is-checked .kb-switch__thumb {
+  transform: translateX(18px);
+}
+
+.kb-root[data-theme='archive'] .kb-segmented__item {
+  padding: 0 16px;
+}
+
+/* ---------- 页签：标签式（同 kaifang-lab 顶部页签） ---------- */
+.kb-root[data-theme='archive'] .kb-tabs {
+  align-items: center;
+  gap: 6px;
+}
+
+.kb-root[data-theme='archive'] .kb-region__heading .kb-tabs {
+  margin-left: 0;
+}
+
+.kb-root[data-theme='archive'] .kb-tabs__tab {
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--kb-color-border);
+  border-radius: var(--kb-radius);
+  background: var(--kb-color-surface-2);
+}
+
+.kb-root[data-theme='archive'] .kb-tabs__tab:hover {
+  color: var(--kb-color-primary);
+}
+
+.kb-root[data-theme='archive'] .kb-tabs__tab.is-active {
+  border-color: color-mix(in srgb, var(--kb-color-primary) 25%, transparent);
+  background: var(--kb-color-primary-soft);
+  font-weight: 400;
+}
+
+.kb-root[data-theme='archive'] .kb-tabs__tab.is-active::after {
+  display: none;
+}
+
+/* ---------- 表格 ---------- */
+.kb-root[data-theme='archive'] .kb-table th,
+.kb-root[data-theme='archive'] .kb-table td {
+  height: 48px;
+  padding: 0 16px;
+}
+
+.kb-root[data-theme='archive'] .kb-table th {
+  height: 44px;
+  color: var(--kb-color-text);
+}
+
+.kb-root[data-theme='archive'] .kb-table tr.kb-table__group td {
+  height: 40px;
+}
+
+/* ---------- 分组 ---------- */
+.kb-root[data-theme='archive'] .kb-section__header {
+  height: 38px;
+}
+
+.kb-root[data-theme='archive'] .kb-section__title::before {
+  top: 4px;
+  bottom: 4px;
+  border-radius: 2px;
+}
+
+.kb-root[data-theme='archive'] .kb-section__body {
+  padding: 16px 0 8px;
+}
+
+/* ---------- 骨架：工具栏、区域卡片、状态栏 ---------- */
+.kb-root[data-theme='archive'] .kb-toolbar {
+  gap: 12px;
+  padding: 0 16px;
+}
+
+.kb-root[data-theme='archive'] .kb-toolbar__group {
+  gap: 4px;
+}
+
+.kb-root[data-theme='archive'] .kb-toolbar .kb-btn--text {
+  padding: 0 10px;
+}
+
+.kb-root[data-theme='archive'] .kb-toolbar .kb-btn--icon {
+  padding: 0;
+}
+
+.kb-root[data-theme='archive'] .kb-toolbar__sep {
+  height: 18px;
+  margin: 0 8px;
+}
+
+.kb-root[data-theme='archive'] .kb-body {
+  padding: var(--kb-gutter);
+}
+
+.kb-root[data-theme='archive'] .kb-resizer--x {
+  width: var(--kb-gutter);
+}
+
+.kb-root[data-theme='archive'] .kb-resizer--x::after {
+  left: calc(var(--kb-gutter) / 2 - 1px);
+}
+
+.kb-root[data-theme='archive'] .kb-body > .kb-region--left.is-collapsed {
+  margin-right: var(--kb-gutter);
+}
+
+.kb-root[data-theme='archive'] .kb-body > .kb-region--right.is-collapsed {
+  margin-left: var(--kb-gutter);
+}
+
+.kb-root[data-theme='archive'] .kb-body.is-overlay-right > .kb-region--right:not(.is-collapsed):not(.is-maximized) {
+  top: var(--kb-gutter);
+  right: var(--kb-gutter);
+  bottom: var(--kb-gutter);
+}
+
+.kb-root[data-theme='archive'] .kb-region {
+  overflow: hidden;
+  border-color: var(--kb-color-divider);
+  border-radius: var(--kb-radius-lg);
+}
+
+.kb-root[data-theme='archive'] .kb-region.is-collapsed {
+  width: 32px;
+}
+
+.kb-root[data-theme='archive'] .kb-region__header {
+  gap: 6px;
+  padding: 0 8px 0 16px;
+  border-bottom-color: var(--kb-color-divider);
+  background: var(--kb-color-surface);
+}
+
+.kb-root[data-theme='archive'] .kb-region--right .kb-region__header {
+  padding-left: 8px;
+}
+
+.kb-root[data-theme='archive'] .kb-region__tools {
+  gap: 4px;
+}
+
+.kb-root[data-theme='archive'] .kb-region__rail {
+  background: var(--kb-color-surface);
+}
+
+.kb-root[data-theme='archive'] .kb-stack__header {
+  height: 38px;
+  padding: 0 8px 0 12px;
+}
+
+.kb-root[data-theme='archive'] .kb-statusbar {
+  padding: 0 16px;
+  border-top-color: var(--kb-color-divider);
+}
+
+.kb-root[data-theme='archive'] .kb-banner {
+  min-height: 34px;
+  padding: 0 16px;
+}
+
+.kb-root[data-theme='archive'] .kb-switcher {
+  margin: var(--kb-gutter) var(--kb-gutter) 0;
+}
+
+.kb-root[data-theme='archive'] .kb-switcher__item {
+  height: var(--kb-control-height);
+}
+
+/* ---------- 设置弹窗 ---------- */
+.kb-root[data-theme='archive'] .kb-settings,
+.kb-root[data-theme='archive'][data-scheme='dark'] .kb-settings {
+  background: var(--kb-mask);
+}
+
+.kb-root[data-theme='archive'] .kb-settings__dialog {
+  border: 0;
+  border-radius: var(--kb-radius);
+}
+
+.kb-root[data-theme='archive'] .kb-settings__header {
+  height: 60px;
+  padding: 0 16px 0 24px;
+  border-bottom-color: var(--kb-color-divider);
+  background: var(--kb-color-surface);
+}
+
+.kb-root[data-theme='archive'] .kb-settings__title {
+  font-size: 16px;
+}
+
+.kb-root[data-theme='archive'] .kb-settings__nav {
+  width: 168px;
+  padding: 8px 0;
+  background: var(--kb-color-surface);
+}
+
+.kb-root[data-theme='archive'] .kb-settings__nav-item {
+  gap: 8px;
+  height: 42px;
+  margin: 2px 6px;
+  padding: 0 14px;
+  border-radius: var(--kb-radius);
+}
+
+.kb-root[data-theme='archive'] .kb-settings__nav-item.is-active::before {
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: var(--kb-radius) 0 0 var(--kb-radius);
+}
+
+.kb-root[data-theme='archive'] .kb-settings__content {
+  padding: 20px 24px;
+}
+
+.kb-root[data-theme='archive'][data-size='sm'] .kb-settings__dialog {
+  border-radius: 0;
+}
+
+.kb-root[data-theme='archive'][data-size='sm'] .kb-settings__nav {
+  width: auto;
+  padding: 0;
+}
+
+.kb-root[data-theme='archive'][data-size='sm'] .kb-settings__nav-item {
+  margin: 0;
+  border-radius: 0;
+}
+
+.kb-root[data-theme='archive'][data-size='sm'] .kb-settings__nav-item.is-active::before {
+  top: auto;
+  width: auto;
+  height: 2px;
+  border-radius: 0;
+}
+
+.kb-root[data-theme='archive'][data-size='sm'] .kb-settings__content {
+  padding: 16px;
+}
+
+/* 表单行：标签在左、无分隔线，行距同 kaifang-lab 表单（34 + 20） */
+.kb-root[data-theme='archive'] .kb-setting-row {
+  gap: 16px;
+  min-height: 54px;
+  border-bottom: 0;
+}
+
+.kb-root[data-theme='archive'] .kb-setting-row__label,
+.kb-root[data-theme='archive'] .kb-schema__label {
+  color: var(--kb-color-text);
+}
+
+.kb-root[data-theme='archive'] .kb-schema__row {
+  gap: 16px;
+  min-height: 54px;
+}
+
+.kb-root[data-theme='archive'] .kb-swatches {
+  gap: 10px;
+}
+
+.kb-root[data-theme='archive'] .kb-swatch {
+  width: 24px;
+  height: 24px;
+}
+
+.kb-root[data-theme='archive'] .kb-plugins th,
+.kb-root[data-theme='archive'] .kb-plugins td {
+  padding: 0 12px;
+}
+
+.kb-root[data-theme='archive'] .kb-plugins .kb-table__action {
+  padding: 0 4px;
+}
+
+.kb-root[data-theme='archive'] .kb-plugins__col-status {
+  width: 96px;
+}
+
+.kb-root[data-theme='archive'] .kb-plugins__col-config {
+  width: 88px;
+}
+
+.kb-root[data-theme='archive'] .kb-plugins__col-switch {
+  width: 72px;
+}
+
+.kb-root[data-theme='archive'] .kb-plugins__status {
+  height: 22px;
+  padding: 0 10px;
+  border-radius: 11px;
+}
+
+.kb-root[data-theme='archive'] .kb-plugin-config__footer {
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 20px;
+}
+
+.kb-root[data-theme='archive'] .kb-schema__card {
+  border-radius: var(--kb-radius);
+}
+
+/* ---------- 模态层、消息、命令面板、右键菜单 ---------- */
+.kb-root[data-theme='archive'] .kb-modal {
+  background: var(--kb-mask);
+}
+
+.kb-root[data-theme='archive'] .kb-modal--top {
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.kb-root[data-theme='archive'] .kb-confirm {
+  width: 420px;
+  border: 0;
+  border-radius: var(--kb-radius);
+}
+
+.kb-root[data-theme='archive'] .kb-confirm__title {
+  padding: 20px 24px 0;
+  font-size: 16px;
+}
+
+.kb-root[data-theme='archive'] .kb-confirm__message {
+  padding: 16px 24px 20px;
+}
+
+.kb-root[data-theme='archive'] .kb-confirm__actions {
+  gap: 12px;
+  padding: 0 24px 20px;
+}
+
+.kb-root[data-theme='archive'] .kb-toast {
+  gap: 10px;
+  padding: 10px 8px 10px 16px;
+  border: 0;
+  border-radius: var(--kb-radius);
+}
+
+.kb-root[data-theme='archive'] .kb-toast--info > .kb-icon {
+  color: var(--kb-color-primary);
+}
+
+.kb-root[data-theme='archive'] .kb-palette {
+  border: 0;
+  border-radius: var(--kb-radius);
+  overflow: hidden;
+}
+
+.kb-root[data-theme='archive'] .kb-palette__search {
+  padding: 0 16px;
+}
+
+.kb-root[data-theme='archive'] .kb-palette__input {
+  height: 48px;
+}
+
+.kb-root[data-theme='archive'] .kb-palette__list {
+  padding: 6px;
+}
+
+.kb-root[data-theme='archive'] .kb-palette__item {
+  height: 36px;
+  padding: 0 10px;
+  border-radius: var(--kb-radius);
+}
+
+.kb-root[data-theme='archive'] .kb-contextmenu {
+  min-width: 168px;
+  padding: 4px;
+  border: 0;
+  border-radius: var(--kb-radius);
+}
+
+.kb-root[data-theme='archive'] .kb-contextmenu__item {
+  height: 34px;
+  padding: 0 10px;
+  border-radius: var(--kb-radius);
+}
+
+.kb-root[data-theme='archive'] .kb-keycap {
+  border-radius: var(--kb-radius);
+}
