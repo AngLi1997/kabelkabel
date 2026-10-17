@@ -24,11 +24,11 @@ await editor.use(myPlugin());                        // 运行期注册业务插
 editor.destroy();
 ```
 
-`ArchiveEditor` 提供：`on / once / off / emit`、`execute`、`use / unuse`、`getState / subscribe`、`setImages / getImages`、`setDocuments / getDocuments / getCurrentDocument / goto`、`save`、`setReadonly / isReadonly`、`notify / confirm`、`undo / redo / isDirty`、`layout.*`、`destroy`。完整选项与方法见 [API 参考](../../docs/api.md)。
+`ArchiveEditor` 提供：`on / once / off / emit`、`execute`、`use / unuse`、`getState / subscribe`、`setImages / getImages`、`setDocuments / getDocuments / getCurrentDocument / goto`、`save`、`getFormData`、`setReadonly / isReadonly`、`notify / confirm`、`undo / redo / isDirty`、`layout.*`、`destroy`。完整选项与方法见 [API 参考](../../docs/api.md)。
 
 ## baseline 预设
 
-`createBaselinePreset(options)` 组装底座的内置插件：布局、撤销重做、只读模式、保存契约、消息与对话框、快捷键、右键菜单、命令面板、工作台、设置、主题。默认布局为左侧“文件目录”、中间“内容”（影像）、右侧无面板；业务功能（著录、标注等）不属于底座，一律以插件接入，并只依赖 [`@kabel/plugin-workspace`](../plugins/workspace/README.md)（工作台，所有业务插件的底座）。
+`createBaselinePreset(options)` 组装底座的内置插件：布局、撤销重做、只读模式、保存契约、查看表单数据、消息与对话框、快捷键、右键菜单、命令面板、工作台、设置、主题。默认布局为左侧“文件目录”、中间“内容”（影像）、右侧无面板；业务功能（著录、标注等）不属于底座，一律以插件接入，并只依赖 [`@kabel/plugin-workspace`](../plugins/workspace/README.md)（工作台，所有业务插件的底座）。
 
 按需组合或替换：
 

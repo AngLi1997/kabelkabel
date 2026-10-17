@@ -76,7 +76,7 @@ describe('createArchiveEditor', () => {
     const onSave = vi.fn();
     mount({ on: { save: onSave } });
     await expect(editor!.save()).resolves.toEqual({ ok: true });
-    expect(onSave).toHaveBeenCalledWith({ reason: 'manual' });
+    expect(onSave).toHaveBeenCalledWith({ reason: 'manual', data: { 'workspace.documents': { current: null, items: [] } } });
     editor!.on('save', () => Promise.reject(new Error('失败')));
     const result = await editor!.save();
     expect(result.ok).toBe(false);

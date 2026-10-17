@@ -6,6 +6,8 @@ import {
   type HistoryOptions,
   type KabelEvents,
   type ConfirmOptions,
+  collectFormData,
+  type FormDataRecord,
   type KabelState,
   type Kernel,
   type NotifyOptions,
@@ -44,6 +46,8 @@ export interface EditorOptions {
   workspace?: Omit<WorkspacePluginOptions, 'images'> | false;
   /** `false` 关闭工具栏右侧的设置入口 */
   settings?: false;
+  /** `false` 关闭工具栏“查看表单数据”按钮 */
+  formData?: false;
   theme?: ThemeOptions | false;
   /** 实例标识，用于布局持久化命名空间；同页多实例需不同 */
   instanceId?: string;
@@ -85,6 +89,8 @@ export interface ArchiveEditor {
   goto(index: number): void;
   /** 保存：依次等待 `save` 事件处理器，成功后标记为已保存 */
   save(): Promise<SaveResult>;
+  /** 当前表单下全部插件的完整提交数据（与 `save` 载荷的 `data` 相同），以提供者 id 为键 */
+  getFormData(): Promise<FormDataRecord>;
   setReadonly(readonly: boolean): void;
   isReadonly(): boolean;
   /** 显示一条提示 */
@@ -132,6 +138,7 @@ export function createArchiveEditor(target: HTMLElement | string, options: Edito
           save: options.save,
           workspace: options.workspace === false ? false : { ...options.workspace, images: options.images },
           settings: options.settings,
+          formData: options.formData,
           theme: options.theme,
         })
       : options.preset || null;
@@ -170,6 +177,7 @@ export function createArchiveEditor(target: HTMLElement | string, options: Edito
     getCurrentDocument: () => kernel.services.tryGet(WORKSPACE_SERVICE)?.current(),
     goto: (index) => kernel.services.tryGet(WORKSPACE_SERVICE)?.goto(index),
     save: async () => ((await kernel.execute<SaveResult>('kabel.save')) ?? { ok: false }),
+    getFormData: () => collectFormData(kernel),
     setReadonly: (readonly) => void kernel.execute('kabel.setReadonly', readonly),
     isReadonly: () => isReadonly(kernel.getState()),
     notify: (message, options) => void kernel.services.tryGet(NOTIFY_SERVICE)?.notify(message, options),

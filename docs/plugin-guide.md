@@ -55,7 +55,7 @@ definePlugin({ name: 'acme:x', dependencies: ['kabel:workspace'], setup(ctx) { .
 
 - 同批注册时按依赖拓扑排序，与书写顺序无关；缺失或循环依赖会报错。
 - 卸载被依赖的插件时，依赖方会先被卸载。
-- 内置插件名：`kabel:layout`、`kabel:history`、`kabel:mode`、`kabel:save`、`kabel:feedback`、`kabel:keymap`、`kabel:contextmenu`、`kabel:palette`、`kabel:workspace`、`kabel:settings`、`kabel:theme`（常量 `WORKSPACE_PLUGIN`、`WORKSPACE_PLUGIN`）。业务插件统一声明 `dependencies: ['kabel:workspace']`（常量 `WORKSPACE_PLUGIN`），只通过工作台的服务与扩展点协作。
+- 内置插件名：`kabel:layout`、`kabel:history`、`kabel:mode`、`kabel:save`、`kabel:feedback`、`kabel:keymap`、`kabel:contextmenu`、`kabel:palette`、`kabel:form-data`、`kabel:workspace`、`kabel:settings`、`kabel:theme`（常量 `WORKSPACE_PLUGIN`、`WORKSPACE_PLUGIN`）。业务插件统一声明 `dependencies: ['kabel:workspace']`（常量 `WORKSPACE_PLUGIN`），只通过工作台的服务与扩展点协作。
 - `title` 为设置 › 插件管理中的显示名称；`builtin: true` 表示 baseline 内置插件：不可在运行期停用，也不在插件管理中显示（布局、撤销与重做、工作台、设置、主题等）。插件管理以树形列表显示：依赖其他插件的插件缩进列在被依赖者之下。
 
 ## 4. 状态
@@ -143,6 +143,7 @@ ctx.registerCommand({
 ```
 
 - 区域内多个面板默认以**标签页**组织；可通过 `layout.regions.<id>.mode = 'stack'` 改为上下堆叠（可折叠、可拖拽调整高度，`weight` 为初始高度比例）。
+- 面板声明 `slot: 'bottom'` 时放在区域的**下半区**（如左侧文件目录下方的数据表格）：区域上下分区，下半区有自己的标题 / 标签页，中间可拖拽调整高度（`layout.regions.<id>.split` 为下半区默认比例，默认 0.5，状态在 `layout.splits`，双击分隔条复位）；区域内只有下半区面板时按普通面板显示。`layout.showPanel` 同样适用于下半区面板。
 - 左右两侧是**通用扩展区域**，没有预设用途：区域内没有面板时整个区域不渲染，贡献第一个面板后自动出现。内置面板：左侧“文件目录”（`workspace.files`，order 10）、中间“内容”（`workspace.content`，order 10）。
 - `actions` 显示在区域标题栏（标签页模式下显示当前标签的操作）：`{ id, icon, tooltip, command? | onClick?, active? }`。面板较多时标题栏空间有限，可在面板内放一条工具条，用 `@kabel/ui` 的 `<PanelActions actions={...} />` 渲染。
 - `view` 收到 `{ kernel, panelId, region }`。定位到面板：`kernel.execute('layout.showPanel', panelId)`。
@@ -267,6 +268,7 @@ ctx.services.tryGet(TAG_SERVICE)?.add('档案');   // 可选依赖
 ## 8.5 保存、只读、消息与对话框
 
 - **保存**：底座的 `kabel.save`（`Mod+S`）依次等待所有 `save` 事件处理器，全部成功后标记撤销栈保存点（`state.history.dirty` 归零）并派发 `saved`，任一处理器 reject 则派发 `save:error` 并提示。业务插件只需 `ctx.on('save', async () => { await api.save(...) })`；有 `save` 监听或有未保存修改时工具栏才显示“保存”按钮。
+- **表单数据**：插件把自己要提交的数据贡献到 `ExtensionPoints.formData`：`ctx.contribute(ExtensionPoints.formData, { id: 'catalog.form', title: '著录', collect: (k) => k.getState().catalog.values })`（可异步）。保存时底座按 `order` 汇总为 `{ [id]: data }` 放进 `save` 载荷的 `data`（任一提供者失败则保存失败）；工具栏保存按钮右侧的“查看表单数据”弹窗展示同一份数据（可刷新、复制、下载）。宿主可用 `editor.getFormData()` 随时获取。工作台自带 `workspace.documents`（当前打开的文件），框选插件自带 `regionSelect.last`。
 - **只读**：读取 `isReadonly(state)`（或 ui 的 `useReadonly()`）决定是否可编辑；会修改内容的命令声明 `mutates: true` 即可自动禁用。
 - **消息与对话框**：`kernel.services.tryGet(NOTIFY_SERVICE)?.notify('已保存', { type: 'success' })`；`await notify.confirm({ message: '确定删除？', danger: true })` 返回 `boolean`。
 

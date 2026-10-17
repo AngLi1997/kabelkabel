@@ -10,6 +10,7 @@ import { workspacePlugin, type WorkspacePluginOptions } from '@kabel/plugin-work
 import {
   contextMenuPlugin,
   feedbackPlugin,
+  formDataViewPlugin,
   keymapPlugin,
   layoutPlugin,
   palettePlugin,
@@ -29,13 +30,15 @@ export interface BaselineOptions {
   workspace?: WorkspacePluginOptions | false;
   /** `false` 关闭工具栏右侧的设置入口 */
   settings?: false;
+  /** `false` 关闭工具栏“查看表单数据”按钮与弹窗（提交数据仍随 `save` 载荷的 `data` 下发） */
+  formData?: false;
   /** `false` 关闭主题插件（仍可通过覆盖 CSS 变量换肤） */
   theme?: ThemeOptions | false;
 }
 
 /**
  * baseline 预设（底座）：
- * 布局 · 撤销重做 · 只读模式 · 保存契约 · 消息与对话框 · 快捷键 · 右键菜单 · 命令面板 ·
+ * 布局 · 撤销重做 · 只读模式 · 保存契约 · 查看表单数据 · 消息与对话框 · 快捷键 · 右键菜单 · 命令面板 ·
  * 工作台（左侧文件目录 + 内容区域 + 影像舞台，所有业务插件的底座）· 设置 · 主题。
  *
  * 布局为 顶部工具栏 / 中间（左侧扩展面板 · 内容 · 右侧扩展面板）/ 底部状态栏；
@@ -52,6 +55,7 @@ export function createBaselinePreset(options: BaselineOptions = {}): PluginInput
     keymapPlugin(),
     contextMenuPlugin(),
     palettePlugin(),
+    options.formData !== false && formDataViewPlugin(),
     options.workspace !== false && workspacePlugin(options.workspace),
     options.settings !== false && settingsPlugin(),
     options.theme !== false && themePlugin(options.theme || {}),

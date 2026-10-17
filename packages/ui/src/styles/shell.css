@@ -166,6 +166,33 @@
   letter-spacing: 2px;
 }
 
+/* 上下分区：下半区（slot: bottom）有自己的子标题栏 */
+.kb-region__lower {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-top: 1px solid var(--kb-color-border);
+}
+
+.kb-region.is-split .kb-region__body {
+  min-height: 72px;
+}
+
+.kb-region__subheader {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  height: var(--kb-header-height);
+  padding: 0 4px 0 var(--kb-space-3);
+  border-bottom: 1px solid var(--kb-color-border);
+  background: var(--kb-color-surface-2);
+}
+
+.kb-region__subheader .kb-tabs {
+  margin-left: -10px;
+}
+
 /* 中等宽度：右侧区域以浮层形式展开，不挤占内容区域 */
 .kb-body.is-overlay-right > .kb-region--right:not(.is-collapsed):not(.is-maximized) {
   position: absolute;

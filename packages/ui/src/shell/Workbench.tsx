@@ -15,6 +15,7 @@ import {
 import { ContextMenu, menuItemsFor } from '../contextmenu/ContextMenu';
 import { contextMenuActions } from '../contextmenu/contextmenu-plugin';
 import { FeedbackHost } from '../feedback/FeedbackHost';
+import { FormDataDialog } from '../formdata/FormDataDialog';
 import { commandBindings } from '../keymap/bindings';
 import { CommandPalette } from '../palette/CommandPalette';
 import { SettingsDialog } from '../settings/SettingsDialog';
@@ -216,6 +217,7 @@ function Shell({ class: className }: { class?: string }) {
       </div>
       <StatusBar />
       <SettingsDialog />
+      <FormDataDialog />
       <CommandPalette />
       <ContextMenu />
       <FeedbackHost />

@@ -29,6 +29,8 @@ const ICONS: Record<string, string> = {
   image: 'M4 5h16v14H4z M9 10.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z M20 15l-5-5L5 19',
   grid: 'M4 4h7v7H4z M13 4h7v7h-7z M4 13h7v7H4z M13 13h7v7h-7z',
   file: 'M6 3h8l4 4v14H6z M14 3v4h4 M9 12h6 M9 16h6',
+  table: 'M4 5h16v14H4z M4 10h16 M4 15h16 M10 10v9',
+  code: 'M8 8l-4 4 4 4 M16 8l4 4-4 4 M13.5 6l-3 12',
   list: 'M9 6h11 M9 12h11 M9 18h11 M4.5 6h.01 M4.5 12h.01 M4.5 18h.01',
   history: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M12 7v5l3 2',
   warning: 'M12 3.5 21 19.5H3z M12 10v4 M12 17v.01',

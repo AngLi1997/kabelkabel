@@ -1,0 +1,73 @@
+{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "records": [
+      {
+        "id": "SC-2026-0811-01",
+        "title": "企业设立登记申请书",
+        "responsible": "四川星辰信息技术有限公司",
+        "date": "2026-08-11",
+        "pages": "1-8",
+        "required": true
+      },
+      {
+        "id": "SC-2026-0811-02",
+        "title": "原许可证正/副本复印件",
+        "responsible": "四川星辰信息技术有限公司",
+        "date": "2026-08-11",
+        "pages": "9-12",
+        "required": true
+      },
+      {
+        "id": "SC-2026-0811-03",
+        "title": "公司章程",
+        "responsible": "四川星辰信息技术有限公司",
+        "date": "2026-08-11",
+        "pages": "13-22",
+        "required": true
+      },
+      {
+        "id": "SC-2026-0811-04",
+        "title": "股东会决议",
+        "responsible": "四川星辰信息技术有限公司",
+        "date": "2026-08-11",
+        "pages": "23-25",
+        "required": true
+      },
+      {
+        "id": "SC-2026-0811-05",
+        "title": "法定代表人身份证复印件",
+        "responsible": "林志远",
+        "date": "2026-08-11",
+        "pages": "26-27",
+        "required": true
+      },
+      {
+        "id": "SC-2026-0811-06",
+        "title": "住所使用证明",
+        "responsible": "物业公司",
+        "date": "2026-08-11",
+        "pages": "28-30",
+        "required": true
+      },
+      {
+        "id": "SC-2026-0811-07",
+        "title": "企业设立登记核准通知书",
+        "responsible": "XX市市监局",
+        "date": "2026-08-11",
+        "pages": "31-32",
+        "required": true
+      },
+      {
+        "id": "SC-2026-0811-08",
+        "title": "全体股东电子签名页",
+        "responsible": "各股东",
+        "date": "2026-08-11",
+        "pages": "33-35",
+        "required": true
+      }
+    ],
+    "total": 8
+  }
+}

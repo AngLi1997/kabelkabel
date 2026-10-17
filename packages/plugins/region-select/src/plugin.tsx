@@ -284,6 +284,14 @@ export const regionSelectPlugin = (options: RegionSelectOptions = {}) =>
         });
       }
 
+      // 表单数据：最近一次框选的元数据（裁剪图本身经 `region:select` 交给下游）
+      ctx.contribute(ExtensionPoints.formData, {
+        id: 'regionSelect.last',
+        title: '框选',
+        order: 50,
+        collect: (k) => k.getState().regionSelect.last,
+      });
+
       for (const def of builtinShapes) if (enabledShapes.includes(def.type)) contributeShape(ctx, def);
 
       ctx.registerCommand({

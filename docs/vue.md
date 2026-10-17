@@ -22,6 +22,7 @@ app.use(KabelVue);
 | --- | --- | --- |
 | `readonly` | `boolean` | 只读模式（`v-model` 之外的单向同步） |
 | `save` | `{ confirmLeave? } \| false` | 保存契约选项 |
+| `form-data` | `false` | 关闭“查看表单数据”按钮 |
 | `workspace` | `{ items?, thumbnails?, directory?, content? } \| false` | 工作台选项（文件目录、内容面板、缩略图…），`false` 不注册 |
 | `images` | `ImageSourceInput[]` | 当前打开的文件，显示在左侧文件目录与内容区域；变化时重新加载；对象可带 `group` 按目录分组 |
 | `plugins` | `PluginInput` | 追加插件（仅创建时读取） |
@@ -37,7 +38,7 @@ app.use(KabelVue);
 
 | 事件 | 参数 | 说明 |
 | --- | --- | --- |
-| `@save` | `SavePayload` | **可返回 Promise**，编辑器等待其完成；reject 即保存失败 |
+| `@save` | `SavePayload` | **可返回 Promise**，编辑器等待其完成；reject 即保存失败；`payload.data` 为全部插件的提交数据 |
 | `@saved` / `@save-error` | `SavePayload` / `unknown` | 保存成功 / 失败 |
 | `@readonly-change` | `boolean` | 只读状态变化 |
 | `@dirty-change` | `boolean` | 未保存状态变化 |

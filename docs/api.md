@@ -11,6 +11,7 @@
 | `images` | 当前打开的文件 `ImageSourceInput[]`，显示在左侧文件目录与内容区域 |
 | `readonly` | 初始只读：声明了 `mutates` 的命令（保存、撤销、重做…）被禁用 |
 | `save` | 保存契约：`{ confirmLeave? }`；`false` 关闭（同时没有 `Mod+S`、保存按钮与离开确认） |
+| `formData` | `false` 关闭工具栏“查看表单数据”按钮与弹窗（提交数据仍随 `save` 载荷下发） |
 | `plugins` | 追加插件 |
 | `preset` | 替换 baseline；`false` 不使用预设（baseline 组成见 [架构设计](architecture.md#baseline-与插件分类)） |
 | `layout` | `LayoutOptions` |
@@ -39,6 +40,7 @@
 | `setImages(list) / getImages()` | 打开一组影像（写入文档模型）/ 读取当前影像 |
 | `setDocuments(items) / getDocuments() / getCurrentDocument() / goto(index)` | 直接操作文档模型（已解析的 `DocumentItem`，用于非图片类型） |
 | `save()` | 依次等待 `save` 事件处理器，成功后标记为已保存：`Promise<{ ok: true } \| { ok: false, error? }>` |
+| `getFormData()` | 当前表单下全部插件的完整提交数据（与 `save` 载荷的 `data` 相同），以提供者 id 为键 |
 | `setReadonly(b) / isReadonly()` | 只读模式 |
 | `notify(message, { type?, duration? }) / confirm(options)` | 消息提示 / 确认对话框（`Promise<boolean>`） |
 | `undo() / redo() / isDirty()` | |
@@ -65,7 +67,8 @@
 
 | 命令 | 参数 / 快捷键 | 说明 |
 | --- | --- | --- |
-| `kabel.save` | `Mod+S` | 保存契约：等待 `save` 事件处理器 → 标记已保存 → `saved`；失败 → `save:error` 并提示 |
+| `kabel.save` | `Mod+S` | 保存契约：汇总表单数据 → 等待 `save` 事件处理器 → 标记已保存 → `saved`；失败 → `save:error` 并提示 |
+| `formData.show` | | 打开“查看表单数据”弹窗 |
 | `kabel.undo` / `kabel.redo` | `Mod+Z` / `Mod+Shift+Z`、`Mod+Y` | 只读时禁用 |
 | `palette.open` | `Mod+Shift+P` | 命令面板（macOS ⌘⇧P，其他平台 Ctrl+Shift+P） |
 | `workspace.prev / next / goto` | `goto(index)` | 切换当前文件 |
@@ -93,7 +96,7 @@
 | `plugin:registered` / `plugin:unregistered` | `{ name }` / `{ name, disabled? }` | 内核 |
 | `command:before` / `command:after` | `{ id, args }` / `{ id, args, result }` | 内核 |
 | `document:change` | `{ index, document }` | 工作台（当前文件变化） |
-| `save`（可异步否决）/ `saved` / `save:error` | `{ reason? }` / `{ reason? }` / `{ error }` | 保存契约 |
+| `save`（可异步否决）/ `saved` / `save:error` | `{ reason?, data? }` / `{ reason?, data? }` / `{ error }` | 保存契约；`data` 为 `ExtensionPoints.formData` 汇总的提交数据 |
 | `mode:change` | `{ readonly }` | 只读模式 |
 
 ## 状态切片
@@ -123,7 +126,7 @@
 | `EventBus` / `KabelEvents` | 事件 |
 | `CommandRegistry` / `CommandDefinition`（`mutates`、`hidden`） | 命令 |
 | `createServiceToken` / `ServiceRegistry` | 服务 |
-| `defineExtensionPoint` / `ExtensionPoints`（`toolbar` / `statusbar` / `panels` / `settings` / `contextMenu`）/ `ContributionRegistry` | 扩展点 |
+| `defineExtensionPoint` / `ExtensionPoints`（`toolbar` / `statusbar` / `panels` / `settings` / `contextMenu` / `formData`）/ `ContributionRegistry` | 扩展点 |
 | `ToolbarItem` / `StatusItem` / `PanelContribution` / `SettingsPage` / `ContextMenuItem` / `View` / `DomView` | 贡献项类型 |
 | `modePlugin` / `isReadonly` | 只读模式（内置） |
 | `savePlugin` / `SaveResult` | 保存契约（内置） |
@@ -172,3 +175,4 @@
 底座只内置布局、撤销重做、工作台、设置、主题等公共能力；其余功能以插件形式提供（见[插件开发指南](plugin-guide.md)）。工作台的配置、命令、服务、事件与扩展点见其 README：
 
 - [工作台 `@kabel/plugin-workspace`](../packages/plugins/workspace/README.md)
+- [数据表格 `@kabel/plugin-data-table`](../packages/plugins/data-table/README.md)

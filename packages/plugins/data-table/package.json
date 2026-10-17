@@ -1,0 +1,38 @@
+{
+  "name": "@kabel/plugin-data-table",
+  "version": "0.1.0",
+  "description": "Kabel 数据表格插件：业务端传入 JSON 数据或接口 URL 展示表格，支持前端/后端分页、行选中，并作为表单数据提交",
+  "type": "module",
+  "license": "MIT",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./style.css": "./dist/style.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "scripts": {
+    "build": "tsup && node ../../../scripts/build-css.mjs dist/style.css src/style.css"
+  },
+  "dependencies": {
+    "@kabel/core": "workspace:*",
+    "@kabel/plugin-workspace": "workspace:*",
+    "@kabel/ui": "workspace:*",
+    "preact": "^10.29.0"
+  }
+}

@@ -23,7 +23,7 @@
 
 | 类别 | 插件 | 说明 |
 | --- | --- | --- |
-| 内置（`builtin`） | `kabel:layout`、`kabel:history`、`kabel:mode`、`kabel:save`、`kabel:feedback`、`kabel:keymap`、`kabel:contextmenu`、`kabel:palette`、`kabel:workspace`、`kabel:settings`、`kabel:theme` | 工作台骨架与公共能力：不可停用，不在 设置 › 插件管理 中显示 |
+| 内置（`builtin`） | `kabel:layout`、`kabel:history`、`kabel:mode`、`kabel:save`、`kabel:feedback`、`kabel:keymap`、`kabel:contextmenu`、`kabel:palette`、`kabel:form-data`、`kabel:workspace`、`kabel:settings`、`kabel:theme` | 工作台骨架与公共能力：不可停用，不在 设置 › 插件管理 中显示 |
 | 宿主 / 功能插件 | 如文书著录、图片标记等业务功能 | 不属于底座；通过 `plugins` 或 `editor.use()` 注册，可在运行期启停 |
 
 底座（baseline）= 上述内置插件，不含任何业务功能。底座提供的公共能力：
@@ -32,6 +32,7 @@
 | --- | --- | --- |
 | 工作台（文档模型、渲染器、影像舞台） | `kabel:workspace` | `state.documents` / `state.stage`、`WORKSPACE_SERVICE`、`document:change`、扩展点 `WorkspaceExtensions.renderers / overlays / tools` |
 | 保存契约 | `kabel:save`（core） | `kabel.save` + 可否决的 `save` 事件 + `saved` / `save:error` + dirty + 离开确认 |
+| 表单数据 | 扩展点 `ExtensionPoints.formData`（core）+ `kabel:form-data`（ui） | 插件声明各自的提交数据；保存时汇总进 `save` 载荷的 `data`，工具栏“查看表单数据”弹窗展示全部 |
 | 只读模式 | `kabel:mode`（core） | `state.mode.readonly`，命令 `mutates: true` 自动禁用 |
 | 消息与对话框 | `kabel:feedback`（ui） | `NOTIFY_SERVICE`：`notify` / `confirm` |
 | 命令面板 | `kabel:palette`（ui） | `Mod+Shift+P`，列出所有可执行且未 `hidden` 的命令 |
@@ -158,7 +159,7 @@ Vue 组件通过 `vueView(Component)` 转为 DomView；`<KabelPanel>` 则直接�
 
 ## 保存与只读
 
-保存流程由底座统一：`kabel.save` → `emitAsync('save')`（处理器可返回 Promise，reject 即失败）→ `history.markSaved()` → `saved`。状态栏显示“保存中 / 未保存 / 保存失败”，有未保存修改时离开页面弹出浏览器确认（可用 `save: { confirmLeave: false }` 关闭）。只读模式是一个全局状态，声明了 `mutates: true` 的命令（保存、撤销、重做及业务插件自己的修改命令）在只读时由命令注册表统一禁用，面板自行读取 `isReadonly(state)` 决定字段是否可编辑。
+保存流程由底座统一：`kabel.save` → 汇总 `ExtensionPoints.formData` 为载荷 `data` → `emitAsync('save')`（处理器可返回 Promise，reject 即失败）→ `history.markSaved()` → `saved`。状态栏显示“保存中 / 未保存 / 保存失败”，有未保存修改时离开页面弹出浏览器确认（可用 `save: { confirmLeave: false }` 关闭）。只读模式是一个全局状态，声明了 `mutates: true` 的命令（保存、撤销、重做及业务插件自己的修改命令）在只读时由命令注册表统一禁用，面板自行读取 `isReadonly(state)` 决定字段是否可编辑。
 
 ## 命令面板、快捷键与右键菜单
 

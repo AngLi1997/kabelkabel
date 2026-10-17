@@ -232,6 +232,22 @@ export const workspacePlugin = (options: WorkspacePluginOptions = {}) =>
         view: ImageRenderer,
       });
 
+      // ---------- 表单数据：当前打开的文件 ----------
+      // 本地文件的 blob / data URL 只在本页有效，不作为提交数据
+      const portable = (src: string) => (/^(blob|data):/i.test(src) ? undefined : src);
+      ctx.contribute(ExtensionPoints.formData, {
+        id: 'workspace.documents',
+        title: '文件目录',
+        order: 10,
+        collect: (k) => {
+          const { items, index } = k.getState().documents;
+          return {
+            current: items[index]?.id ?? null,
+            items: items.map(({ id, name, group, kind, mime, src }) => ({ id, name, group, kind, mime, src: portable(src) })),
+          };
+        },
+      });
+
       // ---------- 状态栏与右键菜单 ----------
       ctx.contribute(ExtensionPoints.statusbar, {
         id: 'workspace.position',

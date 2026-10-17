@@ -1,0 +1,49 @@
+import { createSlice } from '@kabel/core';
+import type { DataTableRow, DataTableState } from './contract';
+
+declare module '@kabel/core' {
+  interface KabelState {
+    dataTable: Record<string, DataTableState>;
+  }
+}
+
+type Tables = Record<string, DataTableState>;
+
+const patch = (s: Tables, id: string, next: Partial<DataTableState>): Tables => {
+  const table = s[id];
+  return table ? { ...s, [id]: { ...table, ...next } } : s;
+};
+
+export const dataTableSlice = createSlice({
+  name: 'dataTable',
+  initialState: {} as Tables,
+  reducers: {
+    init: (s: Tables, p: { id: string; state: DataTableState }) => ({ ...s, [p.id]: p.state }),
+    remove: (s: Tables, id: string) => {
+      if (!s[id]) return s;
+      const { [id]: _, ...rest } = s;
+      return rest;
+    },
+    loading: (s: Tables, p: { id: string; url?: string | null }) =>
+      patch(s, p.id, { loading: true, error: null, ...(p.url !== undefined ? { url: p.url } : {}) }),
+    loaded: (s: Tables, p: { id: string; rows: DataTableRow[]; total: number; page?: number; pageSize?: number; keepSelection?: boolean }) =>
+      patch(s, p.id, {
+        rows: p.rows,
+        total: p.total,
+        loading: false,
+        error: null,
+        ...(p.page !== undefined ? { page: p.page } : {}),
+        ...(p.pageSize !== undefined ? { pageSize: p.pageSize } : {}),
+        ...(p.keepSelection ? {} : { selected: null }),
+      }),
+    failed: (s: Tables, p: { id: string; error: string }) => patch(s, p.id, { loading: false, error: p.error }),
+    setPage: (s: Tables, p: { id: string; page: number; pageSize: number }) => {
+      const t = s[p.id];
+      return !t || (t.page === p.page && t.pageSize === p.pageSize) ? s : patch(s, p.id, { page: p.page, pageSize: p.pageSize });
+    },
+    select: (s: Tables, p: { id: string; index: number | null }) =>
+      s[p.id]?.selected === p.index ? s : patch(s, p.id, { selected: p.index }),
+  },
+});
+
+export const dataTableActions = dataTableSlice.actions;

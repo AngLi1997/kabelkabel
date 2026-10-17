@@ -129,6 +129,7 @@ lease.dispose();                                                              //
 - 事件 `document:change`：`{ index, document }`；`stage:tool-change`：`{ active, previous }`（舞台交互工具被占用、归还或被抢占，`@mode emit`）。
 - 切片 `documents`：`items, index, loading`；切片 `stage`：`zoom, fitScale, rotation, thumbnails, thumbSize, tool`（`tool` 为当前交互工具 `{ id, cursor? }`，不持久化）。均不纳入撤销。切换文件时舞台自动恢复适应窗口与不旋转。
 - 辅助函数：`groupDocuments(items)`、`documentPosition(state)`。
+- 表单数据：贡献 `ExtensionPoints.formData` 的 `workspace.documents`：`{ current, items: [{ id, name, group, kind, mime, src }] }`；本地文件的 blob / data URL 只在本页有效，`src` 留空。
 
 ## 扩展点 `WorkspaceExtensions`
 

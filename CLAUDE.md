@@ -40,14 +40,15 @@ pnpm pack:all                  # 打 tarball 到 .packs/，用于在仓库外的
 **渲染层（`packages/ui`）**：`Workbench` 渲染五段式骨架——顶部工具栏、中间左侧扩展面板、中间内容、中间右侧扩展面板、底部状态栏；内容全部来自扩展点 `ExtensionPoints.toolbar | statusbar | panels`。左右两侧是**通用扩展区域**，不预设用途，区域内没有面板时整个区域不渲染（对应的工具栏开关按钮也隐藏）；设置弹窗的分类页来自 `ExtensionPoints.settings`（`settings/`），主题插件把 `state.theme` 转为根节点的 `data-scheme` / `data-density` / `--kb-accent`（`theme/`、`styles/themes.css`）。
 - 视图类型 `View<P>` = Preact 函数组件 或 `DomView`（`mount(el, props) → { update, unmount }`）；Vue 通过 `vueView()`（继承宿主 appContext）或 `<KabelPanel>`（Teleport 到 DomView 提供的容器）接入。因此面板在切换标签、折叠、最大化时必须**保持挂载只隐藏**，否则 Teleport/DomView 内容会丢失。
 - `useSelector` 精确订阅。
-- 布局状态在 `layout` 切片（`layout-plugin.ts`），持久化键 `kabel:<instanceId>:kabel:layout:state.v1`，读取经 `sanitize`。断点按**容器宽度**计算并回写到 `layout.breakpoint`（不持久化）：`md` 下右栏变为浮层（`overlay`），命令据此决定“收起”还是“关浮层”，区域收起状态统一用 `isRegionCollapsed()` 判断。区域名称（`RegionConfig.title`，默认“左侧面板 / 内容 / 右侧面板”）只用于折叠条与提示；区域内仅一个面板时改用该面板标题。
+- 布局状态在 `layout` 切片（`layout-plugin.ts`），持久化键 `kabel:<instanceId>:kabel:layout:state.v1`，读取经 `sanitize`。断点按**容器宽度**计算并回写到 `layout.breakpoint`（不持久化）：`md` 下右栏变为浮层（`overlay`），命令据此决定“收起”还是“关浮层”，区域收起状态统一用 `isRegionCollapsed()` 判断。面板 `slot: 'bottom'` 放在区域下半区（上下分区，比例在 `layout.splits`，默认值 `RegionConfig.split`），激活面板的状态键用 `slotKey(region, slot)`。区域名称（`RegionConfig.title`，默认“左侧面板 / 内容 / 右侧面板”）只用于折叠条与提示；区域内仅一个面板时改用该面板标题。
 - 快捷键是 document 级监听（浮层如命令面板、确认框自行处理按键并 `preventDefault`，全局监听遇到 `defaultPrevented` 会跳过），但只在事件目标位于工作台内、或焦点在 body 且最近一次交互在工作台内时处理（WebKit 点击按钮不获焦点）。
 
-**baseline**：内置插件（`builtin`）= 布局、撤销重做、只读（`kabel:mode`）、保存（`kabel:save`）、消息与对话框（`kabel:feedback`）、快捷键（`kabel:keymap`）、右键菜单（`kabel:contextmenu`）、命令面板（`kabel:palette`）、工作台（`kabel:workspace`）、设置、主题，由 `createBaselinePreset` 组装。`mode` / `save` 在 core（无渲染依赖，可在 core 内直接扩充 `KabelState`），工作台在 `packages/plugins/workspace`，其余在 ui。默认布局：左侧“文件目录”（`workspace.files`）、中间“内容”（`workspace.content`）、右侧无面板。面板定位统一走 `layout.showPanel` 命令。
+**baseline**：内置插件（`builtin`）= 布局、撤销重做、只读（`kabel:mode`）、保存（`kabel:save`）、消息与对话框（`kabel:feedback`）、快捷键（`kabel:keymap`）、右键菜单（`kabel:contextmenu`）、命令面板（`kabel:palette`）、查看表单数据（`kabel:form-data`）、工作台（`kabel:workspace`）、设置、主题，由 `createBaselinePreset` 组装。`mode` / `save` 在 core（无渲染依赖，可在 core 内直接扩充 `KabelState`），工作台在 `packages/plugins/workspace`，其余在 ui。默认布局：左侧“文件目录”（`workspace.files`）、中间“内容”（`workspace.content`）、右侧无面板。面板定位统一走 `layout.showPanel` 命令。
 
 - **工作台是业务插件的底座**：`state.documents = { items, index, loading }` 是“当前打开的文件”的唯一来源、`state.stage` 是影像舞台状态，`WORKSPACE_SERVICE` 读写；内容面板按 `kind` 从 `WorkspaceExtensions.renderers` 选渲染器；文件目录、页码状态栏、`document:change` 事件都归工作台。业务插件只声明 `dependencies: ['kabel:workspace']`，不 import 其他业务插件；ui 不得依赖工作台（依赖方向 workspace → ui）。目录、内容面板、影像渲染器都是普通贡献项，同 id 贡献即可替换。
 - **命令标记**：`CommandDefinition.mutates`（只读模式下由 `CommandRegistry.isEnabled` 统一禁用）、`hidden`（不进命令面板与快捷键设置；需要参数的命令必须标）。快捷键的生效值一律用 `commandBindings(command, state)`（含用户改绑），不要直接读 `command.keybinding`。
-- **保存契约**：`kabel.save` → `emitAsync('save')` → `history.markSaved()` → `saved`；失败派发 `save:error` 并通过 `NOTIFY_SERVICE` 提示。业务插件在 `save` 事件里实现具体保存，不要另起保存流程。
+- **表单数据**：插件把要提交的数据贡献到 `ExtensionPoints.formData`（`{ id, title, collect }`，可异步）；保存时汇总为 `save` 载荷的 `data`，工具栏“查看表单数据”弹窗（ui `formdata/`）展示同一份数据，宿主用 `editor.getFormData()` 获取。业务插件不要另起“提交数据”通道。
+- **保存契约**：`kabel.save` → 汇总表单数据 → `emitAsync('save')` → `history.markSaved()` → `saved`；失败派发 `save:error` 并通过 `NOTIFY_SERVICE` 提示。业务插件在 `save` 事件里实现具体保存，不要另起保存流程。
 - **右键菜单**：元素加 `data-kb-context`（可选 `data-kb-context-data`），菜单项来自扩展点 `ExtensionPoints.contextMenu`；没有匹配项时不拦截浏览器原生菜单。
 - **错误隔离**：`ViewHost` 内含错误边界，所有面板 / 工具栏 / 覆盖层视图经它渲染；新增渲染入口时同样要走 `ViewHost`。
 

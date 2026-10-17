@@ -6,6 +6,7 @@ import {
   definePlugin,
   ExtensionPoints,
   type Kernel,
+  type PanelSlot,
   type RegionId,
   type StatePredicate,
 } from '@kabel/core';
@@ -22,6 +23,8 @@ export interface RegionConfig {
   /** 多个面板的组织方式：标签页或上下堆叠（可调高度） */
   mode: 'tabs' | 'stack';
   collapsible: boolean;
+  /** 存在下半区面板（`slot: 'bottom'`）时，下半区默认所占高度比例，默认 0.5 */
+  split: number;
 }
 
 export type RegionOptions = Partial<RegionConfig>;
@@ -38,8 +41,10 @@ export interface LayoutState {
   sizes: { left: number; right: number };
   collapsed: { left: boolean; right: boolean };
   maximized: RegionId | null;
-  /** 标签页模式下各区域的激活面板 */
-  active: Partial<Record<RegionId, string>>;
+  /** 标签页模式下各区域（下半区为 `<region>.bottom`）的激活面板，键见 `slotKey` */
+  active: Record<string, string>;
+  /** 各区域下半区所占高度比例，未设置时取 `RegionConfig.split` */
+  splits: Partial<Record<RegionId, number>>;
   /** 堆叠模式下各面板高度权重 */
   weights: Record<string, number>;
   /** 堆叠模式下各面板折叠状态 */
@@ -61,9 +66,9 @@ declare module '@kabel/core' {
 }
 
 export const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
-  left: { title: '左侧面板', size: 280, min: 200, max: 560, collapsed: false, mode: 'tabs', collapsible: true },
-  main: { title: '内容', size: 0, min: 360, max: Infinity, collapsed: false, mode: 'tabs', collapsible: false },
-  right: { title: '右侧面板', size: 360, min: 260, max: 640, collapsed: false, mode: 'tabs', collapsible: true },
+  left: { title: '左侧面板', size: 280, min: 200, max: 560, collapsed: false, mode: 'tabs', collapsible: true, split: 0.5 },
+  main: { title: '内容', size: 0, min: 360, max: Infinity, collapsed: false, mode: 'tabs', collapsible: false, split: 0.4 },
+  right: { title: '右侧面板', size: 360, min: 260, max: 640, collapsed: false, mode: 'tabs', collapsible: true, split: 0.5 },
 };
 
 export function resolveLayoutConfig(options: LayoutOptions = {}): LayoutConfig {
@@ -81,6 +86,7 @@ export function createInitialLayout(config: LayoutConfig): LayoutState {
     collapsed: { left: config.left.collapsed, right: config.right.collapsed },
     maximized: null,
     active: {},
+    splits: {},
     weights: {},
     folded: {},
     compactRegion: 'main',
@@ -88,6 +94,12 @@ export function createInitialLayout(config: LayoutConfig): LayoutState {
     overlay: false,
   };
 }
+
+/** 下半区比例的取值范围 */
+export const SPLIT_RANGE = { min: 0.15, max: 0.85 } as const;
+
+/** 激活面板的状态键：主区为区域名，下半区为 `<region>.bottom` */
+export const slotKey = (region: RegionId, slot: PanelSlot = 'top') => (slot === 'bottom' ? `${region}.bottom` : region);
 
 /** 中等宽度下右侧区域不挤占内容区，改为浮层 */
 export const isOverlayMode = (s: LayoutState) => s.breakpoint === 'md';
@@ -131,8 +143,19 @@ export function createLayoutSlice(config: LayoutConfig) {
       setOverlay: (s: LayoutState, overlay: boolean) => (s.overlay === overlay ? s : { ...s, overlay }),
       maximize: (s: LayoutState, region: RegionId | null) => (s.maximized === region ? s : { ...s, maximized: region }),
       toggleMaximize: (s: LayoutState, region: RegionId) => ({ ...s, maximized: s.maximized === region ? null : region }),
-      setActive: (s: LayoutState, p: { region: RegionId; panelId: string }) =>
-        s.active[p.region] === p.panelId ? s : { ...s, active: { ...s.active, [p.region]: p.panelId } },
+      setActive: (s: LayoutState, p: { region: RegionId; panelId: string; slot?: PanelSlot }) => {
+        const key = slotKey(p.region, p.slot);
+        return s.active[key] === p.panelId ? s : { ...s, active: { ...s.active, [key]: p.panelId } };
+      },
+      setSplit: (s: LayoutState, p: { region: RegionId; ratio: number }) => {
+        const ratio = Math.round(clamp(p.ratio, SPLIT_RANGE.min, SPLIT_RANGE.max) * 1000) / 1000;
+        return s.splits[p.region] === ratio ? s : { ...s, splits: { ...s.splits, [p.region]: ratio } };
+      },
+      resetSplit: (s: LayoutState, region: RegionId) => {
+        if (s.splits[region] === undefined) return s;
+        const { [region]: _, ...splits } = s.splits;
+        return { ...s, splits };
+      },
       setWeights: (s: LayoutState, weights: Record<string, number>) => ({ ...s, weights: { ...s.weights, ...weights } }),
       toggleFolded: (s: LayoutState, panelId: string) => ({ ...s, folded: { ...s.folded, [panelId]: !s.folded[panelId] } }),
       setCompactRegion: (s: LayoutState, region: RegionId) => (s.compactRegion === region ? s : { ...s, compactRegion: region }),
@@ -169,6 +192,9 @@ export function sanitize(base: LayoutState, saved: Partial<LayoutState> | null |
     },
     maximized: region(saved.maximized),
     active: record<string>(saved.active, (x) => typeof x === 'string'),
+    splits: Object.fromEntries(
+      Object.entries(record<number>(saved.splits, (x) => typeof x === 'number' && Number.isFinite(x))).filter(([k]) => region(k)).map(([k, v]) => [k, clamp(v, SPLIT_RANGE.min, SPLIT_RANGE.max)]),
+    ),
     weights: record<number>(saved.weights, (x) => typeof x === 'number' && Number.isFinite(x) && x > 0),
     folded: record<boolean>(saved.folded, (x) => typeof x === 'boolean'),
     compactRegion: region(saved.compactRegion) ?? base.compactRegion,
@@ -246,7 +272,7 @@ export const layoutPlugin = (options: LayoutOptions = {}) =>
           const panel = k.extensions.get(ExtensionPoints.panels).get(panelId);
           if (!panel) return;
           k.dispatch(slice.actions.reveal(panel.region));
-          k.dispatch(slice.actions.setActive({ region: panel.region, panelId }));
+          k.dispatch(slice.actions.setActive({ region: panel.region, panelId, slot: panel.slot }));
         },
       });
       ctx.registerCommand({

@@ -74,9 +74,14 @@ export interface PanelAction {
   active?: StatePredicate;
 }
 
+/** 面板在区域内的位置：`top` 为主区（默认），`bottom` 为可拖拽调整高度的下半区 */
+export type PanelSlot = 'top' | 'bottom';
+
 export interface PanelContribution {
   id: string;
   region: RegionId;
+  /** 放在区域的下半区（如左侧文件目录下方的数据表格）；区域内只有下半区面板时按主区显示 */
+  slot?: PanelSlot;
   title: string;
   icon?: string;
   order?: number;
@@ -125,6 +130,21 @@ export interface ContextMenuItem {
   when?: (state: KabelState, kernel: Kernel, context: ContextMenuContext) => boolean;
 }
 
+/**
+ * 表单数据提供者：插件声明自己要提交的数据。保存时（`save` 事件载荷的 `data`）
+ * 与“查看表单数据”弹窗都按 `order` 依次调用 `collect`，结果以 `id` 为键汇总。
+ */
+export interface FormDataProvider {
+  /** 汇总结果中的键，如 `dataTable.materials` */
+  id: string;
+  /** 显示名称，如“材料目录” */
+  title: string;
+  order?: number;
+  /** 返回可 JSON 序列化的完整提交数据；可异步 */
+  collect: (kernel: Kernel) => unknown;
+  when?: StatePredicate;
+}
+
 /** 内置扩展点 */
 export const ExtensionPoints = {
   toolbar: defineExtensionPoint<ToolbarItem>('kabel.toolbar'),
@@ -132,4 +152,5 @@ export const ExtensionPoints = {
   panels: defineExtensionPoint<PanelContribution>('kabel.panels'),
   settings: defineExtensionPoint<SettingsPage>('kabel.settings'),
   contextMenu: defineExtensionPoint<ContextMenuItem>('kabel.contextMenu'),
+  formData: defineExtensionPoint<FormDataProvider>('kabel.formData'),
 } as const;

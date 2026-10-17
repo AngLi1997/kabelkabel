@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   createKernel,
+  collectFormEntries,
   createSlice,
   definePlugin,
+  ExtensionPoints,
   eventToKeybinding,
   historyPlugin,
   matchKeybinding,
@@ -87,7 +89,7 @@ describe('保存契约', () => {
     expect(kernel.commands.isEnabled('kabel.save')).toBe(false);
     finish();
     await expect(running).resolves.toEqual({ ok: true });
-    expect(saved).toHaveBeenCalledWith({ reason: 'manual' });
+    expect(saved).toHaveBeenCalledWith({ reason: 'manual', data: {} });
     expect(kernel.getState().save).toMatchObject({ saving: false, error: null });
     expect(kernel.getState().save?.savedAt).toBeTypeOf('number');
   });
@@ -122,5 +124,22 @@ describe('保存契约', () => {
     expect(item.when!(kernel.getState(), kernel)).toBe(true);
     await kernel.execute('kabel.setReadonly', true);
     expect(kernel.commands.isEnabled('kabel.save')).toBe(false);
+  });
+
+  it('保存载荷带上全部表单数据提供者的提交数据；提供者失败则保存失败', async () => {
+    const onSave = vi.fn();
+    const { kernel } = await setup(onSave);
+    const point = kernel.extensions.get(ExtensionPoints.formData);
+    const b = point.add({ id: 'b', title: 'B', order: 2, collect: async () => [1, 2] });
+    const a = point.add({ id: 'a', title: 'A', order: 1, collect: () => ({ x: 1 }) });
+    await expect(kernel.execute('kabel.save')).resolves.toEqual({ ok: true });
+    expect(onSave).toHaveBeenCalledWith({ reason: 'manual', data: { a: { x: 1 }, b: [1, 2] } });
+    const entries = await collectFormEntries(kernel);
+    expect(entries.map((e) => e.id)).toEqual(['a', 'b']);
+    a.dispose();
+    b.dispose();
+    point.add({ id: 'c', title: 'C', collect: () => { throw new Error('坏了'); } });
+    await expect(collectFormEntries(kernel)).resolves.toEqual([{ id: 'c', title: 'C', error: '坏了' }]);
+    await expect(kernel.execute('kabel.save')).resolves.toMatchObject({ ok: false });
   });
 });

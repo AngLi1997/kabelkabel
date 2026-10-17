@@ -1,12 +1,14 @@
 import type { PanelContribution, RegionId } from '@kabel/core';
 import type { JSX } from 'preact';
+import { useRef } from 'preact/hooks';
 import { IconButton } from '../components/Button';
 import { Empty } from '../components/Empty';
+import { Resizer } from '../components/Resizer';
 import { Tabs } from '../components/Tabs';
 import { ViewHost } from '../components/ViewHost';
 import { useKernel, useSelector } from '../hooks';
 import { Icon } from '../icons/Icon';
-import { layoutActions, type RegionConfig } from '../layout/layout-plugin';
+import { layoutActions, slotKey, type RegionConfig } from '../layout/layout-plugin';
 import { cx } from '../utils';
 import { PanelActions } from './PanelActions';
 import { PanelStack } from './PanelStack';
@@ -24,17 +26,31 @@ export interface RegionProps {
 
 /**
  * 区域容器：头部（标题/标签页、面板操作、最大化、折叠）+ 内容。
+ * 存在 `slot: 'bottom'` 的面板时，区域分为上下两组（中间可拖拽调整高度），下半区有自己的标题/标签页。
  * 折叠或隐藏时内容保持挂载，保证 DomView（如 Vue Teleport）与面板内部状态不丢失。
  */
 export function Region({ region, config, panels, compact, collapsed, hidden, style }: RegionProps) {
   const kernel = useKernel();
   const maximized = useSelector((s) => s.layout?.maximized === region);
-  const activeState = useSelector((s) => s.layout?.active[region]);
-  const activeId = panels.some((p) => p.id === activeState) ? activeState : panels[0]?.id;
-  const active = panels.find((p) => p.id === activeId);
+  // 下半区面板（slot: 'bottom'）单独成组；区域内只有下半区面板时按主区显示
+  const lowerAll = panels.filter((p) => p.slot === 'bottom');
+  const upperAll = panels.filter((p) => p.slot !== 'bottom');
+  const split = upperAll.length > 0 && lowerAll.length > 0;
+  const upper = split || upperAll.length ? upperAll : lowerAll;
+  const lower = split ? lowerAll : [];
+  const upperKey = slotKey(region, upperAll.length ? 'top' : 'bottom');
+  const activeState = useSelector((s) => s.layout?.active[upperKey]);
+  const lowerActiveState = useSelector((s) => s.layout?.active[slotKey(region, 'bottom')]);
+  const ratio = useSelector((s) => s.layout?.splits[region]) ?? config.split;
+  const activeId = upper.some((p) => p.id === activeState) ? activeState : upper[0]?.id;
+  const active = upper.find((p) => p.id === activeId);
+  const lowerActiveId = lower.some((p) => p.id === lowerActiveState) ? lowerActiveState : lower[0]?.id;
   const stack = config.mode === 'stack';
   const canCollapse = !compact && config.collapsible;
   const canMaximize = !compact;
+  const upperRef = useRef<HTMLDivElement>(null);
+  const lowerRef = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ top: number; bottom: number } | null>(null);
 
   // 区域内只有一个面板时，折叠条与按钮提示直接使用面板标题
   const name = panels.length === 1 ? panels[0]!.title : config.title;
@@ -44,20 +60,19 @@ export function Region({ region, config, panels, compact, collapsed, hidden, sty
   );
 
   let heading;
-  if (stack || panels.length === 0) heading = <span class="kb-region__title">{config.title}</span>;
-  else if (panels.length === 1) heading = <span class="kb-region__title">{panels[0]!.title}</span>;
-  else
-    heading = (
-      <Tabs
-        items={panels}
-        active={activeId}
-        onChange={(panelId) => kernel.dispatch(layoutActions.setActive({ region, panelId }))}
-      />
-    );
+  if (stack || upper.length === 0) heading = <span class="kb-region__title">{config.title}</span>;
+  else heading = <GroupHeading panels={upper} active={activeId} onChange={(panelId) => kernel.dispatch(layoutActions.setActive({ region, panelId, slot: upperAll.length ? 'top' : 'bottom' }))} />;
+
+  const upperBody = (
+    <>
+      {upper.length === 0 && <Empty text="暂无内容" />}
+      {stack ? <PanelStack panels={upper} region={region} /> : <Panes panels={upper} activeId={activeId} region={region} />}
+    </>
+  );
 
   return (
     <div
-      class={cx('kb-region', `kb-region--${region}`, collapsed && 'is-collapsed', maximized && 'is-maximized')}
+      class={cx('kb-region', `kb-region--${region}`, collapsed && 'is-collapsed', maximized && 'is-maximized', split && 'is-split')}
       style={style}
       hidden={hidden}
       data-region={region}
@@ -84,19 +99,68 @@ export function Region({ region, config, panels, compact, collapsed, hidden, sty
             {region === 'left' && collapseButton}
           </div>
         </header>
-        <div class="kb-region__body">
-          {panels.length === 0 && <Empty text="暂无内容" />}
-          {stack ? (
-            <PanelStack panels={panels} region={region} />
-          ) : (
-            panels.map((panel) => (
-              <div key={panel.id} class="kb-region__pane" hidden={panel.id !== activeId}>
-                <ViewHost view={panel.view} props={{ kernel, panelId: panel.id, region }} />
+        {!split ? (
+          <div class="kb-region__body">{upperBody}</div>
+        ) : (
+          <>
+            <div ref={upperRef} class="kb-region__body" style={{ flex: `${1 - ratio} 1 0px` }}>
+              {upperBody}
+            </div>
+            <Resizer
+              axis="y"
+              class="kb-region__split"
+              label={`调整${config.title}上下高度`}
+              onStart={() => {
+                drag.current = { top: upperRef.current?.offsetHeight ?? 0, bottom: lowerRef.current?.offsetHeight ?? 0 };
+              }}
+              onMove={(delta) => {
+                const d = drag.current;
+                const total = d ? d.top + d.bottom : 0;
+                if (!d || total <= 0) return;
+                kernel.dispatch(layoutActions.setSplit({ region, ratio: (d.bottom - delta) / total }));
+              }}
+              onReset={() => kernel.dispatch(layoutActions.resetSplit(region))}
+            />
+            <section ref={lowerRef} class="kb-region__lower" style={{ flex: `${ratio} 1 0px` }} data-slot="bottom">
+              <header class="kb-region__subheader">
+                <div class="kb-region__heading">
+                  <GroupHeading
+                    panels={lower}
+                    active={lowerActiveId}
+                    onChange={(panelId) => kernel.dispatch(layoutActions.setActive({ region, panelId, slot: 'bottom' }))}
+                  />
+                </div>
+                <div class="kb-region__tools">
+                  <PanelActions actions={lower.find((p) => p.id === lowerActiveId)?.actions} />
+                </div>
+              </header>
+              <div class="kb-region__body">
+                <Panes panels={lower} activeId={lowerActiveId} region={region} />
               </div>
-            ))
-          )}
-        </div>
+            </section>
+          </>
+        )}
       </div>
     </div>
+  );
+}
+
+/** 一组面板的标题：单个面板显示标题，多个显示标签页 */
+function GroupHeading({ panels, active, onChange }: { panels: readonly PanelContribution[]; active?: string; onChange: (id: string) => void }) {
+  if (panels.length === 1) return <span class="kb-region__title">{panels[0]!.title}</span>;
+  return <Tabs items={panels} active={active} onChange={onChange} />;
+}
+
+/** 标签页模式的面板内容：全部保持挂载，只隐藏非激活项 */
+function Panes({ panels, activeId, region }: { panels: readonly PanelContribution[]; activeId?: string; region: RegionId }) {
+  const kernel = useKernel();
+  return (
+    <>
+      {panels.map((panel) => (
+        <div key={panel.id} class="kb-region__pane" hidden={panel.id !== activeId}>
+          <ViewHost view={panel.view} props={{ kernel, panelId: panel.id, region }} />
+        </div>
+      ))}
+    </>
   );
 }

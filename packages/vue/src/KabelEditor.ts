@@ -49,6 +49,8 @@ export const KabelEditor = defineComponent({
     preset: { type: [Object, Array, Function, Boolean] as PropType<PluginInput | false>, default: undefined },
     layout: { type: Object as PropType<LayoutOptions>, default: undefined },
     settings: { type: Boolean as PropType<false>, default: undefined },
+    /** 传 false 关闭工具栏“查看表单数据”按钮 */
+    formData: { type: Boolean as PropType<false>, default: undefined },
     theme: { type: [Object, Boolean] as PropType<EditorOptions['theme']>, default: undefined },
     instanceId: { type: String, default: undefined },
     storage: { type: [Object, String, Boolean] as PropType<StorageInput>, default: undefined },
@@ -83,6 +85,7 @@ export const KabelEditor = defineComponent({
         preset: props.preset,
         layout: props.layout,
         settings: props.settings,
+        formData: props.formData,
         theme: props.theme,
         instanceId: props.instanceId,
         storage: props.storage,

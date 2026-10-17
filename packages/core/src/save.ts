@@ -1,7 +1,9 @@
 import { ExtensionPoints } from './contributions';
 import { NOTIFY_SERVICE } from './feedback';
+import { gatherFormData } from './form';
 import { definePlugin } from './plugin';
 import { createSlice } from './store';
+import type { SavePayload } from './event-bus';
 
 export interface SaveState {
   saving: boolean;
@@ -32,7 +34,8 @@ export interface SavePluginOptions {
 const messageOf = (error: unknown) => (error instanceof Error ? error.message : typeof error === 'string' ? error : '保存失败');
 
 /**
- * 保存契约：`kabel.save` 命令（Mod+S）依次等待所有 `save` 事件处理器（emitAsync），
+ * 保存契约：`kabel.save` 命令（Mod+S）先汇总 `ExtensionPoints.formData` 的提交数据放入载荷 `data`，
+ * 再依次等待所有 `save` 事件处理器（emitAsync），
  * 全部成功后标记撤销栈保存点并派发 `saved`；任一处理器 reject 则派发 `save:error`。
  * 底座只管流程，保存什么、存到哪里由业务插件或宿主在 `save` 事件里实现。
  */
@@ -52,9 +55,11 @@ export const savePlugin = (options: SavePluginOptions = {}) =>
         mutates: true,
         enabled: (k) => !k.getState().save?.saving,
         run: async (k, reason?: string): Promise<SaveResult> => {
-          const payload = { reason: typeof reason === 'string' ? reason : 'manual' };
+          const payload: SavePayload = { reason: typeof reason === 'string' ? reason : 'manual' };
           k.dispatch(saveActions.start());
           try {
+            const data = gatherFormData(k);
+            payload.data = data instanceof Promise ? await data : data;
             await k.bus.emitAsync('save', payload);
             k.history.markSaved();
             k.dispatch(saveActions.done(Date.now()));

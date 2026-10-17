@@ -54,7 +54,7 @@ module.exports = { presets: [require('@kabel/ui/tailwind-preset')] };
 
 内置一套 24×24 线性图标，以 iconfont Symbol 格式注入。名称：
 
-`save undo redo validate chevron-left/right/up/down fold-left fold-right panel-left panel-right maximize restore close zoom-in zoom-out fit actual-size rotate-left rotate-right image grid file list history warning error success info reset unfold fold more plus minus submit link folder tag hash search layout arrow-up arrow-down edit eye settings plugin palette box hand download trash`
+`save undo redo validate chevron-left/right/up/down fold-left fold-right panel-left panel-right maximize restore close zoom-in zoom-out fit actual-size rotate-left rotate-right image grid file list history warning error success info reset unfold fold more plus minus submit link folder tag hash search layout arrow-up arrow-down edit eye settings plugin palette box hand download trash table code`
 
 ### 使用宿主的 iconfont 项目
 

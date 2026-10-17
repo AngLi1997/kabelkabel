@@ -28,6 +28,8 @@ export interface KabelEvents {
 export interface SavePayload {
   /** 触发来源，默认 `manual` */
   reason?: string;
+  /** 当前表单下全部插件的提交数据（`ExtensionPoints.formData` 汇总），以提供者 id 为键 */
+  data?: Record<string, unknown>;
 }
 
 export type EventName<E> = keyof E | (string & {});

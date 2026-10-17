@@ -142,6 +142,8 @@ kernel.services.provide(REGION_CROPPER, { original: async (image) => …, crop: 
 
 切片 `regionSelect`：`tool`（当前形状）、`draft`（草稿）、`busy`（裁剪中）、`last`（最近一次的 `{ id, documentId, shape, bbox }`，不含图片数据）。不纳入撤销。
 
+表单数据：贡献 `ExtensionPoints.formData` 的 `regionSelect.last`，即上面的 `last`。
+
 ## 样式
 
 已包含在 `@kabel/editor/style.css` 中。类名前缀 `kb-rsel`。

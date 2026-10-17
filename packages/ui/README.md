@@ -19,7 +19,8 @@ const unmount = mountWorkbench(el, kernel, { icons: {}, class: 'my-host' });
 
 | 插件 | 名称 | 说明 |
 | --- | --- | --- |
-| `layoutPlugin({ regions?, persist? })` | `kabel:layout` | 区域尺寸、折叠、最大化、标签 / 堆叠模式及其持久化 |
+| `layoutPlugin({ regions?, persist? })` | `kabel:layout` | 区域尺寸、折叠、最大化、标签 / 堆叠模式、上下分区（面板 `slot: 'bottom'`，`regions.<id>.split` 为下半区默认比例）及其持久化 |
+| `formDataViewPlugin()` | `kabel:form-data` | 工具栏保存按钮右侧“查看表单数据”（命令 `formData.show`）：弹窗展示 `ExtensionPoints.formData` 全部提供者的提交数据，可刷新、复制、下载；无提供者时不显示 |
 | `feedbackPlugin()` | `kabel:feedback` | 消息提示与确认对话框（实现 `NOTIFY_SERVICE`） |
 | `keymapPlugin()` | `kabel:keymap` | 快捷键改绑（持久化）、冲突检测、设置 › 快捷键 |
 | `contextMenuPlugin()` | `kabel:contextmenu` | 右键菜单：`data-kb-context` 标识区域，菜单项来自扩展点 `ExtensionPoints.contextMenu` |

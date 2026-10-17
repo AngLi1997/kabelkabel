@@ -26,6 +26,8 @@ export { PluginsPage, pluginTree, type PluginRow } from './settings/PluginsPage'
 export * from './theme/theme-plugin';
 export { ThemePage } from './theme/ThemePage';
 export * from './feedback/feedback-plugin';
+export * from './formdata/formdata-plugin';
+export { FormDataDialog } from './formdata/FormDataDialog';
 export * from './palette/palette-plugin';
 export * from './keymap/keymap-plugin';
 export { commandBindings, findConflicts, listedCommands, type KeyConflict } from './keymap/bindings';

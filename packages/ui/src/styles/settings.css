@@ -197,3 +197,45 @@
   border-left: 1px solid var(--kb-color-border-strong);
   border-bottom: 1px solid var(--kb-color-border-strong);
 }
+
+/* ---------- 表单数据弹窗（复用设置弹窗骨架） ---------- */
+.kb-formdata .kb-settings__dialog {
+  width: 880px;
+  height: 600px;
+}
+
+.kb-formdata__tools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.kb-formdata .kb-settings__nav {
+  width: 168px;
+}
+
+.kb-formdata .kb-settings__nav-item span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.kb-formdata .kb-settings__nav-item.is-error {
+  color: var(--kb-color-danger);
+}
+
+.kb-formdata__content {
+  padding: 0;
+  background: var(--kb-color-surface-2);
+}
+
+.kb-formdata__json {
+  margin: 0;
+  padding: var(--kb-space-3);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: var(--kb-font-size-sm);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
+  user-select: text;
+}

@@ -6,6 +6,8 @@
 
 > 文件加载 `@kabel/plugin-file-loader`（`file-loader/`）：MinIO 桶+路径、本地目录、URL 列表三种来源，统一归一化后经 `WORKSPACE_SERVICE.setImages` 显示到舞台。
 
+> 数据表格 `@kabel/plugin-data-table`（`data-table/`）：业务端传入 JSON 或接口 URL 展示表格，支持分页与行选中，默认放在左侧下半区（`slot: 'bottom'`），并作为表单数据提交。
+
 > 内置的工作台 `@kabel/plugin-workspace`（`workspace/`）也在此目录，可作为写法参考；它是 `builtin` 插件，由 `@kabel/editor` 的 baseline 预设默认注册。**所有业务插件都应只依赖它**：`dependencies: ['kabel:workspace']`，通过 `WORKSPACE_SERVICE` 与 `WorkspaceExtensions` 与内容协作，不 import 其他业务插件。
 
 ## 目录与命名
