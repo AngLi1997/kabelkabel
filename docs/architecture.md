@@ -17,7 +17,21 @@
 └──────────────────────────────────────────────────────────────┘
 ```
 
-依赖只能自上而下。`@kabel/core` 不依赖 DOM 渲染库，可在 Node 中单测；插件之间不直接 import 实现，只通过**服务令牌**、**扩展点**和**命令 id** 协作（业务插件只依赖工作台：声明 `dependencies: ['kabel:workspace']`，通过它的服务与扩展点协作）。
+依赖只能自上而下。`@kabel/core` 不依赖 DOM 渲染库，可在 Node 中单测；插件之间不直接 import 实现，只通过**服务令牌**、**扩展点**和**命令 id** 协作。
+
+## 插件分层
+
+```
+L4 场景预设   market-supervision …        只用 ctx.plugin() 组合子插件与默认配置
+L3 业务插件   catalog · ocr-excerpt · layout-extract …   只依赖 L1 / L2 契约，彼此不依赖
+L2 能力插件   fields · ocr · llm · region-select …       contract.ts + 默认实现，宿主可同令牌替换
+L1 工作台     kabel:workspace（builtin）
+L0 内核 / ui  Kernel · Workbench
+```
+
+- 业务插件之间的联动经由能力插件的共享服务与事件：框选识别、版面分析、宿主都通过 `FIELDS_SERVICE` 写字段，著录面板只是字段模型的视图，任何一个停用都不影响其他。
+- 服务依赖用 `inject` 声明（见下文“插件模型”），缺少服务时插件等待而不是报错。
+- 设计说明与场景拆解见 [档案业务插件拆解设计](archive-plugin-design.md)。
 
 ## baseline 与插件分类
 
@@ -56,25 +70,39 @@
 | `plugins` | 插件生命周期：依赖拓扑排序、同步/异步 setup、按依赖逆序卸载；可恢复的停用 / 启用 |
 | `storage` | 带命名空间的持久化存储（默认 localStorage，可替换） |
 
-## 插件模型
+## 插件模型（对照 cordis）
 
 ```ts
 definePlugin({
   name: 'scope:name',
   title: '显示名称',                                   // 插件管理中显示
-  dependencies: ['kabel:workspace'],
-  setup(ctx) {
+  inject: [WORKSPACE_SERVICE, FIELDS_SERVICE],         // 必需服务；{ required, optional } 形式可声明可选服务
+  Config: Schema.object({ endpoint: Schema.string().default('http://…') }),   // 配置 Schema（schemastery）
+  setup(ctx, config) {
+    const fields = ctx.services.get(FIELDS_SERVICE);   // 必需服务一定存在；服务变化时插件会重载，缓存是安全的
     ctx.registerSlice(slice);                          // 状态
     ctx.registerCommand({ id, run, keybinding });      // 行为
     ctx.contribute(ExtensionPoints.toolbar, item);     // 界面贡献
     ctx.provide(TOKEN, service);                       // 对外能力
     ctx.on('document:change', handler);                // 事件
+    ctx.plugin(childPlugin(), { … });                  // 子插件：随本插件停用 / 重载 / 卸载
+    const scope = ctx.scope();                         // 子作用域：可单独释放
     return () => {/* 额外清理 */};
   },
 });
 ```
 
-`ctx` 上注册的一切都挂在插件自己的 `DisposableStore` 上，`kernel.unuse(name)` 时逆序释放，UI 会实时反映（按钮消失、面板卸载）。这使运行期注册/卸载成为常规操作，而不是特例。
+`ctx` 上注册的一切都挂在插件自己的 `DisposableStore` 上，停用、重载、`kernel.unuse(name)` 时逆序释放，UI 会实时反映（按钮消失、面板卸载）。这使运行期注册/卸载成为常规操作，而不是特例。
+
+| cordis 概念 | Kabel | 说明 |
+| --- | --- | --- |
+| `inject`（required / optional） | `KabelPlugin.inject` | 必需服务未就绪时插件 `pending`（不执行 setup），就绪后自动启用，撤回后回到等待；注入的服务出现 / 撤回 / 被覆盖时插件重载（提供者自身除外） |
+| Service | `ctx.provide(token, value)` / `ServiceRegistry` | 覆盖栈：后提供者生效，撤回后恢复；栈顶变化派发 `service:change` |
+| `Config` + `apply(ctx, config)` | `KabelPlugin.Config` + `setup(ctx, config)` | schemastery Schema；注册方配置 < 用户保存的配置；保存后插件重载 |
+| `ctx.plugin(plugin, config)` | `ctx.plugin(input, config?)` | 子插件生命周期挂在父插件上；场景预设即一组子插件 |
+| fork / scope | `ctx.scope()` | 可单独释放的子作用域 |
+
+插件状态：`kernel.plugins.status(name)` 为 `active` / `pending` / `disabled`，`blockers(name)` 为等待的依赖与服务；设置 › 插件管理 显示“运行中 / 等待服务 / 已停用”，子插件列在父插件下，声明了 `Config` 的插件可在其中编辑配置（表单由 Schema 生成）。配置持久化在 `kabel:<instanceId>:kabel:plugins:config`。
 
 **编译期注册**：`createArchiveEditor({ plugins })` / `createKernel({ plugins })`。全部是同步插件时，函数返回前即已完成注册，首帧渲染即完整。
 **运行期注册**：`editor.use(plugin | () => import('./plugin'))`，返回 Promise。
@@ -154,7 +182,7 @@ Vue 组件通过 `vueView(Component)` 转为 DomView；`<KabelPanel>` 则直接�
 | 在内容上叠加什么？ | 影像舞台 `state.stage`（缩放 / 旋转 / 平移）与坐标换算；扩展点 `WorkspaceExtensions.overlays`（覆盖层）与 `tools`（侧边工具条） |
 | 文件从哪来？ | 图片来源解析（URL、base64、Blob、二进制、对象、异步加载器）与 object URL 管理，宿主通过 `setImages` / `setDocuments` 传入 |
 
-业务插件（著录、标注、OCR…）依赖方向是 `业务插件 → workspace → ui → core`，业务插件之间不互相 import。左侧目录、内容面板、影像渲染器都是普通贡献项，同 id 贡献即可整体替换，因此界面也可以由自定义插件定义，无需改动 ui 或 workspace 源码。
+业务插件（著录、标注、OCR…）依赖方向是 `业务插件 → 能力插件契约 → workspace → ui → core`，业务插件之间不互相 import。工作台另提供 `reveal(documentId, bbox)`（切页并把区域缩放平移到视野中，字段证据、问题列表的“定位”都用它）、`updateDocument`、`readBlob`，`DocumentItem.meta` 承载业务属性。左侧目录、内容面板、影像渲染器都是普通贡献项，同 id 贡献即可整体替换，因此界面也可以由自定义插件定义，无需改动 ui 或 workspace 源码。
 
 ## 保存与只读
 
@@ -175,6 +203,10 @@ Vue 组件通过 `vueView(Component)` 转为 DomView；`<KabelPanel>` 则直接�
 - 没有交互工具：左 / 右 / 中键拖动均平移，滚轮缩放。
 - 有交互工具（`WORKSPACE_SERVICE.acquireTool` 租约，同一时刻只有一个，新租约抢占旧租约并广播 `stage:tool-change`）：左键、右键交给工具的覆盖层（`StageOverlay.tool`），**空格 + 左键**或中键拖动平移。平移在捕获阶段接管，工具收不到这些事件，草稿不会被打断。
 - 工具之间的互斥靠租约与 `stage:tool-change` 事件，插件互不知道对方存在。
+
+## 横幅与快捷键提示
+
+扩展点 `ExtensionPoints.banners`：工具栏下方的一行状态提示（如“智能算法已调用…”“请在影像上框选…”），`text` 返回空值时隐藏，`tone` 可按状态计算，可带一个命令按钮。工具栏项 `showKeybinding: true` 时在按钮内显示生效的快捷键（宽屏）。
 
 ## 设置与主题
 

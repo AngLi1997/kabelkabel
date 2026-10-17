@@ -1,6 +1,6 @@
 # 档案业务插件拆解设计（著录 · 摘录 · 加工 · 标注）
 
-> 状态：设计提案。本文基于当前底座（`core` / `ui` / `plugin-workspace` / `plugin-region-select` / `plugin-file-loader`）的实现，对照四类现有系统界面（案卷著录、市场监管加工、文书著录 + AI 提取、影像标注），给出插件拆分、契约与联动方式，以及底座需要补齐的能力。
+> 状态：部分已实现（见文末“实现进度”）。本文基于当前底座（`core` / `ui` / `plugin-workspace` / `plugin-region-select` / `plugin-file-loader`）的实现，对照四类现有系统界面（案卷著录、市场监管加工、文书著录 + AI 提取、影像标注），给出插件拆分、契约与联动方式，以及底座需要补齐的能力。
 >
 > 设计前置参考：dsh（deepseek-harness）“一切皆插件”——功能 = 插件组合，预设只是插件清单；cordis 的 Context / Service / Plugin 模型——服务是有生命周期的依赖，插件声明依赖的服务，作用域（fork）随上下文释放。
 
@@ -324,3 +324,23 @@ createArchiveEditor(el, {
 5. L4：预设与 `examples/vue-app` 中的场景切换示例。
 
 每一步都可独立发布：L2 插件在没有 L3 的情况下可单测，L3 插件在缺少软依赖时降级而不是报错。
+
+## 9. 实现进度
+
+以市场监管档案加工为首个场景，已落地：
+
+| 设计项 | 实现 | 说明 |
+| --- | --- | --- |
+| §5.1 可选注入与服务变更通知 | `KabelPlugin.inject`、`ServiceRegistry.onChange`、`service:change` | 采用 cordis 语义：必需服务缺失时等待、注入的服务变化时重载（未单独提供 `ctx.onService`，重载即可覆盖其用途） |
+| §5.2 作用域 | `ctx.scope()` | |
+| §5.5 插件配置 Schema | `KabelPlugin.Config`（schemastery）、`kernel.plugins.updateConfig`、ui `SchemaForm`、插件管理“配置” | |
+| 子插件 / 场景预设 | `ctx.plugin()`、`@kabel/plugin-market-supervision` | |
+| §5.3 工作台 | `DocumentItem.meta`、`reveal`、`updateDocument`、`readBlob`、命令 `workspace.reveal` | 页面版本、缩略图角标、显示滤镜、`fileDecorations` 未做 |
+| §5.4 ui | `ExtensionPoints.banners`、`ToolbarItem.showKeybinding` | 工具栏具名分组与第二行未做 |
+| §3.2 字段模型 | `@kabel/plugin-fields`（`kabel:fields`） | 字段配置在插件 `Config` 中编辑；`scope`（案卷 / 卷内）、跨字段校验扩展点未做 |
+| §3.4 识别引擎 | `@kabel/plugin-ocr`（`OCR_SERVICE`）、`@kabel/plugin-llm`（`LLM_SERVICE`） | OpenAI 兼容接口，地址在插件配置中设置 |
+| §4.1 著录 | `@kabel/plugin-catalog` | |
+| §4.2 框选摘录 | `@kabel/plugin-ocr-excerpt` | 证据框暂由本插件的覆盖层绘制，`kabel:marks` 落地后改为 `evidence` 图层 |
+| §4.3 AI 提取 | `@kabel/plugin-layout-extract` | 整页 OCR + 大模型结构化提取 |
+
+未做：§3.1 档案上下文（`kabel:archive`）、§3.3 区域标记（`kabel:marks`）、§3.5 影像处理、§4.4–4.8（加工处理、脱敏、标注、质检问题、提交流程）。

@@ -117,19 +117,21 @@
 | 导出 | 说明 |
 | --- | --- |
 | `createKernel(options)` / `Kernel` | 微内核 |
-| `definePlugin` / `KabelPlugin` / `PluginContext` / `PluginInput` | 插件 |
+| `definePlugin` / `KabelPlugin`（`inject`、`Config`、`config`）/ `PluginContext`（`config`、`plugin`、`scope`）/ `PluginInput` / `Inject` | 插件 |
+| `Schema` | 配置 Schema（schemastery，与 cordis 相同） |
 | `createSlice` / `Store` / `Action` / `ActionMeta` | 状态 |
 | `History` / `HistoryState` | 撤销/重做 |
 | `EventBus` / `KabelEvents` | 事件 |
 | `CommandRegistry` / `CommandDefinition`（`mutates`、`hidden`） | 命令 |
-| `createServiceToken` / `ServiceRegistry` | 服务 |
-| `defineExtensionPoint` / `ExtensionPoints`（`toolbar` / `statusbar` / `panels` / `settings` / `contextMenu`）/ `ContributionRegistry` | 扩展点 |
+| `createServiceToken` / `ServiceRegistry`（`onChange`） | 服务 |
+| `defineExtensionPoint` / `ExtensionPoints`（`toolbar` / `statusbar` / `panels` / `settings` / `contextMenu` / `banners`）/ `ContributionRegistry` | 扩展点 |
 | `ToolbarItem` / `StatusItem` / `PanelContribution` / `SettingsPage` / `ContextMenuItem` / `View` / `DomView` | 贡献项类型 |
 | `modePlugin` / `isReadonly` | 只读模式（内置） |
 | `savePlugin` / `SaveResult` | 保存契约（内置） |
 | `NOTIFY_SERVICE` / `NotifyService` | 消息与确认对话框的服务令牌（实现在 ui 的 `feedbackPlugin`） |
 | `eventToKeybinding` / `sameKeybinding` | 快捷键工具 |
-| `kernel.plugins.list / listDisabled / disable / enable / isDisabled` | 插件管理 |
+| `kernel.plugins.list / listDisabled / disable / enable / isDisabled / status / blockers / parentOf / reload` | 插件管理 |
+| `kernel.plugins.getConfig / updateConfig / resetConfig / hasStoredConfig` | 插件配置 |
 | `resolveStorage` / `createMemoryStorage` / `ScopedStorage` | 存储 |
 | `parseKeybinding` / `matchKeybinding` / `formatKeybinding` | 快捷键 |
 | `historyPlugin()` | 撤销/重做交互入口 |
@@ -150,6 +152,7 @@
 | `themePlugin(options)` / `themeActions` / `THEME_ACCENTS` / `DEFAULT_ACCENTS` | 主题插件（内置） |
 | `useKernel` / `useSelector` / `useReadonly` / `useStoreState` / `useContributions` / `useElementSize` / `useMediaQuery` / `useEvent` | hooks |
 | `Button` / `IconButton` / `Tabs` / `Empty` / `Resizer` / `Section` / `ViewHost` / `Icon` / `PanelActions` | 通用组件 |
+| `SchemaForm` | 由 schemastery Schema 生成的配置表单 |
 | `Input` / `Textarea` / `NumberInput` / `Select` / `RadioGroup` / `CheckboxGroup` / `Switch` / `Segmented` | 表单控件（IME 组合输入安全），供功能插件复用 |
 | `cx` / `downloadFile` / `runAction` | 工具函数 |
 | `@kabel/ui/style.css` / `@kabel/ui/tailwind-preset` | 样式 / Tailwind 预设 |
@@ -159,7 +162,7 @@
 | 导出 | 说明 |
 | --- | --- |
 | `workspacePlugin(options)` / `WORKSPACE_PLUGIN` | 工作台插件（内置）：文档模型、文件目录、内容面板、影像舞台 |
-| `WORKSPACE_SERVICE` / `WorkspaceService` | `setImages / setDocuments / getDocuments / getImages / current / goto / setLoading / getStage` |
+| `WORKSPACE_SERVICE` / `WorkspaceService` | `setImages / setDocuments / getDocuments / getImages / current / goto / setLoading / getStage / acquireTool / reveal / updateDocument / readBlob` |
 | `WorkspaceExtensions` | 扩展点：`renderers`（文件渲染器）、`overlays`（舞台覆盖层）、`tools`（舞台工具条） |
 | `DocumentItem` / `DocumentRenderer` / `StageOverlayProps` / `StageTool` | 类型 |
 | `useDocuments` / `useCurrentDocument` / `useStage` | hooks |
@@ -172,3 +175,6 @@
 底座只内置布局、撤销重做、工作台、设置、主题等公共能力；其余功能以插件形式提供（见[插件开发指南](plugin-guide.md)）。工作台的配置、命令、服务、事件与扩展点见其 README：
 
 - [工作台 `@kabel/plugin-workspace`](../packages/plugins/workspace/README.md)
+- 能力插件：[字段模型 `@kabel/plugin-fields`](../packages/plugins/fields/README.md)、[文字识别 `@kabel/plugin-ocr`](../packages/plugins/ocr/README.md)、[大模型 `@kabel/plugin-llm`](../packages/plugins/llm/README.md)、[框选 `@kabel/plugin-region-select`](../packages/plugins/region-select/README.md)
+- 业务插件：[著录面板 `@kabel/plugin-catalog`](../packages/plugins/catalog/README.md)、[框选识别回填 `@kabel/plugin-ocr-excerpt`](../packages/plugins/ocr-excerpt/README.md)、[版面分析自动填充 `@kabel/plugin-layout-extract`](../packages/plugins/layout-extract/README.md)
+- 场景预设：[市场监管档案加工 `@kabel/plugin-market-supervision`](../packages/plugins/market-supervision/README.md)

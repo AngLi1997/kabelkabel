@@ -45,17 +45,69 @@ editor.unuse('acme:hello');                                  // 卸载，按钮�
 | `ctx.onDispose(fn)` | 额外清理逻辑（也可由 `setup` 返回清理函数） |
 | `ctx.getState()` / `ctx.dispatch(action)` | 读取 / 修改状态 |
 | `ctx.storage` | 以插件名为命名空间的持久化存储（`get(key, fallback)` / `set` / `remove`） |
+| `ctx.config` | 生效的配置（声明 `Config` 时；也是 `setup` 的第二个参数） |
+| `ctx.plugin(input, config?)` | 注册子插件，随本插件停用 / 重载 / 卸载 |
+| `ctx.scope()` | 子作用域：同样的注册 API，可单独 `dispose()` |
 | `ctx.kernel` / `bus` / `store` / `history` / `services` / `extensions` | 底层对象 |
 
-## 3. 依赖
+## 3. 依赖：`inject` 服务（推荐）与 `dependencies`
+
+协作能力一律以**服务**表达（cordis 的 `inject`）：
 
 ```ts
-definePlugin({ name: 'acme:x', dependencies: ['kabel:workspace'], setup(ctx) { ... } });
+definePlugin({
+  name: 'acme:x',
+  inject: [WORKSPACE_SERVICE, FIELDS_SERVICE],                 // 必需
+  // inject: { required: [FIELDS_SERVICE], optional: [OCR_SERVICE] },
+  setup(ctx) {
+    const fields = ctx.services.get(FIELDS_SERVICE);           // 必需服务一定存在
+    const ocr = ctx.services.tryGet(OCR_SERVICE);              // 可选服务可能不存在
+  },
+});
 ```
 
-- 同批注册时按依赖拓扑排序，与书写顺序无关；缺失或循环依赖会报错。
-- 卸载被依赖的插件时，依赖方会先被卸载。
-- 内置插件名：`kabel:layout`、`kabel:history`、`kabel:mode`、`kabel:save`、`kabel:feedback`、`kabel:keymap`、`kabel:contextmenu`、`kabel:palette`、`kabel:workspace`、`kabel:settings`、`kabel:theme`（常量 `WORKSPACE_PLUGIN`、`WORKSPACE_PLUGIN`）。业务插件统一声明 `dependencies: ['kabel:workspace']`（常量 `WORKSPACE_PLUGIN`），只通过工作台的服务与扩展点协作。
+- 必需服务未就绪时插件处于**等待**（`kernel.plugins.status(name) === 'pending'`），不执行 setup、不注册任何贡献；就绪后自动启用；服务被撤回时插件停下回到等待。与注册顺序无关。
+- 注入的服务（必需或可选）出现、撤回、被覆盖时插件**重载**（先释放再 setup），所以在 setup 里缓存服务对象是安全的。插件自己提供的服务不会触发自己重载。
+- 重载会重新注册切片（回到初始状态）；需要跨重载保留的状态自行保留（例如模块级 `WeakMap<Kernel, State>`）。
+- `dependencies`（插件名）只用于必须与某个插件同生共死的场景：同批注册时按拓扑排序，缺失或循环依赖报错；被依赖者停下或卸载时依赖方一并停下或卸载。
+- 内置插件名：`kabel:layout`、`kabel:history`、`kabel:mode`、`kabel:save`、`kabel:feedback`、`kabel:keymap`、`kabel:contextmenu`、`kabel:palette`、`kabel:workspace`（`WORKSPACE_PLUGIN`）、`kabel:settings`、`kabel:theme`。
+- 分层规则：业务插件只依赖工作台与能力插件的**契约**（令牌、类型、事件），业务插件之间不互相 import、不互相依赖，见 [架构 › 插件分层](architecture.md#插件分层)。
+
+## 3.5 配置：`Config`
+
+```ts
+import { definePlugin, Schema } from '@kabel/core';
+
+export const ocrPlugin = (config?: Partial<OcrConfig>) =>
+  definePlugin({
+    name: 'kabel:ocr',
+    title: '文字识别（OCR）',
+    Config: Schema.object({
+      endpoint: Schema.string().default('http://127.0.0.1:8118/v1').description('服务地址'),
+      apiKey: Schema.string().role('secret').default('').description('API Key'),
+    }),
+    config,                                   // 注册方配置（预设 / 宿主给的默认值）
+    setup(ctx, options) { /* options 已校验并补全默认值 */ },
+  });
+```
+
+- 生效配置 = 用户在 设置 › 插件管理 › 配置 中保存的配置（优先）或注册方配置，经 `Config` 校验并补全默认值。
+- 配置表单由 Schema 自动生成：`string`（`role('textarea' | 'secret')`）、`number` / `natural`、`boolean`、`union(const…)` 下拉、`array(union(const…))` 多选、`array(object)` 卡片列表或 `role('table')` 表格、嵌套 `object` 分组。
+- 保存 / 恢复默认后插件重载；代码中可用 `kernel.plugins.getConfig / updateConfig / resetConfig`。不要为插件配置另写设置页。
+
+## 3.6 子插件与场景预设：`ctx.plugin`
+
+```ts
+definePlugin({
+  name: 'acme:scene',
+  title: '某场景',
+  setup(ctx) {
+    ctx.plugin([fieldsPlugin({ groups }), catalogPlugin({ region: 'left' }), ocrPlugin({ endpoint })]);
+  },
+});
+```
+
+子插件随父插件停用 / 重载 / 卸载，在插件管理中列在父插件下；用户单独停用的子插件在父插件重载后保持停用。场景预设（如 `@kabel/plugin-market-supervision`）就是这样一个只组合子插件的插件。`ctx.scope()` 则用于更细的生命周期（例如随当前档案注册、切换档案时 `scope.dispose()`）。
 - `title` 为设置 › 插件管理中的显示名称；`builtin: true` 表示 baseline 内置插件：不可在运行期停用，也不在插件管理中显示（布局、撤销与重做、工作台、设置、主题等）。插件管理以树形列表显示：依赖其他插件的插件缩进列在被依赖者之下。
 
 ## 4. 状态
@@ -258,8 +310,10 @@ ctx.services.tryGet(TAG_SERVICE)?.add('档案');   // 可选依赖
 
 | 令牌 | 能力 |
 | --- | --- |
-| `WORKSPACE_SERVICE` | `set/getAll/current/goto/setLoading`（文件列表与当前文件） |
-| `WORKSPACE_SERVICE` | `setImages/getImages/current/goto`（图片来源解析） |
+| `WORKSPACE_SERVICE` | `setImages/setDocuments/getDocuments/current/goto/reveal/updateDocument/readBlob/acquireTool`（文件、影像舞台） |
+| `FIELDS_SERVICE`（`@kabel/plugin-fields`） | 字段配置与字段值（来源、复核、证据）、焦点、校验 |
+| `OCR_SERVICE` / `LLM_SERVICE`（`@kabel/plugin-ocr` / `-llm`） | 文字识别 / 大模型（OpenAI 兼容接口） |
+| `REGION_SERVICE`（`@kabel/plugin-region-select`） | 请求一次框选、无 UI 裁剪 |
 | `NOTIFY_SERVICE` | `notify/dismiss/confirm` |
 | `LAYOUT_CONFIG` | 解析后的布局配置（只读） |
 | `THEME_ACCENTS` | 可选主题色列表 |
@@ -294,7 +348,7 @@ ctx.bus.emit('tags:changed', { tags });
 ctx.on('document:change', ({ document }) => ...);
 ```
 
-内置事件：`ready`、`error`、`plugin:registered`、`plugin:unregistered`、`command:before`、`command:after`、`document:change`、`save`（可异步否决）、`saved`、`save:error`、`mode:change`。可否决的流程用 `bus.emitAsync`，处理器返回的 Promise 会被等待。
+内置事件：`ready`、`error`、`plugin:registered`、`plugin:unregistered`、`plugin:status`、`plugin:config`、`service:change`、`command:before`、`command:after`、`document:change`、`save`（可异步否决）、`saved`、`save:error`、`mode:change`。可否决的流程用 `bus.emitAsync`，处理器返回的 Promise 会被等待。
 
 ## 11. 单元测试
 
@@ -341,7 +395,9 @@ packages/plugins/my-plugin/
 
 ## 14. 检查清单
 
-- [ ] `name` 唯一，设置了 `title`，声明了 `dependencies`
+- [ ] `name` 唯一，设置了 `title`；用 `inject` 声明所需服务（只依赖契约，不 import 其他业务插件）
+- [ ] 需要用户配置的项声明在 `Config` 中（工厂参数作为注册方配置）
+- [ ] 能力插件的令牌、类型、事件放在 `contract.ts`
 - [ ] 插件目录下有 README.md（功能与集成方式）
 - [ ] 所有注册都通过 `ctx`，卸载后无残留（可写一个 `kernel.unuse` 的测试）
 - [ ] reducer 纯函数、不可变更新；需要撤销的切片设置 `history: true`，并为 action 提供 `label`
