@@ -37,12 +37,11 @@ export const DataExchangeConfigSchema: Schema<Partial<DataExchangeConfig>, DataE
   controls: Schema.array(
     Schema.union([
       Schema.const('load').description('加载数据'),
-      Schema.const('submit').description('提交数据'),
-      Schema.const('export').description('导出文件'),
-      Schema.const('import').description('导入文件'),
+      Schema.const('view').description('查看数据'),
+      Schema.const('export').description('导出数据'),
     ]),
   )
-    .default(['load', 'submit'])
+    .default(['load', 'view', 'export'])
     .description('显示的控件'),
   format: Schema.union([Schema.const('json').description('JSON'), Schema.const('yaml').description('YAML')])
     .default('json')
@@ -58,9 +57,9 @@ export const DataExchangeConfigSchema: Schema<Partial<DataExchangeConfig>, DataE
     .description('数据项'),
   fieldsPath: Schema.string().default('fields').description('字段值路径（留空放在根上）'),
   mapping: Schema.array(MappingSchema).role('table').default([]).description('字段对照（为空时按字段标识交换全部字段）'),
-  skipEmpty: Schema.boolean().default(false).description('提交时省略空值'),
-  validate: Schema.boolean().default(true).description('提交前校验必填'),
-  submitOnSave: Schema.boolean().default(false).description('保存时提交'),
+  skipEmpty: Schema.boolean().default(false).description('导出时省略空值'),
+  validate: Schema.boolean().default(true).description('导出前校验必填'),
+  submitOnSave: Schema.boolean().default(false).description('保存时导出'),
   confirmLoad: Schema.boolean().default(true).description('有未保存修改时加载前确认'),
-  filename: Schema.string().default('archive').description('导出文件名'),
+  filename: Schema.string().default('archive').description('建议的文件名'),
 }) as never;

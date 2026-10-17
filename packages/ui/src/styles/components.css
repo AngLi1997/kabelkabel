@@ -28,6 +28,10 @@
 .kb-btn--primary {
   border-color: var(--kb-color-primary);
   background: var(--kb-color-primary);
+}
+
+/* .kb-root button { color: inherit } 优先级更高，主按钮字色必须写在这里才生效 */
+.kb-root .kb-btn--primary:not(:disabled) {
   color: #fff;
 }
 

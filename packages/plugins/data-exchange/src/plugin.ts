@@ -1,4 +1,5 @@
-import { createSlice, definePlugin, ExtensionPoints, NOTIFY_SERVICE, type ToolbarItem } from '@kabel/core';
+import { createSlice, definePlugin, ExtensionPoints, NOTIFY_SERVICE } from '@kabel/core';
+import { h } from 'preact';
 import { FIELDS_SERVICE, isEmptyValue, type FieldRaw } from '@kabel/plugin-fields';
 import { WORKSPACE_SERVICE, type DocumentItem } from '@kabel/plugin-workspace';
 import { DataExchangeConfigSchema, type DataExchangeConfig } from './config';
@@ -6,7 +7,6 @@ import {
   DATA_EXCHANGE_PLUGIN,
   DATA_EXCHANGE_SERVICE,
   type DataExchangeService,
-  type ExchangeControl,
   type ExchangeData,
   type ExchangeDocument,
   type ExchangeFormat,
@@ -14,11 +14,16 @@ import {
   type ExchangeLoadResult,
   type ExchangePayload,
 } from './contract';
-import { deserialize, FORMAT_EXT, FORMAT_MIME, formatOfName, getPath, serialize, setPath } from './format';
+import { deserialize, FORMAT_EXT, FORMAT_MIME, getPath, serialize, setPath } from './format';
+import { EXCHANGE_CONTROLS, ExchangeControls } from './ui';
 
 export interface DataExchangeState {
   /** 进行中的操作 */
   busy: 'load' | 'submit' | null;
+  /** 查看数据对话框中的文本；null 表示关闭 */
+  preview: string | null;
+  /** 加载数据对话框是否打开 */
+  loader: boolean;
 }
 
 declare module '@kabel/core' {
@@ -29,9 +34,11 @@ declare module '@kabel/core' {
 
 export const dataExchangeSlice = createSlice({
   name: 'dataExchange',
-  initialState: { busy: null } as DataExchangeState,
+  initialState: { busy: null, preview: null, loader: false } as DataExchangeState,
   reducers: {
-    busy: (s: DataExchangeState, busy: DataExchangeState['busy']) => (s.busy === busy ? s : { busy }),
+    busy: (s: DataExchangeState, busy: DataExchangeState['busy']) => (s.busy === busy ? s : { ...s, busy }),
+    preview: (s: DataExchangeState, preview: string | null) => (s.preview === preview ? s : { ...s, preview }),
+    loader: (s: DataExchangeState, loader: boolean) => (s.loader === loader ? s : { ...s, loader }),
   },
 });
 
@@ -40,20 +47,15 @@ const messageOf = (error: unknown) => (error instanceof Error ? error.message : 
 /** 导出时不输出只在当前页面有效的地址 */
 const portableUrl = (src: string) => (/^(blob|data):/i.test(src) ? undefined : src);
 
-const CONTROLS: Record<ExchangeControl, Omit<ToolbarItem, 'id' | 'command'> & { title: string }> = {
-  load: { title: '加载数据', icon: 'file', label: '加载数据' },
-  import: { title: '导入文件', icon: 'folder', label: '导入' },
-  export: { title: '导出文件', icon: 'download', label: '导出' },
-  submit: { title: '提交数据', icon: 'submit', label: '提交', primary: true },
-};
-
 /**
  * 数据对接（业务插件）：把字段模型与文件列表导出为 JSON / YAML 交给业务层，或载入业务层提供的数据。
  *
- * 插件不发请求、不做持久化：
- * - **加载**：`data-exchange:load`（emitAsync）向业务层要数据，处理器返回对象或文本；
- * - **提交**：导出后经 `data-exchange:submit`（emitAsync）交给业务层，reject 表示失败；
- * - 控件、格式、数据项与字段对照都在插件配置中设置。
+ * 插件不发请求、不做持久化。工具栏控件样式一致：
+ * - **加载数据**：弹出对话框，按配置的格式选择文件或粘贴文本后载入字段；
+ * - **查看数据**：按当前配置序列化并展示，不提交；
+ * - **导出数据**：序列化后经 `data-exchange:submit`（emitAsync）交给业务层提交，reject 表示失败。
+ *
+ * 业务层加载仍走 `request()` / `data-exchange:load`，不由工具栏按钮触发。
  */
 export const dataExchangePlugin = (config?: Partial<DataExchangeConfig>) =>
   definePlugin({
@@ -72,6 +74,12 @@ export const dataExchangePlugin = (config?: Partial<DataExchangeConfig>) =>
       const has = (item: DataExchangeConfig['items'][number]) => options.items.includes(item);
 
       ctx.registerSlice(dataExchangeSlice);
+      const closePreview = () => kernel.dispatch(dataExchangeSlice.actions.preview(null));
+      const closeLoader = () => kernel.dispatch(dataExchangeSlice.actions.loader(false));
+      ctx.onDispose(() => {
+        closePreview();
+        closeLoader();
+      });
       const busy = () => kernel.getState().dataExchange.busy;
       const setBusy = (value: DataExchangeState['busy']) => kernel.dispatch(dataExchangeSlice.actions.busy(value));
 
@@ -178,7 +186,7 @@ export const dataExchangePlugin = (config?: Partial<DataExchangeConfig>) =>
 
       /** 校验并交给业务层；提示由调用方决定（保存流程中由保存插件统一提示） */
       const deliver = async (format?: ExchangeFormat): Promise<ExchangePayload> => {
-        if (!kernel.bus.listenerCount('data-exchange:submit')) throw new Error('未接入提交接口');
+        if (!kernel.bus.listenerCount('data-exchange:submit')) throw new Error('未接入导出接口');
         if (options.validate) {
           const errors = Object.keys(fields.validate());
           if (errors.length) {
@@ -196,109 +204,93 @@ export const dataExchangePlugin = (config?: Partial<DataExchangeConfig>) =>
         setBusy('submit');
         try {
           const payload = await deliver(format);
-          notify('提交成功', 'success');
+          notify('导出成功', 'success');
           return payload;
         } catch (error) {
-          notify(`提交失败：${messageOf(error)}`, 'error');
+          notify(`导出失败：${messageOf(error)}`, 'error');
           throw error;
         } finally {
           setBusy(null);
         }
       };
 
-      const download = (format?: ExchangeFormat): ExchangePayload => {
-        const payload = exportAs(format);
-        if (typeof document !== 'undefined' && typeof URL.createObjectURL === 'function') {
-          const url = URL.createObjectURL(new Blob([payload.text], { type: payload.mime }));
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = payload.filename;
-          a.style.display = 'none';
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          setTimeout(() => URL.revokeObjectURL(url), 0);
+      /** 把对话框中的文本按配置格式载入；不向业务层请求数据 */
+      const applyText = async (text: string): Promise<ExchangeLoadResult | null> => {
+        if (!text.trim()) {
+          notify('请输入或选择文件', 'warning');
+          return null;
         }
-        return payload;
+        if (!(await confirmDiscard())) return null;
+        setBusy('load');
+        try {
+          const result = await load(text);
+          notify(`已加载 ${result.fields} 个字段${result.documents ? `、${result.documents} 个文件` : ''}`, 'success');
+          closeLoader();
+          return result;
+        } catch (error) {
+          notify(`加载失败：${messageOf(error)}`, 'error');
+          throw error;
+        } finally {
+          setBusy(null);
+        }
       };
 
-      /** 选择本地 JSON / YAML 文件并载入；必须在用户手势中调用 */
-      const importFile = () =>
-        new Promise<ExchangeLoadResult | null>((resolve, reject) => {
-          const input = document.createElement('input');
-          input.type = 'file';
-          input.accept = '.json,.yaml,.yml,application/json,application/yaml';
-          input.style.display = 'none';
-          const done = () => input.remove();
-          input.addEventListener('cancel', () => {
-            done();
-            resolve(null);
-          });
-          input.addEventListener('change', async () => {
-            const file = input.files?.[0];
-            done();
-            if (!file) return resolve(null);
-            try {
-              if (!(await confirmDiscard())) return resolve(null);
-              const result = await load(await file.text(), formatOfName(file.name) ?? options.format);
-              notify(`已导入 ${result.fields} 个字段${result.documents ? `、${result.documents} 个文件` : ''}`, 'success');
-              resolve(result);
-            } catch (error) {
-              notify(`导入失败：${messageOf(error)}`, 'error');
-              reject(error);
-            }
-          });
-          document.body.appendChild(input);
-          input.click();
-        });
-
-      const service: DataExchangeService = { collect, export: exportAs, parse, load, request, submit, download };
+      const service: DataExchangeService = { collect, export: exportAs, parse, load, request, submit };
       ctx.provide(DATA_EXCHANGE_SERVICE, service);
 
       // 命令失败已提示，不再向命令调用方抛出
       const quiet = <T,>(task: () => Promise<T>) => task().catch(() => undefined);
       ctx.registerCommand({
         id: 'dataExchange.load',
-        title: CONTROLS.load.title,
-        icon: CONTROLS.load.icon,
+        title: EXCHANGE_CONTROLS.load.title,
+        icon: EXCHANGE_CONTROLS.load.icon,
         mutates: true,
         enabled: () => !busy(),
-        run: () => quiet(request),
+        run: () => {
+          closePreview();
+          kernel.dispatch(dataExchangeSlice.actions.loader(true));
+        },
       });
       ctx.registerCommand({
-        id: 'dataExchange.submit',
-        title: CONTROLS.submit.title,
-        icon: CONTROLS.submit.icon,
+        id: 'dataExchange.apply',
+        title: '载入文本',
+        hidden: true,
+        mutates: true,
         enabled: () => !busy(),
-        run: () => quiet(() => submit()),
+        run: (_kernel, text: unknown) => quiet(() => applyText(typeof text === 'string' ? text : '')),
+      });
+      ctx.registerCommand({
+        id: 'dataExchange.view',
+        title: EXCHANGE_CONTROLS.view.title,
+        icon: EXCHANGE_CONTROLS.view.icon,
+        enabled: () => !busy(),
+        run: () => {
+          closeLoader();
+          kernel.dispatch(dataExchangeSlice.actions.preview(exportAs().text));
+        },
       });
       ctx.registerCommand({
         id: 'dataExchange.export',
-        title: CONTROLS.export.title,
-        icon: CONTROLS.export.icon,
-        run: () => void download(),
-      });
-      ctx.registerCommand({
-        id: 'dataExchange.import',
-        title: CONTROLS.import.title,
-        icon: CONTROLS.import.icon,
-        mutates: true,
+        title: EXCHANGE_CONTROLS.export.title,
+        icon: EXCHANGE_CONTROLS.export.icon,
         enabled: () => !busy(),
-        run: () => quiet(importFile),
+        run: () => quiet(() => submit()),
       });
 
-      // 按配置显示控件（顺序取配置中的顺序）
-      options.controls.forEach((control, i) => {
-        const { title, ...item } = CONTROLS[control];
-        ctx.contribute(ExtensionPoints.toolbar, {
-          ...item,
-          id: `dataExchange.${control}`,
-          command: `dataExchange.${control}`,
-          group: 'end',
-          order: i,
-          showLabel: true,
-          tooltip: title,
-        });
+      // 三个控件放在同一个视图里，样式不随断点或主按钮规则分叉
+      ctx.contribute(ExtensionPoints.toolbar, {
+        id: 'dataExchange.controls',
+        type: 'view',
+        group: 'end',
+        order: 0,
+        view: (props) =>
+          h(ExchangeControls, {
+            kernel: props.kernel,
+            controls: options.controls,
+            format: options.format,
+            onClosePreview: closePreview,
+            onCloseLoader: closeLoader,
+          }),
       });
 
       if (options.submitOnSave) ctx.on('save', () => deliver().then(() => undefined));

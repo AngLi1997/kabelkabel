@@ -3,14 +3,15 @@ import type { FieldSource, FieldValue } from '@kabel/plugin-fields';
 
 /**
  * 数据对接的对外契约：插件只负责“当前数据 ⇄ 指定格式”的转换，读取与持久化由业务层（宿主）完成：
- * - 加载：业务层在 `data-exchange:load` 里返回数据（来自接口、持久化或固定变量都可以），插件按配置载入；
- * - 提交：插件把数据导出为 JSON / YAML，经 `data-exchange:submit` 交给业务层提交。
+ * - 加载数据：工具栏弹出对话框，按配置格式选择文件或粘贴文本后载入；业务层仍可经 `request()` / `data-exchange:load` 提供数据；
+ * - 查看数据：按当前配置序列化并展示，不提交；
+ * - 导出数据：插件把数据导出为 JSON / YAML，经 `data-exchange:submit` 交给业务层提交。
  */
 
 export type ExchangeFormat = 'json' | 'yaml';
 
-/** 工具栏控件：加载数据、提交数据、导出文件、导入文件 */
-export type ExchangeControl = 'load' | 'submit' | 'export' | 'import';
+/** 工具栏控件：加载数据（文件或文本）、查看数据、导出数据（接口提交） */
+export type ExchangeControl = 'load' | 'view' | 'export';
 
 /** 数据项：字段值、字段来源与复核状态、文件列表 */
 export type ExchangeItem = 'fields' | 'review' | 'documents';
@@ -39,7 +40,7 @@ export type ExchangeData = Record<string, unknown> & {
   documents?: ExchangeDocument[];
 };
 
-/** 提交 / 导出时交给业务层的内容 */
+/** 导出数据时交给业务层的内容 */
 export interface ExchangePayload {
   format: ExchangeFormat;
   /** 结构化数据（业务层可直接使用） */
@@ -47,7 +48,7 @@ export interface ExchangePayload {
   /** 按格式序列化后的文本 */
   text: string;
   mime: string;
-  /** 建议的文件名（导出文件时使用） */
+  /** 建议的文件名 */
   filename: string;
 }
 
@@ -78,8 +79,6 @@ export interface DataExchangeService {
   request(): Promise<ExchangeLoadResult | null>;
   /** 导出并交给业务层提交（`data-exchange:submit`）；成功返回交出的内容 */
   submit(format?: ExchangeFormat): Promise<ExchangePayload>;
-  /** 导出为文件下载 */
-  download(format?: ExchangeFormat): ExchangePayload;
 }
 
 export const DATA_EXCHANGE_SERVICE = createServiceToken<DataExchangeService>('kabel.dataExchange');
@@ -93,7 +92,7 @@ declare module '@kabel/core' {
      */
     'data-exchange:load': ExchangeLoadRequest;
     /**
-     * 提交数据：处理器负责提交与持久化，返回的 Promise 被等待，reject 表示提交失败。
+     * 导出数据：处理器负责提交与持久化，返回的 Promise 被等待，reject 表示导出失败。
      * @mode emitAsync
      */
     'data-exchange:submit': ExchangePayload;

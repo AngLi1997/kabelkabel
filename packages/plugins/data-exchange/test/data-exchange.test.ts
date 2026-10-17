@@ -1,7 +1,10 @@
-import { ExtensionPoints, savePlugin } from '@kabel/core';
+import { ExtensionPoints, savePlugin, type Kernel } from '@kabel/core';
 import { setupPlugins } from '@kabel/core/testing';
 import { field, FIELDS_SERVICE, fieldsPlugin } from '@kabel/plugin-fields';
 import { workspacePlugin, WORKSPACE_SERVICE, type DocumentItem } from '@kabel/plugin-workspace';
+import { KernelContext } from '@kabel/ui';
+import { h, render } from 'preact';
+import { act } from 'preact/test-utils';
 import { describe, expect, it, vi } from 'vitest';
 import { parse as parseYaml } from 'yaml';
 import { DATA_EXCHANGE_SERVICE, dataExchangePlugin, type DataExchangeConfig, type ExchangePayload } from '../src';
@@ -73,14 +76,14 @@ describe('dataExchangePlugin', () => {
     expect(fields.get('name')!.source).toBe('host');
   });
 
-  it('加载数据：向业务层请求，载入字段与文件列表', async () => {
-    const { kernel, fields } = await setup({ items: ['fields', 'documents'] });
+  it('业务层加载：request 向业务层要数据并载入', async () => {
+    const { kernel, fields, exchange } = await setup({ items: ['fields', 'documents'] });
     const handler = vi.fn(async () => ({
       fields: { name: '四川星辰信息技术有限公司', date: '2026年08月11日', unknown: 'x' },
       documents: [{ name: '营业执照.jpg', group: '营业执照', url: 'https://oss.example.com/license.jpg' }],
     }));
     kernel.bus.on('data-exchange:load', handler);
-    await kernel.execute('dataExchange.load');
+    await exchange.request();
     expect(handler).toHaveBeenCalledWith({ format: 'json' });
     expect(fields.values()).toEqual({ name: '四川星辰信息技术有限公司', date: '2026-08-11' });
     expect(kernel.services.get(WORKSPACE_SERVICE).getDocuments().map((d) => d.name)).toEqual(['营业执照.jpg']);
@@ -88,23 +91,66 @@ describe('dataExchangePlugin', () => {
   });
 
   it('业务层可以返回文本', async () => {
-    const { kernel, fields } = await setup({ format: 'yaml' });
+    const { kernel, fields, exchange } = await setup({ format: 'yaml' });
     kernel.bus.on('data-exchange:load', () => 'fields:\n  name: 固定数据\n');
-    await kernel.execute('dataExchange.load');
+    await exchange.request();
     expect(fields.get('name')!.value).toBe('固定数据');
   });
 
-  it('提交：校验通过后把导出内容交给业务层；未通过时不提交', async () => {
+  it('加载数据：弹出对话框，选择文件或粘贴文本后载入，不请求业务层', async () => {
+    const { kernel, fields } = await setup();
+    const handler = vi.fn();
+    kernel.bus.on('data-exchange:load', handler);
+    await kernel.execute('dataExchange.load');
+    expect(handler).not.toHaveBeenCalled();
+    expect(kernel.getState().dataExchange.loader).toBe(true);
+
+    const host = mountControls(kernel);
+    const input = host.querySelector<HTMLInputElement>('input[type="file"]')!;
+    expect(input.accept).toContain('.json');
+    const file = new File(['{"fields":{"name":"文件数据"}}'], 'archive.json', { type: 'application/json' });
+    await act(async () => {
+      Object.defineProperty(input, 'files', { configurable: true, value: [file] });
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      await file.text();
+    });
+    expect(host.querySelector('textarea')!.value).toContain('文件数据');
+
+    const apply = [...host.querySelectorAll('.kb-dx__footer button')].find((b) => b.textContent === '加载')!;
+    await act(async () => {
+      apply.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+    expect(fields.get('name')!.value).toBe('文件数据');
+    expect(kernel.getState().dataExchange.loader).toBe(false);
+    expect(handler).not.toHaveBeenCalled();
+    host.remove();
+
+    await kernel.execute('dataExchange.apply', '{"fields":{"name":"手动输入"}}');
+    expect(fields.get('name')!.value).toBe('手动输入');
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('加载对话框按配置只接受 YAML', async () => {
+    const { kernel } = await setup({ format: 'yaml' });
+    await kernel.execute('dataExchange.load');
+    const host = mountControls(kernel);
+    expect(host.querySelector<HTMLInputElement>('input[type="file"]')!.accept).toContain('.yaml');
+    expect(host.textContent).toContain('选择 YAML 文件');
+    host.remove();
+  });
+
+  it('导出数据：校验通过后把内容交给业务层；未通过时不导出', async () => {
     const { kernel, fields } = await setup({ format: 'yaml' });
     const submitted: ExchangePayload[] = [];
     kernel.bus.on('data-exchange:submit', async (payload) => void submitted.push(payload));
 
-    await kernel.execute('dataExchange.submit');
+    await kernel.execute('dataExchange.export');
     expect(submitted).toHaveLength(0);
     expect(fields.focused()).toBe('name');
 
     fields.set('name', '星辰');
-    await kernel.execute('dataExchange.submit');
+    await kernel.execute('dataExchange.export');
     expect(submitted).toHaveLength(1);
     expect(submitted[0]).toMatchObject({ format: 'yaml', data: { fields: { name: '星辰' } } });
     expect(submitted[0]!.text).toContain('name: 星辰');
@@ -117,7 +163,7 @@ describe('dataExchangePlugin', () => {
     });
     fields.set('name', '星辰');
     await expect(exchange.submit()).rejects.toThrow('接口 500');
-    await expect(kernel.execute('dataExchange.submit')).resolves.toBeUndefined();
+    await expect(kernel.execute('dataExchange.export')).resolves.toBeUndefined();
   });
 
   it('保存时提交：并入保存契约，提交成功才标记已保存', async () => {
@@ -132,20 +178,48 @@ describe('dataExchangePlugin', () => {
     expect(kernel.getState().history.dirty).toBe(false);
   });
 
-  it('控件按配置显示', async () => {
-    const { toolbar, kernel } = await setup({ controls: ['submit', 'export'] });
-    const ids = toolbar()
-      .filter((t) => t.id.startsWith('dataExchange.'))
-      .map((t) => t.id);
-    expect(ids).toEqual(['dataExchange.submit', 'dataExchange.export']);
+  it('查看数据：展示当前序列化内容，不提交', async () => {
+    const { kernel, fields } = await setup();
+    const submit = vi.fn();
+    kernel.bus.on('data-exchange:submit', submit);
+    fields.set('name', '星辰');
+    await kernel.execute('dataExchange.view');
+    expect(submit).not.toHaveBeenCalled();
+    expect(kernel.getState().dataExchange.preview).toContain('星辰');
+
+    const host = mountControls(kernel);
+    expect(host.querySelector('.kb-dx__pre')?.textContent).toContain('星辰');
+    act(() => {
+      host.querySelector<HTMLButtonElement>('.kb-dx__header button')?.click();
+    });
+    expect(kernel.getState().dataExchange.preview).toBeNull();
+    expect(host.querySelector('.kb-dx__pre')).toBeNull();
+    host.remove();
+  });
+
+  it('控件按配置顺序显示，且样式一致', async () => {
+    const { kernel } = await setup({ controls: ['export', 'load'] });
+    const host = mountControls(kernel);
+    const buttons = [...host.querySelectorAll('.kb-dx .kb-btn')];
+    expect(buttons.map((b) => b.querySelector('.kb-btn__label')?.textContent)).toEqual(['导出数据', '加载数据']);
+    expect(buttons.every((b) => b.classList.contains('kb-btn--text') && !b.classList.contains('kb-btn--primary'))).toBe(true);
+    host.remove();
 
     await kernel.plugins.updateConfig('kabel:data-exchange', { ...kernel.plugins.getConfig<object>('kabel:data-exchange'), controls: ['load'] });
-    expect(
-      kernel.extensions
-        .get(ExtensionPoints.toolbar)
-        .getAll()
-        .filter((t) => t.id.startsWith('dataExchange.'))
-        .map((t) => t.id),
-    ).toEqual(['dataExchange.load']);
+    const next = mountControls(kernel);
+    expect([...next.querySelectorAll('.kb-btn__label')].map((n) => n.textContent)).toEqual(['加载数据']);
+    next.remove();
   });
 });
+
+function mountControls(kernel: Kernel): HTMLElement {
+  const item = kernel.extensions.get(ExtensionPoints.toolbar).getAll().find((t) => t.id === 'dataExchange.controls');
+  if (!item || item.type !== 'view' || typeof item.view !== 'function') throw new Error('缺少数据对接控件');
+  const host = document.createElement('div');
+  host.className = 'kb-root';
+  document.body.appendChild(host);
+  act(() => {
+    render(h(KernelContext.Provider, { value: kernel, children: h(item.view as never, { kernel }) }), host);
+  });
+  return host;
+}

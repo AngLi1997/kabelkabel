@@ -11,7 +11,7 @@
 | 框选 `kabel:region-select` | 能力 | 不显示“框选结果”面板 |
 | 框选识别回填 `kabel:ocr-excerpt` | 业务 | `Ctrl+O` |
 | 版面分析自动填充 `kabel:layout-extract` | 业务 | 范围：当前材料项 |
-| 数据对接 `kabel:data-exchange` | 业务 | 控件：加载数据、提交；JSON |
+| 数据对接 `kabel:data-exchange` | 业务 | 控件：加载数据、查看数据、导出数据；JSON |
 
 布局：左侧档案详情数据、中间档案影像、右侧电子文件列表（同 id 贡献把工作台的文件目录移到右侧）。
 
@@ -38,7 +38,7 @@ marketSupervisionPreset({
   ocr: { endpoint: 'http://ocr.example.com/v1' },
   llm: { model: 'qwen2.5-14b-instruct' },
   layoutExtract: false,                     // 不启用版面分析
-  exchange: { controls: ['load', 'submit', 'export'], format: 'yaml' },   // 数据对接：控件与格式
+  exchange: { controls: ['load', 'view', 'export'], format: 'yaml' },   // 数据对接：加载、查看与导出
 });
 ```
 

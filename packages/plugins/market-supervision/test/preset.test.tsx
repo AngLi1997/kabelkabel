@@ -51,7 +51,11 @@ describe('marketSupervisionPreset', () => {
     expect(labels.some((l) => l?.startsWith('OCR 框选'))).toBe(true);
     expect(labels.some((l) => l?.startsWith('版面分析'))).toBe(true);
     expect(labels).toContain('加载数据');
-    expect(labels).toContain('提交');
+    expect(labels).toContain('查看数据');
+    expect(labels).toContain('导出数据');
+    const exchange = [...el.querySelectorAll('.kb-dx .kb-btn')];
+    expect(exchange.map((n) => n.querySelector('.kb-btn__label')?.textContent)).toEqual(['加载数据', '查看数据', '导出数据']);
+    expect(exchange.every((n) => n.classList.contains('kb-btn--text') && !n.classList.contains('kb-btn--primary'))).toBe(true);
   });
 
   it('在插件配置中新增字段后，著录面板随之更新，已填写的值保留', async () => {

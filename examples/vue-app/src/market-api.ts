@@ -7,9 +7,9 @@ import { MARKET_FIELD_GROUPS } from '@kabel/plugin-market-supervision';
  * 加载时优先读取上次提交的数据（localStorage 模拟接口持久化），没有则使用固定变量。
  */
 
-/** 数据对接插件的初始配置：按分组嵌套输出（`subject.subjectName`…），显示全部控件 */
+/** 数据对接插件的初始配置：按分组嵌套输出（`subject.subjectName`…），加载与导出都走业务层接口 */
 export const marketExchange: Partial<DataExchangeConfig> = {
-  controls: ['load', 'import', 'export', 'submit'],
+  controls: ['load', 'view', 'export'],
   format: 'json',
   items: ['fields', 'review'],
   fieldsPath: 'archive',

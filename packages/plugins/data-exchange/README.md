@@ -1,8 +1,8 @@
 # @kabel/plugin-data-exchange · 数据对接（业务插件）
 
-把当前数据（字段值、来源与复核状态、文件列表）导出为 **JSON / YAML** 交给业务层提交，或载入业务层提供的数据，用来和接口对接。
+把当前数据（字段值、来源与复核状态、文件列表）导出为 **JSON / YAML** 交给业务层提交，或把文件 / 文本载入字段，用来和接口对接。
 
-插件**只做数据转换**：不发请求、不做持久化。数据从哪里来（接口、持久化存储、固定变量）、提交到哪里，都由业务层（宿主）在事件里决定。
+插件**只做数据转换**：不发请求、不做持久化。工具栏「加载数据」从本地文件或粘贴文本载入；业务层仍通过 `request()` / `data-exchange:load` 提供数据。提交到哪里由业务层在 `data-exchange:submit` 里决定。
 
 插件名 `kabel:data-exchange`，`inject: { required: [FIELDS_SERVICE], optional: [WORKSPACE_SERVICE] }`。
 
@@ -12,12 +12,12 @@
 import { dataExchangePlugin } from '@kabel/plugin-data-exchange';
 
 const editor = createArchiveEditor(el, {
-  plugins: [fieldsPlugin({ groups }), catalogPlugin(), dataExchangePlugin({ controls: ['load', 'submit'], format: 'yaml' })],
+  plugins: [fieldsPlugin({ groups }), catalogPlugin(), dataExchangePlugin({ controls: ['load', 'view', 'export'], format: 'yaml' })],
 });
 
 // 加载：返回对象或 JSON / YAML 文本（可为 Promise），返回 undefined 表示不处理
 editor.on('data-exchange:load', async () => (await fetch('/api/archive/1')).text());
-// 提交：返回的 Promise 被等待，reject 表示提交失败（插件提示“提交失败：…”）
+// 导出：返回的 Promise 被等待，reject 表示导出失败（插件提示“导出失败：…”）
 editor.on('data-exchange:submit', async ({ text, mime }) => {
   const res = await fetch('/api/archive/1', { method: 'PUT', headers: { 'Content-Type': mime }, body: text });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -32,16 +32,16 @@ editor.on('data-exchange:submit', async ({ text, mime }) => {
 
 | 项 | 默认 | 说明 |
 | --- | --- | --- |
-| `controls` | `['load', 'submit']` | 工具栏显示的控件（多选，按顺序）：`load` 加载数据 / `submit` 提交数据 / `export` 导出文件 / `import` 导入文件 |
+| `controls` | `['load', 'view', 'export']` | 工具栏显示的控件（多选，按顺序，样式一致）：`load` 加载数据（按 `format` 选择文件或粘贴文本）/ `view` 查看数据 / `export` 导出数据（接口提交） |
 | `format` | `json` | 数据格式：`json` / `yaml` |
 | `items` | `['fields']` | 数据项（多选）：`fields` 字段值 / `review` 来源与复核状态（仅导出）/ `documents` 文件列表 |
 | `fieldsPath` | `fields` | 字段值在数据中的路径，`a.b` 嵌套；留空放在根上 |
 | `mapping` | `[]` | 字段对照表：`field` 字段标识 ⇄ `path` 接口字段（`a.b` 嵌套，留空同字段标识），`submit` / `load` 控制方向。为空时按字段标识交换全部字段；不为空时只交换表中的字段 |
-| `skipEmpty` | `false` | 提交时省略空值（默认输出为 `null`） |
-| `validate` | `true` | 提交前校验必填，未通过时定位到第一个错误字段且不提交 |
-| `submitOnSave` | `false` | 保存（`kabel.save` / `Mod+S`）时提交：并入保存契约，提交成功才标记为已保存 |
-| `confirmLoad` | `true` | 有未保存修改时，加载 / 导入前确认 |
-| `filename` | `archive` | 导出文件名（不含扩展名） |
+| `skipEmpty` | `false` | 导出时省略空值（默认输出为 `null`） |
+| `validate` | `true` | 导出前校验必填，未通过时定位到第一个错误字段且不导出 |
+| `submitOnSave` | `false` | 保存（`kabel.save` / `Mod+S`）时导出：并入保存契约，导出成功才标记为已保存 |
+| `confirmLoad` | `true` | 有未保存修改时，加载前确认 |
+| `filename` | `archive` | 建议的文件名（不含扩展名），随导出内容交给业务层 |
 
 ## 数据结构
 
@@ -66,12 +66,12 @@ documents:
 
 | 命令 | 说明 |
 | --- | --- |
-| `dataExchange.load` | 加载数据（`mutates`）：派发 `data-exchange:load` 并载入第一个非空返回值 |
-| `dataExchange.submit` | 提交数据：校验 → 导出 → `data-exchange:submit` |
-| `dataExchange.export` | 导出文件（下载 `.json` / `.yaml`） |
-| `dataExchange.import` | 导入文件（`mutates`）：选择本地 `.json` / `.yaml` / `.yml` 并载入，格式按扩展名判断 |
+| `dataExchange.load` | 加载数据（`mutates`）：打开对话框。按 `format` 选择 `.json` 或 `.yaml` / `.yml`，或粘贴文本，确认后载入字段。不派发 `data-exchange:load` |
+| `dataExchange.apply` | 内部命令（`hidden`）：载入对话框中的文本 |
+| `dataExchange.view` | 查看数据：按当前配置序列化并在对话框中展示，不提交 |
+| `dataExchange.export` | 导出数据：校验 → 序列化 → `data-exchange:submit` 交给业务层 |
 
-工具栏按钮的 id 与命令相同，显示在右侧分组。
+三个控件显示在工具栏右侧，使用相同的文字按钮样式。
 
 ## 服务 `DATA_EXCHANGE_SERVICE`
 
@@ -81,9 +81,8 @@ documents:
 | `export(format?)` | 收集并序列化：`{ format, data, text, mime, filename }` |
 | `parse(text, format?)` | 解析 JSON / YAML 文本 |
 | `load(input, format?)` | 载入对象或文本，返回 `{ fields, documents }` |
-| `request()` | 向业务层请求数据并载入；没有处理器或返回空时为 `null` |
+| `request()` | 向业务层请求数据并载入（`data-exchange:load`）；没有处理器或返回空时为 `null`。工具栏按钮不调用它 |
 | `submit(format?)` | 导出并交给业务层；失败时 reject |
-| `download(format?)` | 导出为文件下载 |
 
 ## 事件
 
@@ -96,4 +95,4 @@ documents:
 
 ## 状态
 
-切片 `dataExchange`（不入撤销）：`busy`（`load` / `submit` / `null`），进行中时相关命令禁用。
+切片 `dataExchange`（不入撤销）：`busy`（`load` / `submit` / `null`，进行中时控件禁用）、`preview`（查看数据对话框中的文本，`null` 为关闭）、`loader`（加载数据对话框是否打开）。

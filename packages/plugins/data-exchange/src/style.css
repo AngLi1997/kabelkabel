@@ -1,0 +1,90 @@
+/* ---------- 数据对接 ---------- */
+.kb-root .kb-dx {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.kb-root .kb-dx__modal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--kb-space-4);
+  background: rgba(20, 28, 40, 0.32);
+}
+
+.kb-root .kb-dx__dialog {
+  display: flex;
+  flex-direction: column;
+  width: 640px;
+  max-width: 100%;
+  max-height: min(640px, 100%);
+  border: 1px solid var(--kb-color-border);
+  background: var(--kb-color-surface);
+  box-shadow: var(--kb-shadow-overlay);
+  outline: none;
+}
+
+.kb-root .kb-dx__header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--kb-space-2) var(--kb-space-3);
+  border-bottom: 1px solid var(--kb-color-border);
+  font-weight: 600;
+}
+
+.kb-root .kb-dx__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kb-space-3);
+  min-height: 0;
+  padding: var(--kb-space-3);
+}
+
+.kb-root .kb-dx__file {
+  display: flex;
+  align-items: center;
+  gap: var(--kb-space-2);
+  min-width: 0;
+}
+
+.kb-root .kb-dx__file input {
+  display: none;
+}
+
+.kb-root .kb-dx__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kb-root .kb-dx__body .kb-textarea {
+  min-height: 180px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.kb-root .kb-dx__footer {
+  display: flex;
+  flex: none;
+  justify-content: flex-end;
+  gap: var(--kb-space-2);
+  padding: 0 var(--kb-space-3) var(--kb-space-3);
+}
+
+.kb-root .kb-dx__pre {
+  margin: 0;
+  padding: var(--kb-space-3);
+  overflow: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre;
+}
