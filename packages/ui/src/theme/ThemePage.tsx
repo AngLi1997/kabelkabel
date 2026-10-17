@@ -44,8 +44,8 @@ export function ThemePage({ kernel }: SettingsPageProps) {
           <Segmented
             label="主题"
             value={theme.preset}
-            // 切换预设时清除自选主题色，使用预设的默认主色
-            onChange={(id) => set({ preset: id, accent: null })}
+            // 切换预设时清除自选主题色并应用预设的默认设置（主色、字号等）
+            onChange={(id) => set({ preset: id, accent: null, ...presets.find((p) => p.id === id)?.defaults })}
             options={presets.map((p) => ({ label: p.title, value: p.id }))}
           />
         </Row>
