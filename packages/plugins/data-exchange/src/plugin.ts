@@ -159,7 +159,7 @@ export const dataExchangePlugin = (config?: Partial<DataExchangeConfig>) =>
         if (!(await confirmDiscard())) return null;
         setBusy('load');
         try {
-          const results = await kernel.bus.emitAsync('data-exchange:load', { format: options.format });
+          const results = await ctx.bus.emitAsync('data-exchange:load', { format: options.format });
           const input = results.find((r) => r != null && r !== '') as ExchangeInput | undefined;
           if (input === undefined) {
             notify('没有可加载的数据', 'warning');
@@ -187,7 +187,7 @@ export const dataExchangePlugin = (config?: Partial<DataExchangeConfig>) =>
           }
         }
         const payload = exportAs(format);
-        await kernel.bus.emitAsync('data-exchange:submit', payload);
+        await ctx.bus.emitAsync('data-exchange:submit', payload);
         ctx.bus.emit('data-exchange:submitted', payload);
         return payload;
       };
