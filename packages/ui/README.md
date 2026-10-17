@@ -25,7 +25,7 @@ const unmount = mountWorkbench(el, kernel, { icons: {}, class: 'my-host' });
 | `contextMenuPlugin()` | `kabel:contextmenu` | 右键菜单：`data-kb-context` 标识区域，菜单项来自扩展点 `ExtensionPoints.contextMenu` |
 | `palettePlugin()` | `kabel:palette` | 命令面板 `Mod+Shift+P` |
 | `settingsPlugin()` | `kabel:settings` | 设置弹窗，分类页来自扩展点 `ExtensionPoints.settings`，内置插件管理 |
-| `themePlugin({ defaults?, accents?, persist? })` | `kabel:theme` | 浅色 / 深色 / 跟随系统、主题色、界面密度、字号 |
+| `themePlugin({ defaults?, accents?, presets?, persist? })` | `kabel:theme` | 主题预设（标准 / 档案）、浅色 / 深色 / 跟随系统、主题色、界面密度、字号 |
 | `logsPlugin({ capacity?, format?, actions?, rules? })` | `kabel:logs` | 事件日志（非 builtin，可在插件管理中停用与配置），见下文 |
 
 文件目录、内容面板、影像等**内容**不在 ui 中，由 [`@kabel/plugin-workspace`](../plugins/workspace/README.md) 通过扩展点贡献；ui 只提供外壳与通用能力，所以整个界面都可以由插件定义。

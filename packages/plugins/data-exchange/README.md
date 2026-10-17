@@ -32,7 +32,7 @@ editor.on('data-exchange:submit', async ({ text, mime }) => {
 
 | 项 | 默认 | 说明 |
 | --- | --- | --- |
-| `controls` | `['load', 'view', 'export']` | 工具栏显示的控件（多选，按顺序，样式一致）：`load` 加载数据（按 `format` 选择文件或粘贴文本）/ `view` 查看数据 / `export` 导出数据（接口提交） |
+| `controls` | `['load', 'view', 'export']` | 工具栏显示的控件（多选，按顺序，样式一致）：`load` 加载数据（按 `format` 选择文件或粘贴文本）/ `view` 查看数据 / `export` 导出数据（下载文件，不校验、不提交） |
 | `format` | `json` | 数据格式：`json` / `yaml` |
 | `items` | `['fields']` | 数据项（多选）：`fields` 字段值 / `review` 来源与复核状态（仅导出）/ `documents` 文件列表 |
 | `fieldsPath` | `fields` | 字段值在数据中的路径，`a.b` 嵌套；留空放在根上 |
@@ -41,7 +41,7 @@ editor.on('data-exchange:submit', async ({ text, mime }) => {
 | `validate` | `true` | 业务层调用 `submit()` 与保存时导出前校验必填，未通过时定位到第一个错误字段且不导出。工具栏「导出数据」不拦截 |
 | `submitOnSave` | `false` | 保存（`kabel.save` / `Mod+S`）时导出：并入保存契约，导出成功才标记为已保存 |
 | `confirmLoad` | `true` | 有未保存修改时，加载前确认 |
-| `filename` | `archive` | 建议的文件名（不含扩展名），随导出内容交给业务层 |
+| `filename` | `archive` | 下载的文件名（不含扩展名）；交给业务层时同样作为建议文件名 |
 
 ## 数据结构
 
@@ -69,7 +69,7 @@ documents:
 | `dataExchange.load` | 加载数据（`mutates`）：打开对话框。按 `format` 选择 `.json` 或 `.yaml` / `.yml`，或粘贴文本，确认后载入字段。不派发 `data-exchange:load` |
 | `dataExchange.apply` | 内部命令（`hidden`）：载入对话框中的文本 |
 | `dataExchange.view` | 查看数据：按当前配置序列化并在对话框中展示，不提交 |
-| `dataExchange.export` | 导出数据：序列化 → `data-exchange:submit` 交给业务层（不校验字段） |
+| `dataExchange.export` | 导出数据：按当前配置序列化并下载文件（不校验、不派发 `data-exchange:submit`） |
 
 三个控件显示在工具栏右侧，使用相同的文字按钮样式。
 

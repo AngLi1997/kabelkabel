@@ -140,21 +140,24 @@ describe('dataExchangePlugin', () => {
     host.remove();
   });
 
-  it('导出控件不校验字段，直接把内容交给业务层', async () => {
-    const { kernel, fields } = await setup({ format: 'yaml' });
+  it('导出控件下载文件，不校验、不交给业务层', async () => {
+    const { kernel, fields } = await setup({ format: 'yaml', filename: 'archive' });
     const submitted: ExchangePayload[] = [];
     kernel.bus.on('data-exchange:submit', async (payload) => void submitted.push(payload));
+    const saved = captureDownloads();
 
     await kernel.execute('dataExchange.export');
-    expect(submitted).toHaveLength(1);
-    expect(submitted[0]).toMatchObject({ format: 'yaml', data: { fields: { name: null } } });
+    expect(submitted).toHaveLength(0);
     expect(fields.focused()).toBeNull();
+    expect(saved).toHaveLength(1);
+    expect(saved[0]).toMatchObject({ name: 'archive.yaml', type: 'application/yaml' });
+    expect(await saved[0]!.blob.text()).toContain('name:');
 
     fields.set('name', '星辰');
     await kernel.execute('dataExchange.export');
-    expect(submitted).toHaveLength(2);
-    expect(submitted[1]).toMatchObject({ format: 'yaml', data: { fields: { name: '星辰' } } });
-    expect(submitted[1]!.text).toContain('name: 星辰');
+    expect(submitted).toHaveLength(0);
+    expect(await saved[1]!.blob.text()).toContain('name: 星辰');
+    saved.restore();
   });
 
   it('业务层 submit：校验未通过时不导出', async () => {
@@ -179,7 +182,10 @@ describe('dataExchangePlugin', () => {
     });
     fields.set('name', '星辰');
     await expect(exchange.submit()).rejects.toThrow('接口 500');
+    const saved = captureDownloads();
     await expect(kernel.execute('dataExchange.export')).resolves.toBeUndefined();
+    expect(saved).toHaveLength(1);
+    saved.restore();
   });
 
   it('保存时提交：并入保存契约，提交成功才标记已保存', async () => {
@@ -232,6 +238,26 @@ describe('dataExchangePlugin', () => {
     next.remove();
   });
 });
+
+function captureDownloads() {
+  const saved: { name: string; type: string; blob: Blob }[] = [];
+  const create = vi.spyOn(URL, 'createObjectURL').mockImplementation((blob) => {
+    saved.push({ name: '', type: (blob as Blob).type, blob: blob as Blob });
+    return 'blob:test';
+  });
+  const revoke = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+  const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+    const last = saved.at(-1);
+    if (last) last.name = this.download;
+  });
+  return Object.assign(saved, {
+    restore() {
+      create.mockRestore();
+      revoke.mockRestore();
+      click.mockRestore();
+    },
+  });
+}
 
 function mountControls(kernel: Kernel): HTMLElement {
   const item = kernel.extensions.get(ExtensionPoints.toolbar).getAll().find((t) => t.id === 'dataExchange.controls');

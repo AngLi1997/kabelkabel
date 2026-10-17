@@ -16,7 +16,7 @@
 | `layout` | `LayoutOptions` |
 | `workspace` | 工作台，见 [plugin-workspace](../packages/plugins/workspace/README.md)：`{ items?, thumbnails?, directory?, content?, urlFactory? } \| false`；`directory: false` 不注册文件目录；`false` 整个工作台不注册（没有文件目录与内容） |
 | `settings` | `false` 关闭工具栏右侧的设置入口 |
-| `theme` | `{ defaults?: Partial<ThemeState>, accents?: { title, color }[], persist? } \| false` |
+| `theme` | `{ defaults?: Partial<ThemeState>, accents?: { title, color }[], presets?: { id, title, accent }[], persist? } \| false` |
 | `instanceId` | 持久化命名空间，默认 `default` |
 | `storage` | `StorageAdapter \| 'local' \| 'session' \| 'memory' \| false` |
 | `history` | `{ limit?: number = 100, coalesceWindow?: number = 1000 }` |
@@ -110,7 +110,7 @@
 | `palette` / `contextmenu` | | 命令面板 / 右键菜单的打开状态 |
 | `layout` | | `sizes, collapsed, maximized, active, weights, folded, compactRegion, breakpoint, overlay` |
 | `settings` | | `open, page` |
-| `theme` | | `scheme, accent, density, fontSize`（持久化） |
+| `theme` | | `preset, scheme, accent, density, fontSize`（持久化） |
 
 ## `@kabel/core`
 
@@ -152,7 +152,7 @@
 | `useDraggable(ref)` / `Drawers` | 弹窗拖动 / 抽屉栏 |
 | `keymapPlugin()` / `keymapActions` / `commandBindings` / `findConflicts` | 快捷键改绑与冲突检测（内置） |
 | `contextMenuPlugin()` | 右键菜单（内置，菜单项来自 `ExtensionPoints.contextMenu`） |
-| `themePlugin(options)` / `themeActions` / `THEME_ACCENTS` / `DEFAULT_ACCENTS` | 主题插件（内置） |
+| `themePlugin(options)` / `themeActions` / `THEME_ACCENTS` / `DEFAULT_ACCENTS` / `THEME_PRESETS` / `DEFAULT_PRESETS` | 主题插件（内置） |
 | `useKernel` / `useSelector` / `useReadonly` / `useStoreState` / `useContributions` / `useElementSize` / `useMediaQuery` / `useEvent` | hooks |
 | `Button` / `IconButton` / `Tabs` / `Empty` / `Resizer` / `Section` / `ViewHost` / `Icon` / `PanelActions` | 通用组件 |
 | `SchemaForm` | 由 schemastery Schema 生成的配置表单 |

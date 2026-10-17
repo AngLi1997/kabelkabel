@@ -45,7 +45,7 @@ pnpm pack:all                  # 打 tarball 到 .packs/，用于在仓库外的
 
 **类型扩充**：插件用 `declare module '@kabel/core'`（或 `'@kabel/editor'`）扩充 `KabelState` / `KabelEvents`。`history` 字段直接写在 `store.ts` 的 `KabelState` 中（包内相对路径的模块扩充在 tsup 打包 d.ts 时不可靠）。
 
-**渲染层（`packages/ui`）**：`Workbench` 渲染五段式骨架——顶部工具栏、中间左侧扩展面板、中间内容、中间右侧扩展面板、底部状态栏；内容全部来自扩展点 `ExtensionPoints.toolbar | statusbar | panels`。左右两侧是**通用扩展区域**，不预设用途，区域内没有面板时整个区域不渲染（对应的工具栏开关按钮也隐藏）；设置弹窗的分类页来自 `ExtensionPoints.settings`（`settings/`），主题插件把 `state.theme` 转为根节点的 `data-scheme` / `data-density` / `--kb-accent`（`theme/`、`styles/themes.css`）。
+**渲染层（`packages/ui`）**：`Workbench` 渲染五段式骨架——顶部工具栏、中间左侧扩展面板、中间内容、中间右侧扩展面板、底部状态栏；内容全部来自扩展点 `ExtensionPoints.toolbar | statusbar | panels`。左右两侧是**通用扩展区域**，不预设用途，区域内没有面板时整个区域不渲染（对应的工具栏开关按钮也隐藏）；设置弹窗的分类页来自 `ExtensionPoints.settings`（`settings/`），主题插件把 `state.theme` 转为根节点的 `data-theme`（主题预设：标准 / 档案）/ `data-scheme` / `data-density` / `--kb-accent`（`theme/`、`styles/themes.css`）。
 - 视图类型 `View<P>` = Preact 函数组件 或 `DomView`（`mount(el, props) → { update, unmount }`）；Vue 通过 `vueView()`（继承宿主 appContext）或 `<KabelPanel>`（Teleport 到 DomView 提供的容器）接入。因此面板在切换标签、折叠、最大化时必须**保持挂载只隐藏**，否则 Teleport/DomView 内容会丢失。
 - `useSelector` 精确订阅。
 - 布局状态在 `layout` 切片（`layout-plugin.ts`），持久化键 `kabel:<instanceId>:kabel:layout:state.v1`，读取经 `sanitize`。断点按**容器宽度**计算并回写到 `layout.breakpoint`（不持久化）：`md` 下右栏变为浮层（`overlay`），命令据此决定“收起”还是“关浮层”，区域收起状态统一用 `isRegionCollapsed()` 判断。区域名称（`RegionConfig.title`，默认“左侧面板 / 内容 / 右侧面板”）只用于折叠条与提示；区域内仅一个面板时改用该面板标题。

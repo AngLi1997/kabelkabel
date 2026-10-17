@@ -61,5 +61,5 @@ export const DataExchangeConfigSchema: Schema<Partial<DataExchangeConfig>, DataE
   validate: Schema.boolean().default(true).description('业务层导出前校验必填'),
   submitOnSave: Schema.boolean().default(false).description('保存时导出'),
   confirmLoad: Schema.boolean().default(true).description('有未保存修改时加载前确认'),
-  filename: Schema.string().default('archive').description('建议的文件名'),
+  filename: Schema.string().default('archive').description('下载的文件名'),
 }) as never;
