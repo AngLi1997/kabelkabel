@@ -48,7 +48,7 @@ L0 内核 / ui  Kernel · Workbench
 | 工作台（文档模型、渲染器、影像舞台） | `kabel:workspace` | `state.documents` / `state.stage`、`WORKSPACE_SERVICE`、`document:change`、扩展点 `WorkspaceExtensions.renderers / overlays / tools` |
 | 保存契约 | `kabel:save`（core） | `kabel.save` + 可否决的 `save` 事件 + `saved` / `save:error` + dirty + 离开确认 |
 | 只读模式 | `kabel:mode`（core） | `state.mode.readonly`，命令 `mutates: true` 自动禁用 |
-| 消息与对话框 | `kabel:feedback`（ui） | `NOTIFY_SERVICE`：`notify` / `confirm` |
+| 消息与对话框 | `kabel:feedback`（ui） | `NOTIFY_SERVICE`：`notify` / `confirm`；`DIALOG_SERVICE` + 扩展点 `ExtensionPoints.dialogs`：底座弹窗（见“弹窗”） |
 | 命令面板 | `kabel:palette`（ui） | `Mod+Shift+P`，列出所有可执行且未 `hidden` 的命令 |
 | 快捷键改绑 | `kabel:keymap`（ui） | `state.keymap.overrides`（持久化）、设置 › 快捷键、冲突检测 |
 | 右键菜单 | `kabel:contextmenu`（ui） | 扩展点 `ExtensionPoints.contextMenu` + `data-kb-context` |
@@ -209,6 +209,17 @@ Vue 组件通过 `vueView(Component)` 转为 DomView；`<KabelPanel>` 则直接�
 ## 横幅与快捷键提示
 
 扩展点 `ExtensionPoints.banners`：工具栏下方的一行状态提示（如“智能算法已调用…”“请在影像上框选…”），`text` 返回空值时隐藏，`tone` 可按状态计算，可带一个命令按钮。工具栏项 `showKeybinding: true` 时在按钮内显示生效的快捷键（宽屏）。
+
+## 弹窗
+
+弹窗的外框与行为统一由底座定义，插件只提供内容——与面板、工具栏一样“一切皆贡献”：
+
+- **贡献**：插件向 `ExtensionPoints.dialogs` 贡献 `{ id, title, view, width?, closable?, maskClosable?, onClose? }`。`title` 可按参数计算；`closable(state)` 为假时（如加载中）Esc、遮罩与关闭按钮都不关闭。贡献随插件的 `DisposableStore` 释放，插件停用 / 卸载时底座自动关闭它打开的弹窗。
+- **触发**：`DIALOG_SERVICE.open(id, props)` / `update` / `close` / `isOpen`，或命令 `dialog.open` / `dialog.close`；底座派发 `dialog:open` / `dialog:close` 事件（自动进入事件日志）。打开状态在 `state.feedback.dialogs`（后者在上层），同 id 再次打开会更新参数并置顶。
+- **底座行为**（`kabel:feedback` 的 `DialogHost`）：遮罩与居中、拖动头部移动（双击复位，限制在工作台内）、关闭按钮、Esc / 点击遮罩关闭、打开时聚焦第一个输入控件并在关闭后归还焦点、多层叠放、确认框（`NOTIFY_SERVICE.confirm`）始终在最上层。内容视图经 `ViewHost` 渲染（错误隔离、可为 DomView / Vue）。
+- **内容**：视图收到 `{ kernel, dialogId, props, close }`；内容区与操作栏用 ui 的 `DialogBody` / `DialogFooter`（或 `.kb-dialog__body` / `.kb-dialog__footer`），保证各插件弹窗外观一致。
+
+因此宿主替换弹窗样式或行为只需改底座一处，插件之间的弹窗也不会互相遮挡错乱。插件不得自绘遮罩或弹窗外框。
 
 ## 设置与主题
 

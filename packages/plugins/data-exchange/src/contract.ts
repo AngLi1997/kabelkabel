@@ -85,6 +85,10 @@ export interface DataExchangeService {
 export const DATA_EXCHANGE_SERVICE = createServiceToken<DataExchangeService>('kabel.dataExchange');
 export const DATA_EXCHANGE_PLUGIN = 'kabel:data-exchange';
 
+/** 底座弹窗 id（`ExtensionPoints.dialogs`）：加载数据、查看数据（参数 `{ text }`）；外框与行为由底座定义 */
+export const LOADER_DIALOG = 'dataExchange.loader';
+export const PREVIEW_DIALOG = 'dataExchange.preview';
+
 declare module '@kabel/core' {
   interface KabelEvents {
     /**

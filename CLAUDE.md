@@ -25,7 +25,7 @@ pnpm pack:all                  # 打 tarball 到 .packs/，用于在仓库外的
 
 ## 架构
 
-依赖只能自上而下：`@kabel/vue` → `@kabel/editor`（主包，再导出所有子包）→ `plugin-workspace` → `@kabel/ui` → `@kabel/core`。`core` 不依赖任何渲染库。插件之间不 import 彼此实现，只通过**服务令牌**（`WORKSPACE_SERVICE`、`FIELDS_SERVICE`、`OCR_SERVICE`、`NOTIFY_SERVICE`…）、**扩展点**和**命令 id** 协作。
+依赖只能自上而下：`@kabel/vue` → `@kabel/editor`（主包，再导出所有子包）→ `plugin-workspace` → `@kabel/ui` → `@kabel/core`。`core` 不依赖任何渲染库。插件之间不 import 彼此实现，只通过**服务令牌**（`WORKSPACE_SERVICE`、`FIELDS_SERVICE`、`OCR_SERVICE`、`NOTIFY_SERVICE`、`DIALOG_SERVICE`…）、**扩展点**和**命令 id** 协作。
 
 **插件分层**（`docs/architecture.md`、`docs/archive-plugin-design.md`）：
 - L1 工作台（builtin）→ L2 **能力插件**（`fields`、`ocr`、`llm`、`region-select`…：契约 `contract.ts` + 默认实现，宿主可用同令牌替换）→ L3 **业务插件**（`catalog`、`ocr-excerpt`、`layout-extract`…）→ L4 **场景预设**（如 `market-supervision`：只用 `ctx.plugin()` 组合子插件与默认配置，不含业务逻辑）。
@@ -55,7 +55,7 @@ pnpm pack:all                  # 打 tarball 到 .packs/，用于在仓库外的
 
 - **工作台是业务插件的底座**：`state.documents = { items, index, loading }` 是“当前打开的文件”的唯一来源、`state.stage` 是影像舞台状态，`WORKSPACE_SERVICE` 读写（含 `reveal(documentId, bbox)` 切页并定位区域、`updateDocument`、`readBlob`；命令 `workspace.reveal`）；内容面板按 `kind` 从 `WorkspaceExtensions.renderers` 选渲染器；文件目录、页码状态栏、`document:change` 事件都归工作台。插件通过 `inject: [WORKSPACE_SERVICE]` 使用工作台；ui 不得依赖工作台（依赖方向 workspace → ui）。目录、内容面板、影像渲染器都是普通贡献项，同 id 贡献即可替换（场景预设据此把文件目录移到右侧）。
 - **事件日志与来源**：`ctx.bus` 是带来源的总线视图（`EventBus.withSource`），`ctx.emit` 同理，命令以注册插件为来源派发 `command:*`；`onAny` 的第三个参数 `meta.source` 即触发插件。日志插件据此记录全部事件，看板经扩展点 `ExtensionPoints.drawers` 显示在最右侧。插件派发事件一律用 `ctx.bus` / `ctx.emit`，不要用 `kernel.bus`（会丢失来源）。
-- **弹窗**：一律用 ui 的 `useDraggable(ref)` 支持拖动（`handleProps` 展开到头部）。
+- **弹窗由底座统一定义**：插件不得自绘遮罩 / 弹窗外框。插件只向扩展点 `ExtensionPoints.dialogs` 贡献内容视图（`{ id, title, view, width?, closable?, maskClosable?, onClose? }`），经 `DIALOG_SERVICE.open(id, props)`（或命令 `dialog.open` / `dialog.close`）触发；遮罩、居中、拖动头部（双击复位）、关闭按钮、Esc / 遮罩关闭、焦点进入与归还、层叠顺序都由 `kabel:feedback` 的 `DialogHost` 实现，开关派发 `dialog:open` / `dialog:close`，贡献插件停用时自动关闭。视图收到 `{ kernel, dialogId, props, close }`，操作按钮放在 ui 的 `DialogBody` / `DialogFooter` 中。确认框用 `NOTIFY_SERVICE.confirm`。底座自身的设置弹窗、确认框用 `useDraggable(ref)` 保持一致的拖动行为。
 - **横幅与快捷键提示**：扩展点 `ExtensionPoints.banners`（工具栏下方一行状态提示，`tone` 可为函数）；`ToolbarItem.showKeybinding` 在按钮内显示生效快捷键。
 - **命令标记**：`CommandDefinition.mutates`（只读模式下由 `CommandRegistry.isEnabled` 统一禁用）、`hidden`（不进命令面板与快捷键设置；需要参数的命令必须标）。快捷键的生效值一律用 `commandBindings(command, state)`（含用户改绑），不要直接读 `command.keybinding`。
 - **保存契约**：`kabel.save` → `emitAsync('save')` → `history.markSaved()` → `saved`；失败派发 `save:error` 并通过 `NOTIFY_SERVICE` 提示。业务插件在 `save` 事件里实现具体保存，不要另起保存流程。

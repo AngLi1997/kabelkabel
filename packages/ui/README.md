@@ -20,7 +20,7 @@ const unmount = mountWorkbench(el, kernel, { icons: {}, class: 'my-host' });
 | 插件 | 名称 | 说明 |
 | --- | --- | --- |
 | `layoutPlugin({ regions?, persist? })` | `kabel:layout` | 区域尺寸、折叠、最大化、标签 / 堆叠模式及其持久化 |
-| `feedbackPlugin()` | `kabel:feedback` | 消息提示与确认对话框（实现 `NOTIFY_SERVICE`） |
+| `feedbackPlugin()` | `kabel:feedback` | 消息提示、确认对话框与底座弹窗（实现 `NOTIFY_SERVICE`、`DIALOG_SERVICE`） |
 | `keymapPlugin()` | `kabel:keymap` | 快捷键改绑（持久化）、冲突检测、设置 › 快捷键 |
 | `contextMenuPlugin()` | `kabel:contextmenu` | 右键菜单：`data-kb-context` 标识区域，菜单项来自扩展点 `ExtensionPoints.contextMenu` |
 | `palettePlugin()` | `kabel:palette` | 命令面板 `Mod+Shift+P` |
@@ -43,11 +43,14 @@ const unmount = mountWorkbench(el, kernel, { icons: {}, class: 'my-host' });
 
 ## 弹窗
 
-所有弹窗（设置、确认框、命令面板、插件弹窗）可拖动：用 `useDraggable(ref)`，把 `handleProps` 展开到头部，`style` 应用到弹窗；位置限制在遮罩层内，拖动柄内的按钮、输入框不触发拖动。设置弹窗还可拖动右下角调整大小，双击头部复位；插件管理表格固定列宽、超长内容省略（悬停显示全文），窄时自动隐藏“标识”“依赖”列。
+**插件弹窗由底座统一定义**：插件向扩展点 `ExtensionPoints.dialogs` 贡献内容视图，经 `DIALOG_SERVICE.open(id, props)`（或命令 `dialog.open` / `dialog.close`）触发；`feedbackPlugin` 的 `DialogHost` 负责遮罩、居中、拖动头部（双击复位）、关闭按钮、Esc / 遮罩关闭（`closable` 为假时不关闭）、焦点进入与归还、多层叠放，开关时派发 `dialog:open` / `dialog:close`，贡献插件停用时自动关闭。视图收到 `{ kernel, dialogId, props, close }`，内容区与操作栏用 `DialogBody` / `DialogFooter`。插件不要自绘遮罩或弹窗外框。
+
+底座自身的弹窗（设置、确认框）同样可拖动：用 `useDraggable(ref)`，把 `handleProps` 展开到头部，`style` 应用到弹窗；位置限制在遮罩层内，拖动柄内的按钮、输入框不触发拖动。设置弹窗还可拖动右下角调整大小，双击头部复位；插件管理表格固定列宽、超长内容省略（悬停显示全文），窄时自动隐藏“标识”“依赖”列。
 
 ## 组件与 hooks
 
 - 外壳：`Workbench`、`Region`、`PanelStack`、`Toolbar`、`StatusBar`、`Drawers`、`SettingsDialog`
+- 弹窗：`DialogHost`（`Workbench` 已挂载）、`DialogBody`、`DialogFooter`
 - 通用：`Button` / `IconButton`、`Tabs`、`Empty`、`Resizer`、`Section`、`Icon`、`PanelActions`、`ViewHost`（内含错误边界，所有视图都应经它渲染）
 - 表单：`Input`、`Textarea`、`NumberInput`、`Select`、`RadioGroup`、`CheckboxGroup`、`Switch`、`Segmented`（输入法组合输入安全）
 - hooks：`useDraggable`（弹窗拖动）、`useLogRecorder`、`useKernel`、`useSelector`（精确订阅）、`useStoreState`、`useContributions`、`useReadonly`、`useElementSize`、`useMediaQuery`、`useEvent`

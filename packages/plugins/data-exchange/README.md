@@ -66,12 +66,12 @@ documents:
 
 | 命令 | 说明 |
 | --- | --- |
-| `dataExchange.load` | 加载数据（`mutates`）：打开对话框。按 `format` 选择 `.json` 或 `.yaml` / `.yml`，或粘贴文本，确认后载入字段。不派发 `data-exchange:load` |
-| `dataExchange.apply` | 内部命令（`hidden`）：载入对话框中的文本 |
-| `dataExchange.view` | 查看数据：按当前配置序列化并在对话框中展示，不提交 |
+| `dataExchange.load` | 加载数据（`mutates`）：打开底座弹窗 `dataExchange.loader`（`LOADER_DIALOG`）。按 `format` 选择 `.json` 或 `.yaml` / `.yml`，或粘贴文本，确认后载入字段。不派发 `data-exchange:load` |
+| `dataExchange.apply` | 内部命令（`hidden`）：载入弹窗中的文本，成功后关闭弹窗 |
+| `dataExchange.view` | 查看数据：按当前配置序列化，在底座弹窗 `dataExchange.preview`（`PREVIEW_DIALOG`，参数 `{ text }`）中展示，不提交 |
 | `dataExchange.export` | 导出数据：序列化 → `data-exchange:submit` 交给业务层（不校验字段） |
 
-三个控件显示在工具栏右侧，使用相同的文字按钮样式。
+三个控件显示在工具栏右侧，使用相同的文字按钮样式。两个弹窗只向 `ExtensionPoints.dialogs` 贡献内容，经 `DIALOG_SERVICE` 打开；遮罩、拖动、关闭、焦点等行为由底座（`kabel:feedback`）统一定义，载入过程中弹窗不可关闭。
 
 ## 服务 `DATA_EXCHANGE_SERVICE`
 
@@ -95,4 +95,4 @@ documents:
 
 ## 状态
 
-切片 `dataExchange`（不入撤销）：`busy`（`load` / `submit` / `null`，进行中时控件禁用）、`preview`（查看数据对话框中的文本，`null` 为关闭）、`loader`（加载数据对话框是否打开）。
+切片 `dataExchange`（不入撤销）：`busy`（`load` / `submit` / `null`，进行中时控件禁用）。弹窗的打开状态由底座维护（`DIALOG_SERVICE.isOpen(LOADER_DIALOG)`）。

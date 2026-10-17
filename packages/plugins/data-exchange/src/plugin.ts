@@ -1,4 +1,4 @@
-import { createSlice, definePlugin, ExtensionPoints, NOTIFY_SERVICE } from '@kabel/core';
+import { createSlice, definePlugin, DIALOG_SERVICE, ExtensionPoints, NOTIFY_SERVICE } from '@kabel/core';
 import { h } from 'preact';
 import { FIELDS_SERVICE, isEmptyValue, type FieldRaw } from '@kabel/plugin-fields';
 import { WORKSPACE_SERVICE, type DocumentItem } from '@kabel/plugin-workspace';
@@ -6,6 +6,8 @@ import { DataExchangeConfigSchema, type DataExchangeConfig } from './config';
 import {
   DATA_EXCHANGE_PLUGIN,
   DATA_EXCHANGE_SERVICE,
+  LOADER_DIALOG,
+  PREVIEW_DIALOG,
   type DataExchangeService,
   type ExchangeData,
   type ExchangeDocument,
@@ -15,15 +17,11 @@ import {
   type ExchangePayload,
 } from './contract';
 import { deserialize, FORMAT_EXT, FORMAT_MIME, getPath, serialize, setPath } from './format';
-import { EXCHANGE_CONTROLS, ExchangeControls } from './ui';
+import { EXCHANGE_CONTROLS, ExchangeControls, LoadDialog, PreviewDialog } from './ui';
 
 export interface DataExchangeState {
   /** 进行中的操作 */
   busy: 'load' | 'submit' | null;
-  /** 查看数据对话框中的文本；null 表示关闭 */
-  preview: string | null;
-  /** 加载数据对话框是否打开 */
-  loader: boolean;
 }
 
 declare module '@kabel/core' {
@@ -34,11 +32,9 @@ declare module '@kabel/core' {
 
 export const dataExchangeSlice = createSlice({
   name: 'dataExchange',
-  initialState: { busy: null, preview: null, loader: false } as DataExchangeState,
+  initialState: { busy: null } as DataExchangeState,
   reducers: {
     busy: (s: DataExchangeState, busy: DataExchangeState['busy']) => (s.busy === busy ? s : { ...s, busy }),
-    preview: (s: DataExchangeState, preview: string | null) => (s.preview === preview ? s : { ...s, preview }),
-    loader: (s: DataExchangeState, loader: boolean) => (s.loader === loader ? s : { ...s, loader }),
   },
 });
 
@@ -51,8 +47,8 @@ const portableUrl = (src: string) => (/^(blob|data):/i.test(src) ? undefined : s
  * 数据对接（业务插件）：把字段模型与文件列表导出为 JSON / YAML 交给业务层，或载入业务层提供的数据。
  *
  * 插件不发请求、不做持久化。工具栏控件样式一致：
- * - **加载数据**：弹出对话框，按配置的格式选择文件或粘贴文本后载入字段；
- * - **查看数据**：按当前配置序列化并展示，不提交；
+ * - **加载数据**：经底座弹窗（`DIALOG_SERVICE`）按配置的格式选择文件或粘贴文本后载入字段；
+ * - **查看数据**：按当前配置序列化并在底座弹窗中展示，不提交；
  * - **导出数据**：序列化后经 `data-exchange:submit`（emitAsync）交给业务层提交，不校验字段；reject 表示失败。
  *
  * 业务层调用 `submit()`、以及保存时导出，按配置校验必填，未通过则不导出。
@@ -75,12 +71,8 @@ export const dataExchangePlugin = (config?: Partial<DataExchangeConfig>) =>
       const has = (item: DataExchangeConfig['items'][number]) => options.items.includes(item);
 
       ctx.registerSlice(dataExchangeSlice);
-      const closePreview = () => kernel.dispatch(dataExchangeSlice.actions.preview(null));
-      const closeLoader = () => kernel.dispatch(dataExchangeSlice.actions.loader(false));
-      ctx.onDispose(() => {
-        closePreview();
-        closeLoader();
-      });
+      // 弹窗由底座渲染（遮罩、拖动、关闭、焦点统一），插件只贡献内容并经 DIALOG_SERVICE 打开 / 关闭
+      const dialogs = () => kernel.services.tryGet(DIALOG_SERVICE);
       const busy = () => kernel.getState().dataExchange.busy;
       const setBusy = (value: DataExchangeState['busy']) => kernel.dispatch(dataExchangeSlice.actions.busy(value));
 
@@ -232,7 +224,7 @@ export const dataExchangePlugin = (config?: Partial<DataExchangeConfig>) =>
         try {
           const result = await load(text);
           notify(`已加载 ${result.fields} 个字段${result.documents ? `、${result.documents} 个文件` : ''}`, 'success');
-          closeLoader();
+          dialogs()?.close(LOADER_DIALOG);
           return result;
         } catch (error) {
           notify(`加载失败：${messageOf(error)}`, 'error');
@@ -254,8 +246,8 @@ export const dataExchangePlugin = (config?: Partial<DataExchangeConfig>) =>
         mutates: true,
         enabled: () => !busy(),
         run: () => {
-          closePreview();
-          kernel.dispatch(dataExchangeSlice.actions.loader(true));
+          dialogs()?.close(PREVIEW_DIALOG);
+          dialogs()?.open(LOADER_DIALOG);
         },
       });
       ctx.registerCommand({
@@ -272,8 +264,8 @@ export const dataExchangePlugin = (config?: Partial<DataExchangeConfig>) =>
         icon: EXCHANGE_CONTROLS.view.icon,
         enabled: () => !busy(),
         run: () => {
-          closeLoader();
-          kernel.dispatch(dataExchangeSlice.actions.preview(exportAs().text));
+          dialogs()?.close(LOADER_DIALOG);
+          dialogs()?.open(PREVIEW_DIALOG, { text: exportAs().text });
         },
       });
       ctx.registerCommand({
@@ -290,14 +282,21 @@ export const dataExchangePlugin = (config?: Partial<DataExchangeConfig>) =>
         type: 'view',
         group: 'end',
         order: 0,
-        view: (props) =>
-          h(ExchangeControls, {
-            kernel: props.kernel,
-            controls: options.controls,
-            format: options.format,
-            onClosePreview: closePreview,
-            onCloseLoader: closeLoader,
-          }),
+        view: (props) => h(ExchangeControls, { kernel: props.kernel, controls: options.controls }),
+      });
+      ctx.contribute(ExtensionPoints.dialogs, {
+        id: LOADER_DIALOG,
+        title: EXCHANGE_CONTROLS.load.title,
+        width: 640,
+        view: (props) => h(LoadDialog, { ...props, format: options.format }),
+        // 载入过程中不允许关闭
+        closable: (state) => !state.dataExchange?.busy,
+      });
+      ctx.contribute(ExtensionPoints.dialogs, {
+        id: PREVIEW_DIALOG,
+        title: EXCHANGE_CONTROLS.view.title,
+        width: 640,
+        view: PreviewDialog,
       });
 
       if (options.submitOnSave) {

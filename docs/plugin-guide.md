@@ -235,6 +235,41 @@ ctx.contribute(WorkspaceExtensions.renderers, { id: 'pdf.renderer', match: (doc)
 - 工具栏右侧设置按钮打开设置弹窗，左侧为分类导航，右侧渲染当前分类的 `view`（收到 `{ kernel }`）。已有分类：`plugins`（插件管理，order 10）、`shortcuts`（快捷键，order 15）、`theme`（主题，order 20）。
 - 命令：`settings.open`（可传分类 id）、`settings.close`。
 
+### 弹窗 `ExtensionPoints.dialogs`
+
+弹窗的遮罩、外框、拖动、关闭、焦点与层叠统一由底座定义，插件**只贡献内容视图**，再经 `DIALOG_SERVICE` 触发，不要自绘遮罩或弹窗外框：
+
+```tsx
+import { DIALOG_SERVICE, ExtensionPoints, type DialogViewProps } from '@kabel/core';
+import { Button, DialogBody, DialogFooter, Input } from '@kabel/ui';
+
+function RenameDialog({ kernel, props, close }: DialogViewProps<{ name: string }>) {
+  const [name, setName] = useState(props.name);
+  return (
+    <>
+      <DialogBody><Input value={name} onChange={setName} /></DialogBody>
+      <DialogFooter>
+        <Button onClick={close}>取消</Button>
+        <Button variant="primary" onClick={() => void kernel.execute('acme.rename', name).then(close)}>确定</Button>
+      </DialogFooter>
+    </>
+  );
+}
+
+ctx.contribute(ExtensionPoints.dialogs, {
+  id: 'acme.rename',
+  title: '重命名',                       // 也可 (props, state) => string
+  width: 420,                            // 默认 480
+  view: RenameDialog,
+  closable: (state) => !state.acme.busy, // 可选：进行中不允许 Esc / 遮罩 / 关闭按钮关闭
+});
+ctx.registerCommand({ id: 'acme.openRename', title: '重命名', run: (k) => k.services.tryGet(DIALOG_SERVICE)?.open('acme.rename', { name: '…' }) });
+```
+
+- 打开状态在 `state.feedback.dialogs`，插件不必另建 `open` 状态；同 id 再次打开会更新参数并置顶，`update(id, props)` 只更新参数。
+- 也可用命令 `dialog.open` / `dialog.close`（如宿主或工具栏项 `command` + `args`）；底座派发 `dialog:open` / `dialog:close`。
+- 插件停用 / 卸载时底座自动关闭它的弹窗；确认类交互直接用 `NOTIFY_SERVICE.confirm`。
+
 ### 覆盖内置贡献
 
 相同 `id` 的贡献项后注册者生效，释放后恢复。例如隐藏内置“重置布局”按钮：
@@ -315,6 +350,7 @@ ctx.services.tryGet(TAG_SERVICE)?.add('档案');   // 可选依赖
 | `OCR_SERVICE` / `LLM_SERVICE`（`@kabel/plugin-ocr` / `-llm`） | 文字识别 / 大模型（OpenAI 兼容接口） |
 | `REGION_SERVICE`（`@kabel/plugin-region-select`） | 请求一次框选、无 UI 裁剪 |
 | `NOTIFY_SERVICE` | `notify/dismiss/confirm` |
+| `DIALOG_SERVICE` | `open/update/close/isOpen`（底座弹窗，内容来自 `ExtensionPoints.dialogs`） |
 | `LOG_SERVICE` | `list/log/clear/subscribe/export/download`（事件日志） |
 | `LAYOUT_CONFIG` | 解析后的布局配置（只读） |
 | `THEME_ACCENTS` | 可选主题色列表 |
@@ -323,8 +359,8 @@ ctx.services.tryGet(TAG_SERVICE)?.add('档案');   // 可选依赖
 
 - **保存**：底座的 `kabel.save`（`Mod+S`）依次等待所有 `save` 事件处理器，全部成功后标记撤销栈保存点（`state.history.dirty` 归零）并派发 `saved`，任一处理器 reject 则派发 `save:error` 并提示。业务插件只需 `ctx.on('save', async () => { await api.save(...) })`；有 `save` 监听或有未保存修改时工具栏才显示“保存”按钮。
 - **只读**：读取 `isReadonly(state)`（或 ui 的 `useReadonly()`）决定是否可编辑；会修改内容的命令声明 `mutates: true` 即可自动禁用。
-- **事件日志**：经 `ctx.bus.emit` / `ctx.emit` 派发的事件、注册的命令执行都会自动以本插件为来源记录到日志看板，无需额外代码；自定义事件用模块扩充 `KabelEvents` 声明类型。插件自己的弹窗用 ui 的 `useDraggable(ref)` 支持拖动。
-- **消息与对话框**：`kernel.services.tryGet(NOTIFY_SERVICE)?.notify('已保存', { type: 'success' })`；`await notify.confirm({ message: '确定删除？', danger: true })` 返回 `boolean`。
+- **事件日志**：经 `ctx.bus.emit` / `ctx.emit` 派发的事件、注册的命令执行都会自动以本插件为来源记录到日志看板，无需额外代码；自定义事件用模块扩充 `KabelEvents` 声明类型。
+- **消息与对话框**：`kernel.services.tryGet(NOTIFY_SERVICE)?.notify('已保存', { type: 'success' })`；`await notify.confirm({ message: '确定删除？', danger: true })` 返回 `boolean`。其他弹窗贡献到 `ExtensionPoints.dialogs` 并经 `DIALOG_SERVICE` 打开（见第 6 节“弹窗”），外框与行为由底座统一定义。
 
 ## 9. 向左 / 右侧区域贡献面板
 
@@ -405,4 +441,5 @@ packages/plugins/my-plugin/
 - [ ] reducer 纯函数、不可变更新；需要撤销的切片设置 `history: true`，并为 action 提供 `label`
 - [ ] 命令提供 `enabled`，按钮禁用态才能正确反映
 - [ ] 样式类名加自有前缀，颜色使用 `var(--kb-*)` 令牌
+- [ ] 弹窗只贡献 `ExtensionPoints.dialogs` 内容并经 `DIALOG_SERVICE` 打开，不自绘遮罩 / 外框
 - [ ] 为新增的状态 / 事件写 `declare module` 类型扩充

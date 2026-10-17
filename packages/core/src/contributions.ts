@@ -165,6 +165,36 @@ export interface DrawerContribution {
   close: (kernel: Kernel) => unknown;
 }
 
+export interface DialogViewProps<P = any> {
+  kernel: Kernel;
+  dialogId: string;
+  /** `DIALOG_SERVICE.open(id, props)` 传入的参数 */
+  props: P;
+  /** 关闭本弹窗（不检查 `closable`） */
+  close: () => void;
+}
+
+/**
+ * 弹窗：内容由插件贡献，弹窗外框与行为统一由底座（`kabel:feedback`）定义——
+ * 遮罩、居中、拖动头部移动（双击复位）、关闭按钮、Esc / 点击遮罩关闭、焦点进入与归还、层叠顺序。
+ * 插件只贡献内容视图，经 `DIALOG_SERVICE.open(id, props)` 或命令 `dialog.open` 打开，不自行渲染遮罩与外框。
+ * 视图内的操作按钮放在 ui 的 `<DialogFooter>`（或 `.kb-dialog__footer` 元素）中，与底座弹窗样式一致。
+ */
+export interface DialogContribution<P = any> {
+  id: string;
+  /** 头部标题，可按参数计算 */
+  title: string | ((props: P, state: KabelState) => string);
+  /** 宽度（px），默认 480；超出工作台时收缩 */
+  width?: number;
+  view: View<DialogViewProps<P>>;
+  /** 是否允许用户关闭（Esc、遮罩、关闭按钮），如加载中返回 false；默认允许 */
+  closable?: (state: KabelState, kernel: Kernel, props: P) => boolean;
+  /** 点击遮罩是否关闭，默认 true */
+  maskClosable?: boolean;
+  /** 弹窗关闭后（任何途径）调用 */
+  onClose?: (kernel: Kernel, props: P) => void;
+}
+
 /** 内置扩展点 */
 export const ExtensionPoints = {
   toolbar: defineExtensionPoint<ToolbarItem>('kabel.toolbar'),
@@ -174,4 +204,5 @@ export const ExtensionPoints = {
   contextMenu: defineExtensionPoint<ContextMenuItem>('kabel.contextMenu'),
   banners: defineExtensionPoint<BannerItem>('kabel.banners'),
   drawers: defineExtensionPoint<DrawerContribution>('kabel.drawers'),
+  dialogs: defineExtensionPoint<DialogContribution>('kabel.dialogs'),
 } as const;

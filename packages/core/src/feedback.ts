@@ -27,3 +27,19 @@ export interface NotifyService {
 }
 
 export const NOTIFY_SERVICE = createServiceToken<NotifyService>('kabel.notify');
+
+/**
+ * 弹窗服务：打开 / 关闭 `ExtensionPoints.dialogs` 中贡献的弹窗。实现由渲染层提供（ui 的 feedbackPlugin）。
+ * 弹窗外框与交互统一由底座定义，插件只贡献内容视图并经此服务（或命令 `dialog.open` / `dialog.close`）触发。
+ */
+export interface DialogService {
+  /** 打开弹窗；已打开时更新参数并移到最上层 */
+  open<P = unknown>(id: string, props?: P): void;
+  /** 更新已打开弹窗的参数；未打开时忽略 */
+  update<P = unknown>(id: string, props: P): void;
+  /** 关闭弹窗，缺省关闭最上层的一个；不检查 `closable` */
+  close(id?: string): void;
+  isOpen(id: string): boolean;
+}
+
+export const DIALOG_SERVICE = createServiceToken<DialogService>('kabel.dialog');

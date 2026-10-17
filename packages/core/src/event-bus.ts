@@ -29,6 +29,9 @@ export interface KabelEvents {
   save: SavePayload;
   saved: SavePayload;
   'save:error': { error: unknown };
+  /** 底座弹窗已打开 / 已关闭（`DIALOG_SERVICE`） */
+  'dialog:open': { id: string; props?: unknown };
+  'dialog:close': { id: string };
   /** 只读模式切换 */
   'mode:change': { readonly: boolean };
 }

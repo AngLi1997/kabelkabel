@@ -1,9 +1,8 @@
-import type { Kernel } from '@kabel/core';
-import { Button, IconButton, Input, Textarea, useDraggable, useSelector } from '@kabel/ui';
+import type { DialogViewProps, Kernel } from '@kabel/core';
+import { Button, DialogBody, DialogFooter, Input, Textarea, useSelector } from '@kabel/ui';
 import type { ComponentChildren } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { FILE_LOADER_SERVICE, type MinioConfig } from './contract';
-import { fileLoaderActions } from './slice';
 
 const MENU: { command: string; label: string }[] = [
   { command: 'fileLoader.openDirectory', label: '本地目录…' },
@@ -11,9 +10,8 @@ const MENU: { command: string; label: string }[] = [
   { command: 'fileLoader.openUrls', label: 'URL 列表…' },
 ];
 
-/** 工具栏“打开”菜单与两个表单对话框（MinIO、URL 列表） */
-export function LoaderToolbar({ kernel, defaults }: { kernel: Kernel; defaults?: Partial<MinioConfig> }) {
-  const dialog = useSelector((s) => s.fileLoader?.dialog ?? null);
+/** 工具栏“打开”菜单；MinIO、URL 列表两个表单经底座弹窗打开 */
+export function LoaderToolbar({ kernel }: { kernel: Kernel }) {
   const busy = useSelector((s) => !!s.fileLoader?.busy);
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
@@ -60,53 +58,34 @@ export function LoaderToolbar({ kernel, defaults }: { kernel: Kernel; defaults?:
           ))}
         </div>
       )}
-      {dialog === 'urls' && <UrlsDialog kernel={kernel} />}
-      {dialog === 'minio' && <MinioDialog kernel={kernel} defaults={defaults} />}
     </div>
   );
 }
 
-function Modal({ title, kernel, onSubmit, submitLabel, busy, children }: { title: string; kernel: Kernel; onSubmit: () => void; submitLabel: string; busy: boolean; children: ComponentChildren }) {
-  const box = useRef<HTMLDivElement>(null);
-  const close = () => kernel.dispatch(fileLoaderActions.openDialog(null));
-  const drag = useDraggable(box);
-  useEffect(() => {
-    const previous = document.activeElement as HTMLElement | null;
-    box.current?.querySelector<HTMLElement>('input,textarea')?.focus();
-    return () => previous?.focus?.();
-  }, []);
+/** 表单弹窗的内容：输入框中回车提交；外框（标题、拖动、关闭）由底座弹窗提供 */
+function Form({ close, onSubmit, busy, children }: { close: () => void; onSubmit: () => void; busy: boolean; children: ComponentChildren }) {
   return (
-    <div class="kb-fl__modal" onPointerDown={(e) => e.target === e.currentTarget && close()}>
-      <div
-        ref={box}
-        class="kb-fl__dialog"
-        style={drag.style}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        onKeyDown={(e) => {
-          if (e.key === 'Escape') {
-            e.preventDefault();
-            close();
-          } else if (e.key === 'Enter' && (e.target as HTMLElement).tagName === 'INPUT' && !busy) {
-            e.preventDefault();
-            onSubmit();
-          }
-        }}
-      >
-        <header {...drag.handleProps} class={`kb-fl__header ${drag.handleProps.class}`}>
-          <span class="kb-fl__title">{title}</span>
-          <IconButton icon="close" title="关闭 (Esc)" onClick={close} />
-        </header>
-        <div class="kb-fl__body">{children}</div>
-        <footer class="kb-fl__footer">
-          <Button onClick={close}>取消</Button>
-          <Button variant="primary" disabled={busy} onClick={onSubmit}>
-            {busy ? '加载中…' : submitLabel}
-          </Button>
-        </footer>
-      </div>
-    </div>
+    <>
+      <DialogBody>
+        <div
+          class="kb-fl__body"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && (e.target as HTMLElement).tagName === 'INPUT' && !busy) {
+              e.preventDefault();
+              onSubmit();
+            }
+          }}
+        >
+          {children}
+        </div>
+      </DialogBody>
+      <DialogFooter>
+        <Button onClick={close}>取消</Button>
+        <Button variant="primary" disabled={busy} onClick={onSubmit}>
+          {busy ? '加载中…' : '加载'}
+        </Button>
+      </DialogFooter>
+    </>
   );
 }
 
@@ -117,30 +96,26 @@ const Field = ({ label, children }: { label: string; children: ComponentChildren
   </label>
 );
 
-/** 提交：成功后关闭对话框；失败保留内容（提示已由服务发出） */
-function useSubmit(kernel: Kernel, run: () => Promise<unknown>) {
+/** 提交：成功后关闭弹窗；失败保留内容（提示已由服务发出） */
+function useSubmit(close: () => void, run: () => Promise<unknown>) {
   const busy = useSelector((s) => !!s.fileLoader?.busy);
-  const submit = () =>
-    run().then(
-      () => kernel.dispatch(fileLoaderActions.openDialog(null)),
-      () => {},
-    );
+  const submit = () => run().then(close, () => {});
   return { busy, submit };
 }
 
-function UrlsDialog({ kernel }: { kernel: Kernel }) {
+export function UrlsDialog({ kernel, close }: DialogViewProps) {
   const [text, setText] = useState('');
-  const { busy, submit } = useSubmit(kernel, () => kernel.services.get(FILE_LOADER_SERVICE).loadUrls(text));
+  const { busy, submit } = useSubmit(close, () => kernel.services.get(FILE_LOADER_SERVICE).loadUrls(text));
   return (
-    <Modal title="从 URL 列表加载" kernel={kernel} onSubmit={submit} submitLabel="加载" busy={busy}>
+    <Form close={close} onSubmit={submit} busy={busy}>
       <Field label="URL（每行一个，也可用逗号分隔）">
         <Textarea rows={8} value={text} onChange={setText} placeholder={'https://example.com/scans/001.jpg\nhttps://example.com/scans/002.jpg'} />
       </Field>
-    </Modal>
+    </Form>
   );
 }
 
-function MinioDialog({ kernel, defaults }: { kernel: Kernel; defaults?: Partial<MinioConfig> }) {
+export function MinioDialog({ kernel, close, defaults }: DialogViewProps & { defaults?: Partial<MinioConfig> }) {
   const [form, setForm] = useState({
     endpoint: defaults?.endpoint ?? '',
     bucket: defaults?.bucket ?? '',
@@ -149,7 +124,7 @@ function MinioDialog({ kernel, defaults }: { kernel: Kernel; defaults?: Partial<
     secretKey: defaults?.secretKey ?? '',
   });
   const set = (key: keyof typeof form) => (value: string) => setForm((f) => ({ ...f, [key]: value }));
-  const { busy, submit } = useSubmit(kernel, () =>
+  const { busy, submit } = useSubmit(close, () =>
     kernel.services.get(FILE_LOADER_SERVICE).loadMinio({
       ...defaults,
       endpoint: form.endpoint.trim(),
@@ -160,7 +135,7 @@ function MinioDialog({ kernel, defaults }: { kernel: Kernel; defaults?: Partial<
     }),
   );
   return (
-    <Modal title="从 MinIO 加载" kernel={kernel} onSubmit={submit} submitLabel="加载" busy={busy}>
+    <Form close={close} onSubmit={submit} busy={busy}>
       <Field label="服务地址">
         <Input value={form.endpoint} onChange={set('endpoint')} placeholder="http://127.0.0.1:9000" />
       </Field>
@@ -180,6 +155,6 @@ function MinioDialog({ kernel, defaults }: { kernel: Kernel; defaults?: Partial<
           <input type="password" class="kb-input" autocomplete="off" value={form.secretKey} onInput={(e) => set('secretKey')(e.currentTarget.value)} />
         </Field>
       </div>
-    </Modal>
+    </Form>
   );
 }

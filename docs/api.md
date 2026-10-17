@@ -124,11 +124,12 @@
 | `EventBus`（`withSource` / `emitAs`，`onAny` 收到 `meta.source`）/ `KabelEvents` / `EmitMeta` | 事件 |
 | `CommandRegistry`（`ownerOf`）/ `CommandDefinition`（`mutates`、`hidden`） | 命令；派发 `command:before / after / error` |
 | `createServiceToken` / `ServiceRegistry`（`onChange`） | 服务 |
-| `defineExtensionPoint` / `ExtensionPoints`（`toolbar` / `statusbar` / `panels` / `settings` / `contextMenu` / `banners` / `drawers`）/ `ContributionRegistry` | 扩展点 |
+| `defineExtensionPoint` / `ExtensionPoints`（`toolbar` / `statusbar` / `panels` / `settings` / `contextMenu` / `banners` / `drawers` / `dialogs`）/ `ContributionRegistry` | 扩展点 |
 | `ToolbarItem` / `StatusItem` / `PanelContribution` / `SettingsPage` / `ContextMenuItem` / `View` / `DomView` | 贡献项类型 |
 | `modePlugin` / `isReadonly` | 只读模式（内置） |
 | `savePlugin` / `SaveResult` | 保存契约（内置） |
 | `NOTIFY_SERVICE` / `NotifyService` | 消息与确认对话框的服务令牌（实现在 ui 的 `feedbackPlugin`） |
+| `DIALOG_SERVICE` / `DialogService` / `DialogContribution` / `DialogViewProps` | 底座弹窗：`open / update / close / isOpen`，内容来自 `ExtensionPoints.dialogs`（实现在 ui 的 `feedbackPlugin`） |
 | `LOG_SERVICE` / `LogService` / `LogEntry` | 事件日志的服务令牌（实现在 ui 的 `logsPlugin`） |
 | `eventToKeybinding` / `sameKeybinding` | 快捷键工具 |
 | `kernel.plugins.list / listDisabled / disable / enable / isDisabled / status / blockers / parentOf / reload` | 插件管理 |
@@ -146,7 +147,8 @@
 | `Workbench` / `Region` / `PanelStack` / `Toolbar` / `StatusBar` | 外壳组件 |
 | `layoutPlugin(options)` / `LAYOUT_CONFIG` / `layoutActions` | 布局插件（内置） |
 | `settingsPlugin()` / `settingsActions` / `SettingsDialog` / `PluginsPage` / `pluginTree` | 设置插件（内置） |
-| `feedbackPlugin()` | 消息提示与确认对话框（内置） |
+| `feedbackPlugin()` | 消息提示、确认对话框与底座弹窗（内置；命令 `dialog.open` / `dialog.close`） |
+| `DialogHost` / `DialogBody` / `DialogFooter` | 底座弹窗出口（`Workbench` 已挂载）/ 弹窗内容区 / 操作栏 |
 | `palettePlugin()` | 命令面板（内置） |
 | `logsPlugin(config)` / `DEFAULT_LOG_RULES` / `LogPanel` / `exportLogs` | 事件日志（状态栏日志按钮 + 最右侧看板，事件规则可配置） |
 | `useDraggable(ref)` / `Drawers` | 弹窗拖动 / 抽屉栏 |

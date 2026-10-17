@@ -78,6 +78,7 @@ packages/plugins/<name>/
 - 已被工作区自动识别（`pnpm-workspace.yaml` 包含 `packages/plugins/*`），新增后执行 `pnpm install` 即可。
 - 测试：放在 `<name>/test/**/*.test.ts(x)`，用 `@kabel/core/testing` 的 `setupPlugins()`；`@kabel/plugin-<name>` 在 vitest 与 `pnpm typecheck` 中已自动映射到源码，无需先构建。
 - 样式：若插件带 CSS，需把 `packages/plugins/<name>/src/style.css` 追加到 `packages/editor/package.json` 的 build 脚本中，主包的 `style.css` 才会包含它。
+- 弹窗：不要自绘遮罩 / 弹窗外框。向 `ExtensionPoints.dialogs` 贡献内容视图，经 `DIALOG_SERVICE.open(id, props)` 打开，外框与拖动、关闭、焦点等行为由底座统一定义（见 `docs/plugin-guide.md` 第 6 节“弹窗”）。
 - 集成：宿主 `createArchiveEditor(el, { plugins: [myPlugin()] })` 或 `editor.use(...)`；按场景组合时写一个场景预设插件（`ctx.plugin([...])`）；要成为默认能力时再考虑放进 `createBaselinePreset`（业务功能通常不进 baseline）。
 - 配置：需要用户配置的项（服务地址、字段、策略）声明为 `Config`，在 设置 › 插件管理 中编辑，不要另写设置页。
 - 文档：改动插件对外行为时同步更新其 README 与 `docs/`。

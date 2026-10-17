@@ -1,13 +1,13 @@
-import { ExtensionPoints, savePlugin, type Kernel } from '@kabel/core';
+import { DIALOG_SERVICE, ExtensionPoints, savePlugin, type Kernel } from '@kabel/core';
 import { setupPlugins } from '@kabel/core/testing';
 import { field, FIELDS_SERVICE, fieldsPlugin } from '@kabel/plugin-fields';
 import { workspacePlugin, WORKSPACE_SERVICE, type DocumentItem } from '@kabel/plugin-workspace';
-import { KernelContext } from '@kabel/ui';
+import { DialogHost, feedbackPlugin, KernelContext } from '@kabel/ui';
 import { h, render } from 'preact';
 import { act } from 'preact/test-utils';
 import { describe, expect, it, vi } from 'vitest';
 import { parse as parseYaml } from 'yaml';
-import { DATA_EXCHANGE_SERVICE, dataExchangePlugin, type DataExchangeConfig, type ExchangePayload } from '../src';
+import { DATA_EXCHANGE_SERVICE, dataExchangePlugin, LOADER_DIALOG, PREVIEW_DIALOG, type DataExchangeConfig, type ExchangePayload } from '../src';
 
 const docs: DocumentItem[] = [
   { id: 'a1', name: '申请书-1.jpg', group: '企业设立登记申请书', kind: 'image', src: 'https://oss.example.com/a1.jpg' },
@@ -28,7 +28,7 @@ const fields = () =>
   });
 
 async function setup(config: Partial<DataExchangeConfig> = {}) {
-  const ctx = await setupPlugins([workspacePlugin({ items: docs }), fields(), dataExchangePlugin(config)]);
+  const ctx = await setupPlugins([feedbackPlugin(), workspacePlugin({ items: docs }), fields(), dataExchangePlugin(config)]);
   return { ...ctx, fields: ctx.kernel.services.get(FIELDS_SERVICE), exchange: ctx.kernel.services.get(DATA_EXCHANGE_SERVICE) };
 }
 
@@ -97,13 +97,13 @@ describe('dataExchangePlugin', () => {
     expect(fields.get('name')!.value).toBe('固定数据');
   });
 
-  it('加载数据：弹出对话框，选择文件或粘贴文本后载入，不请求业务层', async () => {
+  it('加载数据：弹出底座弹窗，选择文件或粘贴文本后载入，不请求业务层', async () => {
     const { kernel, fields } = await setup();
     const handler = vi.fn();
     kernel.bus.on('data-exchange:load', handler);
     await kernel.execute('dataExchange.load');
     expect(handler).not.toHaveBeenCalled();
-    expect(kernel.getState().dataExchange.loader).toBe(true);
+    expect(kernel.services.get(DIALOG_SERVICE).isOpen(LOADER_DIALOG)).toBe(true);
 
     const host = mountControls(kernel);
     const input = host.querySelector<HTMLInputElement>('input[type="file"]')!;
@@ -116,13 +116,13 @@ describe('dataExchangePlugin', () => {
     });
     expect(host.querySelector('textarea')!.value).toContain('文件数据');
 
-    const apply = [...host.querySelectorAll('.kb-dx__footer button')].find((b) => b.textContent === '加载')!;
+    const apply = [...host.querySelectorAll('.kb-dialog__footer button')].find((b) => b.textContent === '加载')!;
     await act(async () => {
       apply.dispatchEvent(new MouseEvent('click', { bubbles: true }));
       await Promise.resolve();
     });
     expect(fields.get('name')!.value).toBe('文件数据');
-    expect(kernel.getState().dataExchange.loader).toBe(false);
+    expect(kernel.services.get(DIALOG_SERVICE).isOpen(LOADER_DIALOG)).toBe(false);
     expect(handler).not.toHaveBeenCalled();
     host.remove();
 
@@ -206,14 +206,16 @@ describe('dataExchangePlugin', () => {
     fields.set('name', '星辰');
     await kernel.execute('dataExchange.view');
     expect(submit).not.toHaveBeenCalled();
-    expect(kernel.getState().dataExchange.preview).toContain('星辰');
+    expect(kernel.services.get(DIALOG_SERVICE).isOpen(PREVIEW_DIALOG)).toBe(true);
 
     const host = mountControls(kernel);
+    expect(host.querySelector('.kb-dialog__title')?.textContent).toBe('查看数据');
+    expect(host.querySelector('.kb-dialog__header')?.classList.contains('kb-drag-handle')).toBe(true);
     expect(host.querySelector('.kb-dx__pre')?.textContent).toContain('星辰');
     act(() => {
-      host.querySelector<HTMLButtonElement>('.kb-dx__header button')?.click();
+      host.querySelector<HTMLButtonElement>('.kb-dialog__header button')?.click();
     });
-    expect(kernel.getState().dataExchange.preview).toBeNull();
+    expect(kernel.services.get(DIALOG_SERVICE).isOpen(PREVIEW_DIALOG)).toBe(false);
     expect(host.querySelector('.kb-dx__pre')).toBeNull();
     host.remove();
   });
@@ -240,7 +242,7 @@ function mountControls(kernel: Kernel): HTMLElement {
   host.className = 'kb-root';
   document.body.appendChild(host);
   act(() => {
-    render(h(KernelContext.Provider, { value: kernel, children: h(item.view as never, { kernel }) }), host);
+    render(h(KernelContext.Provider, { value: kernel, children: [h(item.view as never, { kernel }), h(DialogHost, null)] }), host);
   });
   return host;
 }

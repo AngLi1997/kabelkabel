@@ -5,14 +5,16 @@ import { useDraggable } from '../components/draggable';
 import { useKernel, useSelector } from '../hooks';
 import { Icon } from '../icons/Icon';
 import { cx } from '../utils';
+import { DialogHost } from './DialogHost';
 
 const ICONS: Record<NoticeType, string> = { info: 'info', success: 'success', warning: 'warning', error: 'error' };
 
-/** 提示与确认对话框的渲染出口，由 Workbench 挂载 */
+/** 提示、弹窗与确认对话框的渲染出口，由 Workbench 挂载；确认框在弹窗之上 */
 export function FeedbackHost() {
   return (
     <>
       <Toasts />
+      <DialogHost />
       <ConfirmDialog />
     </>
   );

@@ -26,7 +26,7 @@ Kabel 的内核：事件、状态、撤销重做、命令、服务、扩展点�
 | `modePlugin({ readonly? })` | `kabel:mode` | 只读模式：`state.mode.readonly`，`mutates` 命令只读时自动禁用，事件 `mode:change` |
 | `savePlugin({ confirmLeave? })` | `kabel:save` | 保存契约：`kabel.save`（`Mod+S`）等待所有 `save` 事件处理器，成功后标记已保存并派发 `saved`，失败派发 `save:error` |
 
-另导出消息与对话框的服务令牌 `NOTIFY_SERVICE`、事件日志的服务令牌 `LOG_SERVICE`（`list / log / clear / subscribe / export / download`），实现都在 `@kabel/ui`。
+另导出消息与对话框的服务令牌 `NOTIFY_SERVICE`、底座弹窗的服务令牌 `DIALOG_SERVICE`（内容来自扩展点 `ExtensionPoints.dialogs`）、事件日志的服务令牌 `LOG_SERVICE`（`list / log / clear / subscribe / export / download`），实现都在 `@kabel/ui`。
 
 ## 最小示例
 

@@ -58,6 +58,63 @@
   padding: var(--kb-space-2) var(--kb-space-3) var(--kb-space-3);
 }
 
+/* ---------- 底座弹窗（DIALOG_SERVICE） ---------- */
+.kb-dialog {
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+  max-height: 100%;
+  border: 1px solid var(--kb-color-border);
+  background: var(--kb-color-surface);
+  box-shadow: var(--kb-shadow-overlay);
+  outline: none;
+}
+
+.kb-dialog__header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kb-space-2);
+  padding: var(--kb-space-2) var(--kb-space-3);
+  border-bottom: 1px solid var(--kb-color-border);
+}
+
+.kb-dialog__title {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kb-dialog__main,
+.kb-dialog__view {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.kb-dialog__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--kb-space-3);
+  min-height: 0;
+  padding: var(--kb-space-3);
+  overflow: auto;
+}
+
+.kb-dialog__footer {
+  display: flex;
+  flex: none;
+  justify-content: flex-end;
+  gap: var(--kb-space-2);
+  padding: 0 var(--kb-space-3) var(--kb-space-3);
+}
+
 /* ---------- 消息提示 ---------- */
 .kb-toasts {
   position: absolute;
