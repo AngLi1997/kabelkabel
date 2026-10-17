@@ -32,6 +32,12 @@ export class DisposableStore implements Disposable {
     return d;
   }
 
+  /** 移除（不释放）已登记的项，用于提前释放的子作用域 */
+  delete(item: Disposable): void {
+    const index = this.items.indexOf(item);
+    if (index >= 0) this.items.splice(index, 1);
+  }
+
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;

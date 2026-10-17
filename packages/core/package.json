@@ -35,5 +35,8 @@
   "sideEffects": false,
   "scripts": {
     "build": "tsup"
+  },
+  "dependencies": {
+    "schemastery": "^3.18.0"
   }
 }

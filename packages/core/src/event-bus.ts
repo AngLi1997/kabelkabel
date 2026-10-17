@@ -15,6 +15,12 @@ export interface KabelEvents {
   'plugin:registered': { name: string };
   /** disabled 为 true 表示被停用（可重新启用），否则为卸载 */
   'plugin:unregistered': { name: string; disabled?: boolean };
+  /** 插件进入启用（active）或等待（pending：依赖或必需服务未就绪、重载中） */
+  'plugin:status': { name: string; status: 'active' | 'pending' };
+  /** 插件配置已保存（随后插件重载） */
+  'plugin:config': { name: string; config: unknown };
+  /** 服务栈顶变化（提供、撤回、覆盖） */
+  'service:change': { id: string; owner?: string };
   'command:before': { id: string; args: unknown[] };
   'command:after': { id: string; args: unknown[]; result: unknown };
   /** 保存流程：处理器可返回 Promise，全部完成后才标记为已保存；reject 表示保存失败 */
