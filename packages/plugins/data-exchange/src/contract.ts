@@ -5,7 +5,8 @@ import type { FieldSource, FieldValue } from '@kabel/plugin-fields';
  * 数据对接的对外契约：插件只负责“当前数据 ⇄ 指定格式”的转换，读取与持久化由业务层（宿主）完成：
  * - 加载数据：工具栏弹出对话框，按配置格式选择文件或粘贴文本后载入；业务层仍可经 `request()` / `data-exchange:load` 提供数据；
  * - 查看数据：按当前配置序列化并展示，不提交；
- * - 导出数据：插件把数据导出为 JSON / YAML，经 `data-exchange:submit` 交给业务层提交。
+ * - 导出数据：工具栏控件把数据导出为 JSON / YAML，经 `data-exchange:submit` 交给业务层，不校验字段；
+ *   业务层调用 `submit()` 时按配置校验必填。
  */
 
 export type ExchangeFormat = 'json' | 'yaml';
@@ -77,7 +78,7 @@ export interface DataExchangeService {
   load(input: ExchangeInput, format?: ExchangeFormat): Promise<ExchangeLoadResult>;
   /** 向业务层请求数据并载入（`data-exchange:load`）；没有业务层响应时返回 null */
   request(): Promise<ExchangeLoadResult | null>;
-  /** 导出并交给业务层提交（`data-exchange:submit`）；成功返回交出的内容 */
+  /** 校验后导出并交给业务层提交（`data-exchange:submit`）；未通过校验或提交失败时 reject */
   submit(format?: ExchangeFormat): Promise<ExchangePayload>;
 }
 

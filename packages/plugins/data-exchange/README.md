@@ -38,7 +38,7 @@ editor.on('data-exchange:submit', async ({ text, mime }) => {
 | `fieldsPath` | `fields` | 字段值在数据中的路径，`a.b` 嵌套；留空放在根上 |
 | `mapping` | `[]` | 字段对照表：`field` 字段标识 ⇄ `path` 接口字段（`a.b` 嵌套，留空同字段标识），`submit` / `load` 控制方向。为空时按字段标识交换全部字段；不为空时只交换表中的字段 |
 | `skipEmpty` | `false` | 导出时省略空值（默认输出为 `null`） |
-| `validate` | `true` | 导出前校验必填，未通过时定位到第一个错误字段且不导出 |
+| `validate` | `true` | 业务层调用 `submit()` 与保存时导出前校验必填，未通过时定位到第一个错误字段且不导出。工具栏「导出数据」不拦截 |
 | `submitOnSave` | `false` | 保存（`kabel.save` / `Mod+S`）时导出：并入保存契约，导出成功才标记为已保存 |
 | `confirmLoad` | `true` | 有未保存修改时，加载前确认 |
 | `filename` | `archive` | 建议的文件名（不含扩展名），随导出内容交给业务层 |
@@ -69,7 +69,7 @@ documents:
 | `dataExchange.load` | 加载数据（`mutates`）：打开对话框。按 `format` 选择 `.json` 或 `.yaml` / `.yml`，或粘贴文本，确认后载入字段。不派发 `data-exchange:load` |
 | `dataExchange.apply` | 内部命令（`hidden`）：载入对话框中的文本 |
 | `dataExchange.view` | 查看数据：按当前配置序列化并在对话框中展示，不提交 |
-| `dataExchange.export` | 导出数据：校验 → 序列化 → `data-exchange:submit` 交给业务层 |
+| `dataExchange.export` | 导出数据：序列化 → `data-exchange:submit` 交给业务层（不校验字段） |
 
 三个控件显示在工具栏右侧，使用相同的文字按钮样式。
 
@@ -82,7 +82,7 @@ documents:
 | `parse(text, format?)` | 解析 JSON / YAML 文本 |
 | `load(input, format?)` | 载入对象或文本，返回 `{ fields, documents }` |
 | `request()` | 向业务层请求数据并载入（`data-exchange:load`）；没有处理器或返回空时为 `null`。工具栏按钮不调用它 |
-| `submit(format?)` | 导出并交给业务层；失败时 reject |
+| `submit(format?)` | 校验后导出并交给业务层；未通过校验或提交失败时 reject |
 
 ## 事件
 

@@ -140,20 +140,36 @@ describe('dataExchangePlugin', () => {
     host.remove();
   });
 
-  it('导出数据：校验通过后把内容交给业务层；未通过时不导出', async () => {
+  it('导出控件不校验字段，直接把内容交给业务层', async () => {
     const { kernel, fields } = await setup({ format: 'yaml' });
     const submitted: ExchangePayload[] = [];
     kernel.bus.on('data-exchange:submit', async (payload) => void submitted.push(payload));
 
     await kernel.execute('dataExchange.export');
+    expect(submitted).toHaveLength(1);
+    expect(submitted[0]).toMatchObject({ format: 'yaml', data: { fields: { name: null } } });
+    expect(fields.focused()).toBeNull();
+
+    fields.set('name', '星辰');
+    await kernel.execute('dataExchange.export');
+    expect(submitted).toHaveLength(2);
+    expect(submitted[1]).toMatchObject({ format: 'yaml', data: { fields: { name: '星辰' } } });
+    expect(submitted[1]!.text).toContain('name: 星辰');
+  });
+
+  it('业务层 submit：校验未通过时不导出', async () => {
+    const { kernel, fields, exchange } = await setup({ format: 'yaml' });
+    const submitted: ExchangePayload[] = [];
+    kernel.bus.on('data-exchange:submit', async (payload) => void submitted.push(payload));
+
+    await expect(exchange.submit()).rejects.toThrow('有 1 个字段未通过校验');
     expect(submitted).toHaveLength(0);
     expect(fields.focused()).toBe('name');
 
     fields.set('name', '星辰');
-    await kernel.execute('dataExchange.export');
+    await exchange.submit();
     expect(submitted).toHaveLength(1);
     expect(submitted[0]).toMatchObject({ format: 'yaml', data: { fields: { name: '星辰' } } });
-    expect(submitted[0]!.text).toContain('name: 星辰');
   });
 
   it('业务层提交失败时 submit 抛出', async () => {
@@ -171,8 +187,13 @@ describe('dataExchangePlugin', () => {
     await kernel.use(savePlugin({ confirmLeave: false }));
     const submit = vi.fn();
     kernel.bus.on('data-exchange:submit', submit);
-    fields.set('name', '星辰');
+    fields.set('pages', 2);
     expect(kernel.getState().history.dirty).toBe(true);
+    await expect(kernel.execute('kabel.save')).resolves.toMatchObject({ ok: false });
+    expect(submit).not.toHaveBeenCalled();
+    expect(kernel.getState().history.dirty).toBe(true);
+
+    fields.set('name', '星辰');
     await expect(kernel.execute('kabel.save')).resolves.toEqual({ ok: true });
     expect(submit).toHaveBeenCalledTimes(1);
     expect(kernel.getState().history.dirty).toBe(false);

@@ -53,8 +53,9 @@ const portableUrl = (src: string) => (/^(blob|data):/i.test(src) ? undefined : s
  * 插件不发请求、不做持久化。工具栏控件样式一致：
  * - **加载数据**：弹出对话框，按配置的格式选择文件或粘贴文本后载入字段；
  * - **查看数据**：按当前配置序列化并展示，不提交；
- * - **导出数据**：序列化后经 `data-exchange:submit`（emitAsync）交给业务层提交，reject 表示失败。
+ * - **导出数据**：序列化后经 `data-exchange:submit`（emitAsync）交给业务层提交，不校验字段；reject 表示失败。
  *
+ * 业务层调用 `submit()`、以及保存时导出，按配置校验必填，未通过则不导出。
  * 业务层加载仍走 `request()` / `data-exchange:load`，不由工具栏按钮触发。
  */
 export const dataExchangePlugin = (config?: Partial<DataExchangeConfig>) =>
@@ -184,25 +185,28 @@ export const dataExchangePlugin = (config?: Partial<DataExchangeConfig>) =>
         }
       };
 
-      /** 校验并交给业务层；提示由调用方决定（保存流程中由保存插件统一提示） */
+      /** 未通过时定位到第一个错误字段并中断（工具栏导出不走这里） */
+      const ensureValid = () => {
+        if (!options.validate) return;
+        const errors = Object.keys(fields.validate());
+        if (!errors.length) return;
+        fields.focus(errors[0]!);
+        throw new Error(`有 ${errors.length} 个字段未通过校验`);
+      };
+
+      /** 序列化并交给业务层；不校验。提示由调用方决定（保存流程中由保存插件统一提示） */
       const deliver = async (format?: ExchangeFormat): Promise<ExchangePayload> => {
         if (!kernel.bus.listenerCount('data-exchange:submit')) throw new Error('未接入导出接口');
-        if (options.validate) {
-          const errors = Object.keys(fields.validate());
-          if (errors.length) {
-            fields.focus(errors[0]!);
-            throw new Error(`有 ${errors.length} 个字段未通过校验`);
-          }
-        }
         const payload = exportAs(format);
         await ctx.bus.emitAsync('data-exchange:submit', payload);
         ctx.bus.emit('data-exchange:submitted', payload);
         return payload;
       };
 
-      const submit = async (format?: ExchangeFormat): Promise<ExchangePayload> => {
+      const finish = async (format: ExchangeFormat | undefined, validate: boolean): Promise<ExchangePayload> => {
         setBusy('submit');
         try {
+          if (validate) ensureValid();
           const payload = await deliver(format);
           notify('导出成功', 'success');
           return payload;
@@ -213,6 +217,9 @@ export const dataExchangePlugin = (config?: Partial<DataExchangeConfig>) =>
           setBusy(null);
         }
       };
+
+      /** 业务层调用：先校验再提交 */
+      const submit = (format?: ExchangeFormat) => finish(format, true);
 
       /** 把对话框中的文本按配置格式载入；不向业务层请求数据 */
       const applyText = async (text: string): Promise<ExchangeLoadResult | null> => {
@@ -274,7 +281,7 @@ export const dataExchangePlugin = (config?: Partial<DataExchangeConfig>) =>
         title: EXCHANGE_CONTROLS.export.title,
         icon: EXCHANGE_CONTROLS.export.icon,
         enabled: () => !busy(),
-        run: () => quiet(() => submit()),
+        run: () => quiet(() => finish(undefined, false)),
       });
 
       // 三个控件放在同一个视图里，样式不随断点或主按钮规则分叉
@@ -293,6 +300,11 @@ export const dataExchangePlugin = (config?: Partial<DataExchangeConfig>) =>
           }),
       });
 
-      if (options.submitOnSave) ctx.on('save', () => deliver().then(() => undefined));
+      if (options.submitOnSave) {
+        ctx.on('save', () => {
+          ensureValid();
+          return deliver().then(() => undefined);
+        });
+      }
     },
   });
