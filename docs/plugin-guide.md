@@ -315,6 +315,7 @@ ctx.services.tryGet(TAG_SERVICE)?.add('档案');   // 可选依赖
 | `OCR_SERVICE` / `LLM_SERVICE`（`@kabel/plugin-ocr` / `-llm`） | 文字识别 / 大模型（OpenAI 兼容接口） |
 | `REGION_SERVICE`（`@kabel/plugin-region-select`） | 请求一次框选、无 UI 裁剪 |
 | `NOTIFY_SERVICE` | `notify/dismiss/confirm` |
+| `LOG_SERVICE` | `list/log/clear/subscribe/export/download`（事件日志） |
 | `LAYOUT_CONFIG` | 解析后的布局配置（只读） |
 | `THEME_ACCENTS` | 可选主题色列表 |
 
@@ -322,6 +323,7 @@ ctx.services.tryGet(TAG_SERVICE)?.add('档案');   // 可选依赖
 
 - **保存**：底座的 `kabel.save`（`Mod+S`）依次等待所有 `save` 事件处理器，全部成功后标记撤销栈保存点（`state.history.dirty` 归零）并派发 `saved`，任一处理器 reject 则派发 `save:error` 并提示。业务插件只需 `ctx.on('save', async () => { await api.save(...) })`；有 `save` 监听或有未保存修改时工具栏才显示“保存”按钮。
 - **只读**：读取 `isReadonly(state)`（或 ui 的 `useReadonly()`）决定是否可编辑；会修改内容的命令声明 `mutates: true` 即可自动禁用。
+- **事件日志**：经 `ctx.bus.emit` / `ctx.emit` 派发的事件、注册的命令执行都会自动以本插件为来源记录到日志看板，无需额外代码；自定义事件用模块扩充 `KabelEvents` 声明类型。插件自己的弹窗用 ui 的 `useDraggable(ref)` 支持拖动。
 - **消息与对话框**：`kernel.services.tryGet(NOTIFY_SERVICE)?.notify('已保存', { type: 'success' })`；`await notify.confirm({ message: '确定删除？', danger: true })` 返回 `boolean`。
 
 ## 9. 向左 / 右侧区域贡献面板

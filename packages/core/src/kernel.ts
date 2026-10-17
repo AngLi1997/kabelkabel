@@ -43,7 +43,7 @@ export class Kernel {
     this.plugins = new PluginManager(this);
     // 服务栈顶变化：广播给宿主，并让声明了 inject 的插件等待 / 启用 / 重载
     this.services.onChange((change) => {
-      this.bus.emit('service:change', change);
+      this.bus.emitAs(change.owner, 'service:change', change);
       this.plugins.onServiceChange(change);
     });
     this.ready = this.plugins.register(options.plugins);

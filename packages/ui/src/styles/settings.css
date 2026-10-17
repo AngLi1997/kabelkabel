@@ -13,10 +13,15 @@
 .kb-settings__dialog {
   display: flex;
   flex-direction: column;
-  width: 920px;
+  width: 960px;
+  min-width: min(480px, 100%);
   max-width: 100%;
-  height: 620px;
+  height: 640px;
+  min-height: min(320px, 100%);
   max-height: 100%;
+  /* 右下角拖动调整大小 */
+  resize: both;
+  overflow: hidden;
   border: 1px solid var(--kb-color-border);
   background: var(--kb-color-surface);
   box-shadow: var(--kb-shadow-overlay);
@@ -93,6 +98,7 @@
   flex: 1;
   min-width: 0;
   padding: var(--kb-space-3) var(--kb-space-4);
+  container-type: inline-size;
 }
 
 /* 窄屏：弹窗铺满，分类导航改为横排 */
@@ -104,6 +110,8 @@
   width: 100%;
   height: 100%;
   border: 0;
+  resize: none;
+  transform: none !important;
 }
 
 .kb-root[data-size='sm'] .kb-settings__body {
@@ -180,11 +188,63 @@
 }
 
 /* ---------- 插件管理 ---------- */
+/* 固定列宽：内容过长时省略（悬停显示全文），表格始终不超出弹窗 */
+.kb-plugins {
+  table-layout: fixed;
+}
+
+.kb-plugins th,
+.kb-plugins td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kb-plugins__col-status {
+  width: 84px;
+}
+
+.kb-plugins__col-config {
+  width: 76px;
+}
+
+.kb-plugins__col-switch {
+  width: 60px;
+}
+
+.kb-plugins .kb-table__action {
+  width: auto;
+  padding: 0 var(--kb-space-1);
+}
+
+/* 内容区较窄时隐藏“标识”列（标识仍在名称的悬停提示中） */
+@container (max-width: 600px) {
+  .kb-plugins__col-id,
+  .kb-plugins__id {
+    display: none;
+  }
+}
+
+@container (max-width: 440px) {
+  .kb-plugins__col-deps,
+  .kb-plugins__deps {
+    display: none;
+  }
+}
+.kb-plugins td.kb-plugins__name-cell {
+  overflow: visible;
+}
+
 .kb-plugins__name {
   position: relative;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   padding-left: calc(var(--kb-depth, 0) * 18px);
+}
+
+.kb-plugins__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* 依赖关系连接线：└ */
@@ -222,11 +282,6 @@
   color: var(--kb-color-text-disabled);
 }
 
-.kb-plugins__deps {
-  max-width: 220px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
 /* ---------- 插件配置 ---------- */
 .kb-plugin-config__header {

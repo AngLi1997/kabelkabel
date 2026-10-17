@@ -7,12 +7,12 @@ Kabel 的内核：事件、状态、撤销重做、命令、服务、扩展点�
 | 模块 | 说明 |
 | --- | --- |
 | `Kernel` / `createKernel(options)` | 聚合以下所有能力；`kernel.use(plugin)` / `unuse(name)` 运行期注册与卸载 |
-| `EventBus` | 同步 `emit`、可否决的 `emitAsync`；处理器异常转发到 `error` 事件；事件类型用模块扩充 `KabelEvents` 追加 |
+| `EventBus` | 同步 `emit`、可否决的 `emitAsync`；处理器异常转发到 `error` 事件；事件类型用模块扩充 `KabelEvents` 追加。`withSource(name)` / `emitAs(source, …)` 派发带来源的事件，`onAny((type, payload, { source }) => …)` 可知道是哪个插件触发的（插件的 `ctx.bus` / `ctx.emit` 自动带来源） |
 | `Store` / `createSlice` | 单一状态树，切片 reducer 必须纯函数、不可变更新；`history: true` 的切片纳入撤销 |
 | `History` | 快照式撤销 / 重做，连续变更可合并，支持事务与保存点（`state.history.dirty`） |
-| `CommandRegistry` | 命令：`id`、`run`、`enabled`、`checked`、`keybinding`、`mutates`（只读时禁用）、`hidden`（不进命令面板） |
+| `CommandRegistry` | 命令：`id`、`run`、`enabled`、`checked`、`keybinding`、`mutates`（只读时禁用）、`hidden`（不进命令面板）；`ownerOf(id)` 为注册它的插件，`command:before / after / error` 以它为来源派发 |
 | `ServiceRegistry` / `createServiceToken` | 服务令牌：插件之间通过令牌共享能力，不直接 import 实现；覆盖栈，栈顶变化通知（`onChange` / `service:change`） |
-| `ExtensionRegistry` / `ExtensionPoints` | 扩展点：`toolbar`、`statusbar`、`panels`、`settings`、`contextMenu`；同 id 后注册者生效，释放后恢复前者 |
+| `ExtensionRegistry` / `ExtensionPoints` | 扩展点：`toolbar`、`statusbar`、`panels`、`settings`、`contextMenu`、`banners`、`drawers`（最右侧抽屉）；同 id 后注册者生效，释放后恢复前者 |
 | `PluginManager` | 对照 cordis：`inject` 服务依赖（等待 / 启用 / 重载）、`Config` 配置（schemastery，持久化后重载）、`ctx.plugin` 子插件、`ctx.scope` 子作用域；依赖拓扑排序、同步 / 异步 setup、可恢复的停用 / 启用 |
 | `Schema` | 配置 Schema（schemastery 再导出） |
 | `ScopedStorage` | 带命名空间的持久化（默认 localStorage，可替换） |
@@ -26,7 +26,7 @@ Kabel 的内核：事件、状态、撤销重做、命令、服务、扩展点�
 | `modePlugin({ readonly? })` | `kabel:mode` | 只读模式：`state.mode.readonly`，`mutates` 命令只读时自动禁用，事件 `mode:change` |
 | `savePlugin({ confirmLeave? })` | `kabel:save` | 保存契约：`kabel.save`（`Mod+S`）等待所有 `save` 事件处理器，成功后标记已保存并派发 `saved`，失败派发 `save:error` |
 
-另导出消息与对话框的服务令牌 `NOTIFY_SERVICE`（实现在 `@kabel/ui`）。
+另导出消息与对话框的服务令牌 `NOTIFY_SERVICE`、事件日志的服务令牌 `LOG_SERVICE`（`list / log / clear / subscribe / export / download`），实现都在 `@kabel/ui`。
 
 ## 最小示例
 

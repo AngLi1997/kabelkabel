@@ -1,3 +1,18 @@
+/* ---------- 弹窗拖动柄 ---------- */
+.kb-drag-handle {
+  cursor: move;
+  user-select: none;
+  touch-action: none;
+}
+
+.kb-drag-handle :is(button, input, textarea, select, a, [data-kb-no-drag]) {
+  cursor: auto;
+}
+
+.kb-drag-handle button {
+  cursor: pointer;
+}
+
 /* ---------- 模态层（确认框、命令面板） ---------- */
 .kb-modal {
   position: absolute;

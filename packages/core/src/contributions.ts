@@ -142,6 +142,29 @@ export interface BannerItem {
   action?: { label: string; command: string; args?: unknown[] };
 }
 
+export interface DrawerViewProps {
+  kernel: Kernel;
+  drawerId: string;
+}
+
+/**
+ * 抽屉：工作台最右侧（右侧扩展区域之外）展开的一栏，如日志看板。
+ * `when` 为真时显示；窄屏下改为浮层。头部显示标题、`actions` 与关闭按钮（执行 `close`）。
+ */
+export interface DrawerContribution {
+  id: string;
+  title: string;
+  icon?: string;
+  order?: number;
+  /** 初始宽度，默认 380 */
+  width?: number;
+  view: View<DrawerViewProps>;
+  when: StatePredicate;
+  actions?: PanelAction[];
+  /** 关闭抽屉 */
+  close: (kernel: Kernel) => unknown;
+}
+
 /** 内置扩展点 */
 export const ExtensionPoints = {
   toolbar: defineExtensionPoint<ToolbarItem>('kabel.toolbar'),
@@ -150,4 +173,5 @@ export const ExtensionPoints = {
   settings: defineExtensionPoint<SettingsPage>('kabel.settings'),
   contextMenu: defineExtensionPoint<ContextMenuItem>('kabel.contextMenu'),
   banners: defineExtensionPoint<BannerItem>('kabel.banners'),
+  drawers: defineExtensionPoint<DrawerContribution>('kabel.drawers'),
 } as const;

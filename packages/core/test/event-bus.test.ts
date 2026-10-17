@@ -59,6 +59,20 @@ describe('EventBus', () => {
     const spy = vi.fn();
     bus.onAny(spy);
     bus.emit('a', 1);
-    expect(spy).toHaveBeenCalledWith('a', 1);
+    expect(spy).toHaveBeenCalledWith('a', 1, {});
+  });
+
+  it('withSource 派发的事件带来源，监听与原总线共享', () => {
+    const bus = new EventBus();
+    const any = vi.fn();
+    const handler = vi.fn();
+    bus.onAny(any);
+    const scoped = bus.withSource('demo');
+    scoped.on('x', handler);
+    scoped.emit('x', 1);
+    bus.emitAs('other', 'y');
+    expect(handler).toHaveBeenCalledWith(1);
+    expect(any).toHaveBeenNthCalledWith(1, 'x', 1, { source: 'demo' });
+    expect(any).toHaveBeenNthCalledWith(2, 'y', undefined, { source: 'other' });
   });
 });

@@ -23,6 +23,7 @@ import { cx } from '../utils';
 import { Region } from './Region';
 import { StatusBar } from './StatusBar';
 import { Banners } from './Banners';
+import { Drawers } from './Drawers';
 import { Toolbar } from './Toolbar';
 
 export interface WorkbenchProps {
@@ -215,6 +216,7 @@ function Shell({ class: className }: { class?: string }) {
         {region('main')}
         {showResizer('right') && resizer('right')}
         {present('right') && region('right')}
+        <Drawers overlay={breakpoint !== 'lg'} />
       </div>
       <StatusBar />
       <SettingsDialog />
