@@ -1,7 +1,7 @@
 {
   "name": "@kabel/plugin-market-supervision",
   "version": "0.1.0",
-  "description": "Kabel 场景预设：市场监管档案加工（字段分组、框选识别回填、版面分析自动填充）",
+  "description": "Kabel 场景预设：市场监管档案加工（字段分组、框选识别回填、版面分析自动填充、数据对接）",
   "type": "module",
   "license": "MIT",
   "main": "./dist/index.cjs",
@@ -35,6 +35,7 @@
     "@kabel/plugin-ocr": "workspace:*",
     "@kabel/plugin-llm": "workspace:*",
     "@kabel/plugin-ocr-excerpt": "workspace:*",
-    "@kabel/plugin-layout-extract": "workspace:*"
+    "@kabel/plugin-layout-extract": "workspace:*",
+    "@kabel/plugin-data-exchange": "workspace:*"
   }
 }

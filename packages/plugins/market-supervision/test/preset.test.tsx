@@ -14,7 +14,7 @@ afterEach(() => {
   editor = undefined;
 });
 
-const CHILDREN = ['kabel:fields', 'kabel:catalog', 'kabel:ocr', 'kabel:llm', 'kabel:region-select', 'kabel:ocr-excerpt', 'kabel:layout-extract'];
+const CHILDREN = ['kabel:fields', 'kabel:catalog', 'kabel:ocr', 'kabel:llm', 'kabel:region-select', 'kabel:ocr-excerpt', 'kabel:layout-extract', 'kabel:data-exchange'];
 
 async function mount() {
   el = document.createElement('div');
@@ -40,7 +40,7 @@ describe('marketSupervisionPreset', () => {
     expect(kernel.plugins.getConfig<{ endpoint: string }>('kabel:llm')!.endpoint).toBe(DEFAULT_LLM_ENDPOINT);
   });
 
-  it('布局：左侧档案详情数据（三组字段）、中间影像、右侧电子文件列表；工具栏有 OCR 框选与版面分析', async () => {
+  it('布局：左侧档案详情数据（三组字段）、中间影像、右侧电子文件列表；工具栏有 OCR 框选、版面分析与数据对接', async () => {
     await mount();
     const left = el.querySelector('[data-region="left"]')!;
     const groups = [...left.querySelectorAll('.kb-catalog .kb-section__title')].map((n) => n.textContent);
@@ -50,6 +50,8 @@ describe('marketSupervisionPreset', () => {
     const labels = [...el.querySelectorAll('.kb-toolbar .kb-btn__label')].map((n) => n.textContent);
     expect(labels.some((l) => l?.startsWith('OCR 框选'))).toBe(true);
     expect(labels.some((l) => l?.startsWith('版面分析'))).toBe(true);
+    expect(labels).toContain('加载数据');
+    expect(labels).toContain('提交');
   });
 
   it('在插件配置中新增字段后，著录面板随之更新，已填写的值保留', async () => {

@@ -342,5 +342,6 @@ createArchiveEditor(el, {
 | §4.1 著录 | `@kabel/plugin-catalog` | |
 | §4.2 框选摘录 | `@kabel/plugin-ocr-excerpt` | 证据框暂由本插件的覆盖层绘制，`kabel:marks` 落地后改为 `evidence` 图层 |
 | §4.3 AI 提取 | `@kabel/plugin-layout-extract` | 整页 OCR + 大模型结构化提取 |
+| 数据对接 | `@kabel/plugin-data-exchange` | 字段 / 文件列表 ⇄ JSON、YAML；加载与提交经事件交给业务层，插件不发请求、不持久化 |
 
 未做：§3.1 档案上下文（`kabel:archive`）、§3.3 区域标记（`kabel:marks`）、§3.5 影像处理、§4.4–4.8（加工处理、脱敏、标注、质检问题、提交流程）。

@@ -46,7 +46,7 @@
 | `@kabel/editor` | **主包**：baseline 预设 + `createArchiveEditor` 宿主 API，并再导出以上各包 |
 | `@kabel/vue` | **Vue 3 适配器**：`<KabelEditor>`、`<KabelPanel>`、`<KabelToolbarButton>`、`vueView()`、组合式 API |
 
-扩展插件统一放在 [`packages/plugins`](packages/plugins/README.md)，包名 `@kabel/plugin-<name>`：能力插件（`fields` 字段模型、`ocr` 文字识别、`llm` 大模型、`region-select` 框选、`file-loader` 文件加载）、业务插件（`catalog` 著录面板、`ocr-excerpt` 框选识别回填、`layout-extract` 版面分析自动填充）与场景预设（`market-supervision` 市场监管档案加工）。示例 `pnpm dev` 默认进入场景列表，市场监管场景也可直接打开 `?scene=market`。
+扩展插件统一放在 [`packages/plugins`](packages/plugins/README.md)，包名 `@kabel/plugin-<name>`：能力插件（`fields` 字段模型、`ocr` 文字识别、`llm` 大模型、`region-select` 框选、`file-loader` 文件加载）、业务插件（`catalog` 著录面板、`ocr-excerpt` 框选识别回填、`layout-extract` 版面分析自动填充、`data-exchange` 数据对接）与场景预设（`market-supervision` 市场监管档案加工）。示例 `pnpm dev` 默认进入场景列表，市场监管场景也可直接打开 `?scene=market`。
 
 baseline 组成（均为内置）：布局、撤销与重做、只读模式、保存、消息与对话框、快捷键、右键菜单、命令面板、工作台、设置、主题。按需组合：`createArchiveEditor(el, { preset: [layoutPlugin(), historyPlugin(), workspacePlugin()] })`。
 

@@ -23,7 +23,7 @@
 
 ```
 L4 场景预设   market-supervision …        只用 ctx.plugin() 组合子插件与默认配置
-L3 业务插件   catalog · ocr-excerpt · layout-extract …   只依赖 L1 / L2 契约，彼此不依赖
+L3 业务插件   catalog · ocr-excerpt · layout-extract · data-exchange …   只依赖 L1 / L2 契约，彼此不依赖
 L2 能力插件   fields · ocr · llm · region-select …       contract.ts + 默认实现，宿主可同令牌替换
 L1 工作台     kabel:workspace（builtin）
 L0 内核 / ui  Kernel · Workbench

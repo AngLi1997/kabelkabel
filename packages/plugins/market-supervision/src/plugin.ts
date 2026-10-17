@@ -1,5 +1,6 @@
 import { definePlugin, ExtensionPoints } from '@kabel/core';
 import { catalogPlugin, type CatalogConfig } from '@kabel/plugin-catalog';
+import { dataExchangePlugin, type DataExchangeConfig } from '@kabel/plugin-data-exchange';
 import { fieldsPlugin, type FieldsConfig } from '@kabel/plugin-fields';
 import { layoutExtractPlugin, type LayoutExtractConfig } from '@kabel/plugin-layout-extract';
 import { llmPlugin, type LlmConfig } from '@kabel/plugin-llm';
@@ -19,6 +20,8 @@ export interface MarketSupervisionOptions {
   llm?: Partial<LlmConfig>;
   excerpt?: Partial<ExcerptConfig> | false;
   layoutExtract?: Partial<LayoutExtractConfig> | false;
+  /** 数据对接（加载 / 提交 JSON、YAML，交给业务层处理） */
+  exchange?: Partial<DataExchangeConfig> | false;
 }
 
 export const MARKET_SUPERVISION_PLUGIN = 'kabel:market-supervision';
@@ -39,6 +42,7 @@ export const DEFAULT_LLM_ENDPOINT = 'http://10.20.0.15:8101/v1/models';
  * | 框选 `kabel:region-select` | 影像区域框选（不显示框选结果面板） |
  * | 框选识别回填 `kabel:ocr-excerpt` | OCR 框选（Ctrl+O）回填当前字段 |
  * | 版面分析自动填充 `kabel:layout-extract` | 整页识别 + 大模型提取，回填为待复核 |
+ * | 数据对接 `kabel:data-exchange` | 加载业务层提供的数据、导出 JSON / YAML 交给业务层提交 |
  *
  * 布局：左侧档案详情数据、中间档案影像、右侧电子文件列表。子插件随预设一起停用 / 卸载；
  * 用户在设置中保存的子插件配置优先于这里的默认值。
@@ -66,6 +70,7 @@ export const marketSupervisionPreset = (options: MarketSupervisionOptions = {}) 
         regionSelectPlugin({ panel: false }),
         options.excerpt !== false && ocrExcerptPlugin(options.excerpt || {}),
         options.layoutExtract !== false && layoutExtractPlugin({ scope: 'group', ...(options.layoutExtract || {}) }),
+        options.exchange !== false && dataExchangePlugin(options.exchange || {}),
       ]);
     },
   });

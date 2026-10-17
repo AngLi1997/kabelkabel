@@ -176,5 +176,5 @@
 
 - [工作台 `@kabel/plugin-workspace`](../packages/plugins/workspace/README.md)
 - 能力插件：[字段模型 `@kabel/plugin-fields`](../packages/plugins/fields/README.md)、[文字识别 `@kabel/plugin-ocr`](../packages/plugins/ocr/README.md)、[大模型 `@kabel/plugin-llm`](../packages/plugins/llm/README.md)、[框选 `@kabel/plugin-region-select`](../packages/plugins/region-select/README.md)
-- 业务插件：[著录面板 `@kabel/plugin-catalog`](../packages/plugins/catalog/README.md)、[框选识别回填 `@kabel/plugin-ocr-excerpt`](../packages/plugins/ocr-excerpt/README.md)、[版面分析自动填充 `@kabel/plugin-layout-extract`](../packages/plugins/layout-extract/README.md)
+- 业务插件：[著录面板 `@kabel/plugin-catalog`](../packages/plugins/catalog/README.md)、[框选识别回填 `@kabel/plugin-ocr-excerpt`](../packages/plugins/ocr-excerpt/README.md)、[版面分析自动填充 `@kabel/plugin-layout-extract`](../packages/plugins/layout-extract/README.md)、[数据对接 `@kabel/plugin-data-exchange`](../packages/plugins/data-exchange/README.md)
 - 场景预设：[市场监管档案加工 `@kabel/plugin-market-supervision`](../packages/plugins/market-supervision/README.md)

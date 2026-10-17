@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { KabelEditor, type SavePayload } from '@kabel/vue';
+import { KabelEditor, type ArchiveEditor, type SavePayload } from '@kabel/vue';
 import { FIELDS_SERVICE } from '@kabel/plugin-fields';
 import { computed, ref } from 'vue';
 import {
@@ -9,6 +9,7 @@ import {
   saveAddedPlugins,
   type DemoScene,
 } from './scenes';
+import { connectMarketApi } from './market-api';
 
 const props = defineProps<{ scene: DemoScene }>();
 const emit = defineEmits<{ back: [] }>();
@@ -32,7 +33,9 @@ const initialPlugins = [
 const available = computed(() => demoPlugins.filter((item) => !added.value.includes(item.id)));
 const addedPlugins = computed(() => demoPlugins.filter((item) => added.value.includes(item.id)));
 
-function onReady() {
+function onReady(instance: ArchiveEditor) {
+  // 业务层：数据对接插件只导出 / 载入数据，接口读写在宿主完成
+  if (props.scene.id === 'market') connectMarketApi(instance);
   ready.value = true;
 }
 

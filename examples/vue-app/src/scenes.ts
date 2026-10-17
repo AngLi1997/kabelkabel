@@ -13,6 +13,7 @@ import { ocrPlugin, OCR_PLUGIN } from '@kabel/plugin-ocr';
 import { ocrExcerptPlugin, EXCERPT_PLUGIN } from '@kabel/plugin-ocr-excerpt';
 import { regionSelectPlugin, REGION_SELECT_PLUGIN } from '@kabel/plugin-region-select';
 import { marketImages } from './market';
+import { marketExchange } from './market-api';
 import { sampleImages } from './scans';
 
 /** 演示里可手动添加的插件。初始配置写在这里，不往插件包里放演示数据。 */
@@ -98,6 +99,7 @@ const marketInit = {
     ocr: { endpoint: DEFAULT_OCR_ENDPOINT },
     llm: { endpoint: DEFAULT_LLM_ENDPOINT },
     layoutExtract: { scope: 'group' as const },
+    exchange: marketExchange,
   },
 };
 

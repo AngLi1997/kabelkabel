@@ -11,6 +11,7 @@
   "dependencies": {
     "@kabel/editor": "workspace:*",
     "@kabel/plugin-catalog": "workspace:*",
+    "@kabel/plugin-data-exchange": "workspace:*",
     "@kabel/plugin-fields": "workspace:*",
     "@kabel/plugin-file-loader": "workspace:*",
     "@kabel/plugin-layout-extract": "workspace:*",
