@@ -35,9 +35,15 @@ importers:
       '@kabel/editor':
         specifier: workspace:*
         version: link:../../packages/editor
+      '@kabel/plugin-fields':
+        specifier: workspace:*
+        version: link:../../packages/plugins/fields
       '@kabel/plugin-file-loader':
         specifier: workspace:*
         version: link:../../packages/plugins/file-loader
+      '@kabel/plugin-market-supervision':
+        specifier: workspace:*
+        version: link:../../packages/plugins/market-supervision
       '@kabel/plugin-region-select':
         specifier: workspace:*
         version: link:../../packages/plugins/region-select
@@ -79,11 +85,116 @@ importers:
         specifier: workspace:*
         version: link:../ui
 
+  packages/plugins/catalog:
+    dependencies:
+      '@kabel/core':
+        specifier: workspace:*
+        version: link:../../core
+      '@kabel/plugin-fields':
+        specifier: workspace:*
+        version: link:../fields
+      '@kabel/ui':
+        specifier: workspace:*
+        version: link:../../ui
+      preact:
+        specifier: ^10.29.0
+        version: 10.29.8
+
+  packages/plugins/fields:
+    dependencies:
+      '@kabel/core':
+        specifier: workspace:*
+        version: link:../../core
+
   packages/plugins/file-loader:
     dependencies:
       '@kabel/core':
         specifier: workspace:*
         version: link:../../core
+      '@kabel/plugin-workspace':
+        specifier: workspace:*
+        version: link:../workspace
+      '@kabel/ui':
+        specifier: workspace:*
+        version: link:../../ui
+      preact:
+        specifier: ^10.29.0
+        version: 10.29.8
+
+  packages/plugins/layout-extract:
+    dependencies:
+      '@kabel/core':
+        specifier: workspace:*
+        version: link:../../core
+      '@kabel/plugin-fields':
+        specifier: workspace:*
+        version: link:../fields
+      '@kabel/plugin-llm':
+        specifier: workspace:*
+        version: link:../llm
+      '@kabel/plugin-ocr':
+        specifier: workspace:*
+        version: link:../ocr
+      '@kabel/plugin-workspace':
+        specifier: workspace:*
+        version: link:../workspace
+
+  packages/plugins/llm:
+    dependencies:
+      '@kabel/core':
+        specifier: workspace:*
+        version: link:../../core
+
+  packages/plugins/market-supervision:
+    dependencies:
+      '@kabel/core':
+        specifier: workspace:*
+        version: link:../../core
+      '@kabel/plugin-catalog':
+        specifier: workspace:*
+        version: link:../catalog
+      '@kabel/plugin-fields':
+        specifier: workspace:*
+        version: link:../fields
+      '@kabel/plugin-layout-extract':
+        specifier: workspace:*
+        version: link:../layout-extract
+      '@kabel/plugin-llm':
+        specifier: workspace:*
+        version: link:../llm
+      '@kabel/plugin-ocr':
+        specifier: workspace:*
+        version: link:../ocr
+      '@kabel/plugin-ocr-excerpt':
+        specifier: workspace:*
+        version: link:../ocr-excerpt
+      '@kabel/plugin-region-select':
+        specifier: workspace:*
+        version: link:../region-select
+      '@kabel/plugin-workspace':
+        specifier: workspace:*
+        version: link:../workspace
+
+  packages/plugins/ocr:
+    dependencies:
+      '@kabel/core':
+        specifier: workspace:*
+        version: link:../../core
+
+  packages/plugins/ocr-excerpt:
+    dependencies:
+      '@kabel/core':
+        specifier: workspace:*
+        version: link:../../core
+      '@kabel/plugin-fields':
+        specifier: workspace:*
+        version: link:../fields
+      '@kabel/plugin-ocr':
+        specifier: workspace:*
+        version: link:../ocr
+      '@kabel/plugin-region-select':
+        specifier: workspace:*
+        version: link:../region-select
       '@kabel/plugin-workspace':
         specifier: workspace:*
         version: link:../workspace

@@ -130,10 +130,12 @@ export interface ContextMenuItem {
 /**
  * 横幅：工具栏下方的一行提示（如“智能算法已调用”“影像已锁定”），由状态计算，返回空值时隐藏。
  */
+export type BannerTone = 'info' | 'success' | 'warning' | 'danger';
+
 export interface BannerItem {
   id: string;
   order?: number;
-  tone?: 'info' | 'success' | 'warning' | 'danger';
+  tone?: BannerTone | ((state: KabelState) => BannerTone);
   icon?: string;
   text: (state: KabelState, kernel: Kernel) => string | null | undefined | false;
   /** 横幅右侧的操作按钮（执行命令） */

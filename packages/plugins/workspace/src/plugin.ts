@@ -119,6 +119,12 @@ export const workspacePlugin = (options: WorkspacePluginOptions = {}) =>
         run: () => kernel.dispatch(documentsActions.next()),
       });
       ctx.registerCommand({
+        id: 'workspace.reveal',
+        title: '定位到文件区域',
+        hidden: true,
+        run: (_k, documentId: string, bbox?: { x: number; y: number; width: number; height: number }) => service.reveal(documentId, bbox),
+      });
+      ctx.registerCommand({
         id: 'workspace.goto',
         title: '跳转到文件',
         hidden: true,

@@ -1,0 +1,41 @@
+{
+  "name": "@kabel/plugin-ocr-excerpt",
+  "version": "0.1.0",
+  "description": "Kabel 框选识别回填（业务插件）：在档案影像上框选区域，OCR 识别后回填到当前字段，并在影像上标出证据",
+  "type": "module",
+  "license": "MIT",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./style.css": "./dist/style.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "scripts": {
+    "build": "tsup && node ../../../scripts/build-css.mjs dist/style.css src/style.css"
+  },
+  "dependencies": {
+    "@kabel/core": "workspace:*",
+    "@kabel/ui": "workspace:*",
+    "@kabel/plugin-workspace": "workspace:*",
+    "@kabel/plugin-region-select": "workspace:*",
+    "@kabel/plugin-fields": "workspace:*",
+    "@kabel/plugin-ocr": "workspace:*",
+    "preact": "^10.29.0"
+  }
+}

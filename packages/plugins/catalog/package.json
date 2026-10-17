@@ -1,0 +1,38 @@
+{
+  "name": "@kabel/plugin-catalog",
+  "version": "0.1.0",
+  "description": "Kabel 著录面板（业务插件）：按字段配置分组渲染档案详情数据，字段导航、复核、校验",
+  "type": "module",
+  "license": "MIT",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./style.css": "./dist/style.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "scripts": {
+    "build": "tsup && node ../../../scripts/build-css.mjs dist/style.css src/style.css"
+  },
+  "dependencies": {
+    "@kabel/core": "workspace:*",
+    "@kabel/ui": "workspace:*",
+    "@kabel/plugin-fields": "workspace:*",
+    "preact": "^10.29.0"
+  }
+}

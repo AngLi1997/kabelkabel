@@ -16,7 +16,7 @@ export function Banners() {
   return (
     <div class="kb-banners">
       {visible.map(({ item, text }) => (
-        <div key={item.id} class={cx('kb-banner', `kb-banner--${item.tone ?? 'info'}`)} role="status">
+        <div key={item.id} class={cx('kb-banner', `kb-banner--${(typeof item.tone === 'function' ? item.tone(state) : item.tone) ?? 'info'}`)} role="status">
           {item.icon && <Icon name={item.icon} />}
           <span class="kb-banner__text">{text}</span>
           {item.action && (
