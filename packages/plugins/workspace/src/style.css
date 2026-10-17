@@ -284,6 +284,10 @@
   color: var(--kb-color-primary);
 }
 
+.kb-root[data-theme='archive'] .kb-files__item.is-active {
+  box-shadow: inset 3px 0 0 var(--kb-color-primary);
+}
+
 .kb-files__name {
   flex: 1;
   min-width: 0;
