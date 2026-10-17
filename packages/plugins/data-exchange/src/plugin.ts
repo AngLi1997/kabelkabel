@@ -1,4 +1,5 @@
 import { createSlice, definePlugin, DIALOG_SERVICE, ExtensionPoints, NOTIFY_SERVICE } from '@kabel/core';
+import { downloadFile } from '@kabel/ui';
 import { h } from 'preact';
 import { FIELDS_SERVICE, isEmptyValue, type FieldRaw } from '@kabel/plugin-fields';
 import { WORKSPACE_SERVICE, type DocumentItem } from '@kabel/plugin-workspace';
@@ -49,9 +50,9 @@ const portableUrl = (src: string) => (/^(blob|data):/i.test(src) ? undefined : s
  * 插件不发请求、不做持久化。工具栏控件样式一致：
  * - **加载数据**：经底座弹窗（`DIALOG_SERVICE`）按配置的格式选择文件或粘贴文本后载入字段；
  * - **查看数据**：按当前配置序列化并在底座弹窗中展示，不提交；
- * - **导出数据**：序列化后经 `data-exchange:submit`（emitAsync）交给业务层提交，不校验字段；reject 表示失败。
+ * - **导出数据**：按当前配置序列化并下载文件，不校验、不提交；
  *
- * 业务层调用 `submit()`、以及保存时导出，按配置校验必填，未通过则不导出。
+ * 业务层调用 `submit()`、以及保存时导出，按配置校验必填后经 `data-exchange:submit` 提交，未通过则不导出。
  * 业务层加载仍走 `request()` / `data-exchange:load`，不由工具栏按钮触发。
  */
 export const dataExchangePlugin = (config?: Partial<DataExchangeConfig>) =>
@@ -195,10 +196,11 @@ export const dataExchangePlugin = (config?: Partial<DataExchangeConfig>) =>
         return payload;
       };
 
-      const finish = async (format: ExchangeFormat | undefined, validate: boolean): Promise<ExchangePayload> => {
+      /** 业务层调用：先校验再提交 */
+      const submit = async (format?: ExchangeFormat): Promise<ExchangePayload> => {
         setBusy('submit');
         try {
-          if (validate) ensureValid();
+          ensureValid();
           const payload = await deliver(format);
           notify('导出成功', 'success');
           return payload;
@@ -210,8 +212,16 @@ export const dataExchangePlugin = (config?: Partial<DataExchangeConfig>) =>
         }
       };
 
-      /** 业务层调用：先校验再提交 */
-      const submit = (format?: ExchangeFormat) => finish(format, true);
+      /** 工具栏导出：下载文件，不校验、不交给业务层 */
+      const download = () => {
+        try {
+          const payload = exportAs();
+          downloadFile(payload.filename, payload.text, payload.mime);
+          notify('导出成功', 'success');
+        } catch (error) {
+          notify(`导出失败：${messageOf(error)}`, 'error');
+        }
+      };
 
       /** 把对话框中的文本按配置格式载入；不向业务层请求数据 */
       const applyText = async (text: string): Promise<ExchangeLoadResult | null> => {
@@ -273,7 +283,7 @@ export const dataExchangePlugin = (config?: Partial<DataExchangeConfig>) =>
         title: EXCHANGE_CONTROLS.export.title,
         icon: EXCHANGE_CONTROLS.export.icon,
         enabled: () => !busy(),
-        run: () => quiet(() => finish(undefined, false)),
+        run: () => download(),
       });
 
       // 三个控件放在同一个视图里，样式不随断点或主按钮规则分叉

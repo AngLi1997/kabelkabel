@@ -223,7 +223,7 @@ Vue 组件通过 `vueView(Component)` 转为 DomView；`<KabelPanel>` 则直接�
 
 ## 设置与主题
 
-`settingsPlugin` 在工具栏右侧提供设置入口，弹窗分类页来自扩展点 `ExtensionPoints.settings`：插件管理（设置插件内置）、主题（主题插件贡献）。`themePlugin` 把 `state.theme` 转为根节点的 `data-theme`（主题预设）、`data-scheme`、`data-density` 与 `--kb-accent` 等变量并持久化。内置两套预设：标准（`tokens.css`，藏青、冷灰）与档案（`data-theme="archive"`，参照业务系统 kaifang-lab：绛红 `#8f2428` 主色、暖纸色底、暖灰文字与描边，含深色配色），在 设置 › 主题 中切换，宿主可用 `themePlugin({ defaults: { preset: 'archive' } })` 设为默认；自定义预设经 `presets` 选项登记，并在 `.kb-root[data-theme='<id>']` 下覆盖 `--kb-*` 令牌（需写在 `[data-accent]` 规则之前，使自选主题色仍生效）。
+`settingsPlugin` 在工具栏右侧提供设置入口，弹窗分类页来自扩展点 `ExtensionPoints.settings`：插件管理（设置插件内置）、主题（主题插件贡献）。`themePlugin` 把 `state.theme` 转为根节点的 `data-theme`（主题预设）、`data-scheme`、`data-density` 与 `--kb-accent` 等变量并持久化。内置两套预设：标准（`tokens.css`，藏青、冷灰）与档案（`data-theme="archive"`，`styles/theme-archive.css`，参照业务系统 kaifang-lab：绛红 `#8f2428` 主色、暖纸色底、暖灰文字与描边，含深色配色；尺寸同其 naive-ui 风格——14px 字号、34px 控件、3px 圆角、48px 表格行、8px 圆角的面板卡片、24px 弹窗内边距、40×22 开关、标签式页签；插件自身的尺寸调整写在各插件 `style.css` 的 `.kb-root[data-theme='archive']` 下），在 设置 › 主题 中切换，宿主可用 `themePlugin({ defaults: { preset: 'archive' } })` 设为默认；预设可带 `defaults`（如档案主题的 14px 字号），选用时一并应用；自定义预设经 `presets` 选项登记，并在 `.kb-root[data-theme='<id>']` 下覆盖 `--kb-*` 令牌（需写在 `[data-accent]` 规则之前，使自选主题色仍生效）。
 
 ## 与宿主的通信
 

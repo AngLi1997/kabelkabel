@@ -26,6 +26,8 @@ export interface ThemePreset {
   title: string;
   /** 预设的默认主色，用于设置页色板（未选主题色时高亮） */
   accent: string;
+  /** 选用该预设时一并应用的设置（如字号） */
+  defaults?: Partial<Omit<ThemeState, 'preset' | 'accent'>>;
 }
 
 export interface ThemeOptions {
@@ -58,8 +60,8 @@ export const DEFAULT_ACCENTS: ThemeAccent[] = [
 
 /** 内置主题预设：标准（藏青、冷灰）与档案（参照 kaifang-lab：绛红主色、暖纸色底） */
 export const DEFAULT_PRESETS: ThemePreset[] = [
-  { id: 'default', title: '标准', accent: '#1f4e8c' },
-  { id: 'archive', title: '档案', accent: '#8f2428' },
+  { id: 'default', title: '标准', accent: '#1f4e8c', defaults: { fontSize: 13 } },
+  { id: 'archive', title: '档案', accent: '#8f2428', defaults: { fontSize: 14 } },
 ];
 
 export const FONT_SIZES = [12, 13, 14] as const;
@@ -124,13 +126,15 @@ export const themePlugin = (options: ThemeOptions = {}) =>
     title: '主题',
     builtin: true,
     setup(ctx) {
-      const initial = sanitizeTheme(DEFAULT_THEME, { ...DEFAULT_THEME, ...options.defaults });
+      const presets = options.presets ?? DEFAULT_PRESETS;
+      const preset = presets.find((p) => p.id === (options.defaults?.preset ?? DEFAULT_THEME.preset));
+      const initial = sanitizeTheme(DEFAULT_THEME, { ...DEFAULT_THEME, ...preset?.defaults, ...options.defaults });
       const slice = createThemeSlice(initial);
       const persist = options.persist !== false;
       const saved = persist ? ctx.storage.get<Partial<ThemeState> | null>(STORAGE_KEY, null) : null;
       ctx.registerSlice(slice, sanitizeTheme(initial, saved));
       ctx.provide(THEME_ACCENTS, options.accents ?? DEFAULT_ACCENTS);
-      ctx.provide(THEME_PRESETS, options.presets ?? DEFAULT_PRESETS);
+      ctx.provide(THEME_PRESETS, presets);
       if (persist) ctx.watch((s) => s.theme, (theme) => ctx.storage.set(STORAGE_KEY, theme));
 
       ctx.registerCommand({
