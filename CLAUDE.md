@@ -58,7 +58,7 @@ pnpm pack:all                  # 打 tarball 到 .packs/，用于在仓库外的
 - **弹窗由底座统一定义**：插件不得自绘遮罩 / 弹窗外框。插件只向扩展点 `ExtensionPoints.dialogs` 贡献内容视图（`{ id, title, view, width?, closable?, maskClosable?, onClose? }`），经 `DIALOG_SERVICE.open(id, props)`（或命令 `dialog.open` / `dialog.close`）触发；遮罩、居中、拖动头部（双击复位）、关闭按钮、Esc / 遮罩关闭、焦点进入与归还、层叠顺序都由 `kabel:feedback` 的 `DialogHost` 实现，开关派发 `dialog:open` / `dialog:close`，贡献插件停用时自动关闭。视图收到 `{ kernel, dialogId, props, close }`，操作按钮放在 ui 的 `DialogBody` / `DialogFooter` 中。确认框用 `NOTIFY_SERVICE.confirm`。底座自身的设置弹窗、确认框用 `useDraggable(ref)` 保持一致的拖动行为。
 - **横幅与快捷键提示**：扩展点 `ExtensionPoints.banners`（工具栏下方一行状态提示，`tone` 可为函数）；`ToolbarItem.showKeybinding` 在按钮内显示生效快捷键。
 - **命令标记**：`CommandDefinition.mutates`（只读模式下由 `CommandRegistry.isEnabled` 统一禁用）、`hidden`（不进命令面板与快捷键设置；需要参数的命令必须标）。快捷键的生效值一律用 `commandBindings(command, state)`（含用户改绑），不要直接读 `command.keybinding`。
-- **表单数据**：插件把要提交的数据贡献到 `ExtensionPoints.formData`（`{ id, title, collect }`，可异步）；保存时汇总为 `save` 载荷的 `data`，工具栏“查看表单数据”弹窗（ui `formdata/`）展示同一份数据，宿主用 `editor.getFormData()` 获取。业务插件不要另起“提交数据”通道。
+- **表单数据**：插件把要提交的数据贡献到 `ExtensionPoints.formData`（`{ id, title, collect }`，可异步）；保存时汇总为 `save` 载荷的 `data`，工具栏“查看表单数据”弹窗（ui `formdata/`）展示同一份数据，宿主用 `editor.getFormData()` 获取。业务插件不要另起“提交数据”通道。插件当前生效、需要可查看的运行期配置贡献到 `ExtensionPoints.formConfig`（同形状），与插件列表（`kernel.plugins` 的状态与 `getConfig`）一起组成“表单配置”（弹窗第二页、`editor.getFormConfig()`）。
 - **保存契约**：`kabel.save` → 汇总表单数据 → `emitAsync('save')` → `history.markSaved()` → `saved`；失败派发 `save:error` 并通过 `NOTIFY_SERVICE` 提示。业务插件在 `save` 事件里实现具体保存，不要另起保存流程。
 - **右键菜单**：元素加 `data-kb-context`（可选 `data-kb-context-data`），菜单项来自扩展点 `ExtensionPoints.contextMenu`；没有匹配项时不拦截浏览器原生菜单。
 - **错误隔离**：`ViewHost` 内含错误边界，所有面板 / 工具栏 / 覆盖层视图经它渲染；新增渲染入口时同样要走 `ViewHost`。

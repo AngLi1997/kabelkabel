@@ -47,7 +47,7 @@ L0 内核 / ui  Kernel · Workbench
 | --- | --- | --- |
 | 工作台（文档模型、渲染器、影像舞台） | `kabel:workspace` | `state.documents` / `state.stage`、`WORKSPACE_SERVICE`、`document:change`、扩展点 `WorkspaceExtensions.renderers / overlays / tools` |
 | 保存契约 | `kabel:save`（core） | `kabel.save` + 可否决的 `save` 事件 + `saved` / `save:error` + dirty + 离开确认 |
-| 表单数据 | 扩展点 `ExtensionPoints.formData`（core）+ `kabel:form-data`（ui） | 插件声明各自的提交数据；保存时汇总进 `save` 载荷的 `data`，工具栏“查看表单数据”弹窗展示全部 |
+| 表单数据 | 扩展点 `ExtensionPoints.formData`（core）+ `kabel:form-data`（ui） | 插件声明各自的提交数据；保存时汇总进 `save` 载荷的 `data`，工具栏“查看表单数据”弹窗展示全部；`ExtensionPoints.formConfig` 贡献表单配置（布局、主题、表格…），与插件列表一起在弹窗“表单配置”页展示（`collectFormConfig`） |
 | 只读模式 | `kabel:mode`（core） | `state.mode.readonly`，命令 `mutates: true` 自动禁用 |
 | 消息与对话框 | `kabel:feedback`（ui） | `NOTIFY_SERVICE`：`notify` / `confirm`；`DIALOG_SERVICE` + 扩展点 `ExtensionPoints.dialogs`：底座弹窗（见“弹窗”） |
 | 命令面板 | `kabel:palette`（ui） | `Mod+Shift+P`，列出所有可执行且未 `hidden` 的命令 |

@@ -1,4 +1,4 @@
-import { ExtensionPoints } from '@kabel/core';
+import { ExtensionPoints, Schema } from '@kabel/core';
 import { createTestKernel } from '@kabel/core/testing';
 import { render } from 'preact';
 import { act } from 'preact/test-utils';
@@ -146,11 +146,16 @@ describe('面板摆放', () => {
 });
 
 describe('查看表单数据', () => {
-  it('有提供者时显示按钮，弹窗展示全部插件的提交数据', async () => {
+  it('没有任何数据 / 配置提供者时不显示按钮', () => {
+    const kernel = createTestKernel({ plugins: [feedbackPlugin(), formDataViewPlugin()] });
+    mount(kernel);
+    expect([...host.querySelectorAll('.kb-toolbar button')].some((b) => b.textContent === '查看表单数据')).toBe(false);
+  });
+
+  it('弹窗展示全部插件的提交数据', async () => {
     const kernel = createTestKernel({ plugins: [layoutPlugin({ persist: false }), feedbackPlugin(), formDataViewPlugin()] });
     mount(kernel);
     const button = () => [...host.querySelectorAll('.kb-toolbar button')].find((b) => b.textContent === '查看表单数据');
-    expect(button()).toBeUndefined();
 
     act(() => {
       kernel.extensions.get(ExtensionPoints.formData).add({ id: 'catalog', title: '著录', collect: () => ({ title: '公司章程' }) });
@@ -168,5 +173,36 @@ describe('查看表单数据', () => {
     expect(host.querySelector('[data-dialog="formData.view"] .kb-dialog__title')?.textContent).toBe('表单数据');
     await act(() => kernel.execute('formData.close'));
     expect(host.querySelector('[data-dialog="formData.view"]')).toBeNull();
+  });
+
+  it('表单配置页：实例、插件及其配置、布局与插件贡献的配置', async () => {
+    const kernel = createTestKernel({
+      plugins: [
+        layoutPlugin({ persist: false, regions: { left: { size: 300 } }, panels: { a: { region: 'right' } } }),
+        feedbackPlugin(),
+        formDataViewPlugin(),
+        { name: 'demo', title: '演示', Config: Schema.object({ url: Schema.string().default('/x'), apiKey: Schema.string().default('sk-1') }), setup() {} },
+      ],
+    });
+    kernel.extensions.get(ExtensionPoints.panels).add(panel('a'));
+    kernel.extensions.get(ExtensionPoints.formConfig).add({ id: 'demo', title: '演示配置', collect: () => ({ format: function fmt() {} }) });
+    mount(kernel);
+    await act(() => kernel.execute('formData.show', 'config'));
+    await act(async () => void (await flush()));
+    const json = () => JSON.parse(host.querySelector('.kb-formdata__json')?.textContent ?? '{}');
+    expect(host.querySelector('.kb-formdata__tabs .is-active')?.textContent).toBe('表单配置');
+    const all = json();
+    expect(all.instanceId).toBe(kernel.id);
+    expect(all.plugins.find((p: { name: string }) => p.name === 'demo')).toEqual({ name: 'demo', title: '演示', status: 'active', config: { url: '/x', apiKey: '******' } });
+    expect(all.plugins.find((p: { name: string }) => p.name === 'kabel:layout')).toMatchObject({ builtin: true, status: 'active' });
+    expect(all.layout.regions.left.size).toBe(300);
+    expect(all.layout.panels).toEqual({ a: { region: 'right' } });
+    expect(all.layout.placed).toEqual([{ id: 'a', title: 'a', region: 'right', slot: 'top', order: 100 }]);
+    expect(all.demo).toEqual({ format: 'ƒ fmt' });
+
+    // 切回表单数据页
+    act(() => [...host.querySelectorAll<HTMLElement>('.kb-formdata__tabs .kb-tabs__tab')][0]!.click());
+    await act(async () => void (await flush()));
+    expect(json()).toEqual({});
   });
 });

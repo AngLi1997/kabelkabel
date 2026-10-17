@@ -80,11 +80,20 @@ export interface TableState {
   url: string | null;
 }
 
+/** 运行期可修改的配置（`update` 的参数，与当前配置浅合并） */
+export type TablePatch = Partial<Omit<TableConfig, 'id'>>;
+
 export interface TableService {
   /** 已注册的表格 id */
   list(): string[];
-  /** 运行期新增一个表格，返回移除函数 */
+  /** 运行期新增一个表格（同 id 先移除再添加），返回移除函数 */
   add(config: TableConfig): () => void;
+  /** 运行期修改配置：标题、列、分页、序号列、提交、空数据提示、面板默认位置、数据源（`data` / `url`）、`fetch` / `parse` */
+  update(id: string, patch: TablePatch): Promise<void>;
+  /** 移除表格（面板、表单数据与状态） */
+  remove(id: string): void;
+  /** 当前生效的配置 */
+  getConfig(id: string): TableConfig | undefined;
   /** 替换为给定 JSON 数据（切换为本地数据源） */
   setData(id: string, rows: readonly TableRow[]): void;
   /** 从 URL 加载；不传 url 时重新加载当前接口 */
@@ -108,6 +117,16 @@ export const TABLE_SERVICE = createServiceToken<TableService>('kabel.table');
 declare module '@kabel/core' {
   interface KabelEvents {
     /**
+     * 表格已注册（初始配置或 `add`）。
+     * @mode emit
+     */
+    'table:add': { id: string };
+    /**
+     * 表格已移除（`remove`、`add` 同 id 替换、插件停用）。
+     * @mode emit
+     */
+    'table:remove': { id: string };
+    /**
      * 数据已加载（本地数据或接口返回）。
      * @mode emit
      */
@@ -117,5 +136,10 @@ declare module '@kabel/core' {
      * @mode emit
      */
     'table:select': { id: string; index: number | null; row: TableRow | null };
+    /**
+     * 配置已修改（`update` / 命令 `table.update`）；`changed` 为本次修改的字段名。
+     * @mode emit
+     */
+    'table:config': { id: string; config: TableConfig; changed: string[] };
   }
 }

@@ -387,6 +387,11 @@
 }
 
 /* ---------- 查看表单数据（底座弹窗内容） ---------- */
+.kb-formdata__tabs {
+  padding: 0 var(--kb-space-2);
+  border-bottom: 1px solid var(--kb-color-divider);
+}
+
 .kb-formdata {
   display: flex;
   height: 520px;

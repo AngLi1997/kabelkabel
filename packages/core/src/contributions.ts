@@ -166,6 +166,13 @@ export interface FormDataProvider {
 }
 
 /**
+ * 表单配置提供者：插件声明自己当前生效的配置（如布局、主题、表格列定义），
+ * 与插件列表一起组成“表单配置”（“查看表单数据”弹窗的“表单配置”页、`collectFormConfig(kernel)`），
+ * 便于排查与复现某个表单的界面。形状与 `FormDataProvider` 相同；函数值在展示时显示为 `ƒ name`。
+ */
+export type FormConfigProvider = FormDataProvider;
+
+/**
  * 横幅：工具栏下方的一行提示（如“智能算法已调用”“影像已锁定”），由状态计算，返回空值时隐藏。
  */
 export type BannerTone = 'info' | 'success' | 'warning' | 'danger';
@@ -242,6 +249,7 @@ export const ExtensionPoints = {
   settings: defineExtensionPoint<SettingsPage>('kabel.settings'),
   contextMenu: defineExtensionPoint<ContextMenuItem>('kabel.contextMenu'),
   formData: defineExtensionPoint<FormDataProvider>('kabel.formData'),
+  formConfig: defineExtensionPoint<FormConfigProvider>('kabel.formConfig'),
   banners: defineExtensionPoint<BannerItem>('kabel.banners'),
   drawers: defineExtensionPoint<DrawerContribution>('kabel.drawers'),
   dialogs: defineExtensionPoint<DialogContribution>('kabel.dialogs'),

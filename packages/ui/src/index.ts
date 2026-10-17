@@ -29,7 +29,7 @@ export * from './theme/theme-plugin';
 export { ThemePage } from './theme/ThemePage';
 export * from './feedback/feedback-plugin';
 export * from './formdata/formdata-plugin';
-export { FormDataView } from './formdata/FormDataView';
+export { FormDataView, type FormDataViewTab } from './formdata/FormDataView';
 export { DialogHost, DialogBody, DialogFooter } from './feedback/DialogHost';
 export * from './palette/palette-plugin';
 export * from './keymap/keymap-plugin';

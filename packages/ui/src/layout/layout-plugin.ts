@@ -383,6 +383,30 @@ export const layoutPlugin = (options: LayoutOptions = {}) =>
         { id: 'layout.reset', group: 'end', icon: 'layout', tooltip: '重置布局', command: 'layout.reset', order: 920 },
       );
 
+      // 表单配置：区域配置、宿主摆放、用户调整与当前生效的面板位置
+      ctx.contribute(ExtensionPoints.formConfig, {
+        id: 'layout',
+        title: '布局',
+        order: 10,
+        collect: (k) => {
+          const s = k.getState();
+          const { breakpoint: _b, overlay: _o, ...state } = s.layout;
+          return {
+            regions: config,
+            panels: k.services.tryGet(LAYOUT_PANELS) ?? {},
+            state,
+            placed: resolvePanels(k, s).map((p) => ({
+              id: p.id,
+              title: p.title,
+              region: p.region,
+              slot: p.slot ?? 'top',
+              order: p.order ?? 100,
+              ...(p.when && !p.when(s, k) ? { visible: false } : {}),
+            })),
+          };
+        },
+      });
+
       // 面板头部右键：移动到其他区域 / 上下分区，或恢复默认位置（`data-kb-context="panel"`，数据为面板 id）
       const targets: { id: string; label: string; placement: Required<Pick<PanelPlacement, 'region' | 'slot'>> }[] = [
         { id: 'left', label: '移到左侧', placement: { region: 'left', slot: 'top' } },

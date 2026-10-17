@@ -20,7 +20,7 @@ const unmount = mountWorkbench(el, kernel, { icons: {}, class: 'my-host' });
 | 插件 | 名称 | 说明 |
 | --- | --- | --- |
 | `layoutPlugin({ regions?, panels?, persist? })` | `kabel:layout` | 区域尺寸、折叠、最大化、标签 / 堆叠模式、上下分区（面板 `slot: 'bottom'`，`regions.<id>.split` 为下半区默认比例，下半区可收起）、面板摆放（`panels` 按面板 id 指定位置；用户右键“移到…” / `layout.movePanel`；`resolvePanels()` 计算实际位置）及其持久化 |
-| `formDataViewPlugin()` | `kabel:form-data` | 工具栏保存按钮右侧“查看表单数据”（命令 `formData.show`）：底座弹窗展示 `ExtensionPoints.formData` 全部提供者的提交数据，可刷新、复制、下载；无提供者时不显示 |
+| `formDataViewPlugin()` | `kabel:form-data` | 工具栏保存按钮右侧“查看表单数据”（命令 `formData.show`）：底座弹窗分“表单数据”（`ExtensionPoints.formData` 全部提供者的提交数据）与“表单配置”（实例、插件状态与生效配置、`ExtensionPoints.formConfig` 贡献的布局 / 主题 / 表格等配置；`formData.show('config')` 直接打开）两页，可刷新、复制、下载；两类提供者都没有时不显示 |
 | `feedbackPlugin()` | `kabel:feedback` | 消息提示、确认对话框与底座弹窗（实现 `NOTIFY_SERVICE`、`DIALOG_SERVICE`） |
 | `keymapPlugin()` | `kabel:keymap` | 快捷键改绑（持久化）、冲突检测、设置 › 快捷键 |
 | `contextMenuPlugin()` | `kabel:contextmenu` | 右键菜单：`data-kb-context` 标识区域，菜单项来自扩展点 `ExtensionPoints.contextMenu` |

@@ -13,7 +13,20 @@ export * from './contributions';
 export { historyPlugin } from './history-plugin';
 export { modePlugin, modeActions, isReadonly, type ModeState, type ModePluginOptions } from './mode';
 export { savePlugin, saveActions, type SaveState, type SaveResult, type SavePluginOptions } from './save';
-export { collectFormData, collectFormEntries, gatherFormData, gatherFormEntries, type FormDataEntry, type FormDataRecord } from './form';
+export {
+  collectFormConfig,
+  collectFormConfigEntries,
+  collectFormData,
+  collectFormEntries,
+  formConfigPlugins,
+  maskSecrets,
+  gatherFormData,
+  gatherFormEntries,
+  type FormConfigPlugin,
+  type FormConfigRecord,
+  type FormDataEntry,
+  type FormDataRecord,
+} from './form';
 
 export * from './feedback';
 export * from './logs';

@@ -41,6 +41,7 @@
 | `setDocuments(items) / getDocuments() / getCurrentDocument() / goto(index)` | 直接操作文档模型（已解析的 `DocumentItem`，用于非图片类型） |
 | `save()` | 依次等待 `save` 事件处理器，成功后标记为已保存：`Promise<{ ok: true } \| { ok: false, error? }>` |
 | `getFormData()` | 当前表单下全部插件的完整提交数据（与 `save` 载荷的 `data` 相同），以提供者 id 为键 |
+| `getFormConfig()` | 当前表单的配置：`{ instanceId, plugins: [{ name, title, status, builtin?, parent?, config?, userConfig? }], layout, theme, …}`，其余键来自 `ExtensionPoints.formConfig`；`apiKey` / `token` / `password` 等密钥类字段的值显示为 `******` |
 | `setReadonly(b) / isReadonly()` | 只读模式 |
 | `notify(message, { type?, duration? }) / confirm(options)` | 消息提示 / 确认对话框（`Promise<boolean>`） |
 | `undo() / redo() / isDirty()` | |
@@ -68,7 +69,7 @@
 | 命令 | 参数 / 快捷键 | 说明 |
 | --- | --- | --- |
 | `kabel.save` | `Mod+S` | 保存契约：汇总表单数据 → 等待 `save` 事件处理器 → 标记已保存 → `saved`；失败 → `save:error` 并提示 |
-| `formData.show` | | 打开“查看表单数据”弹窗 |
+| `formData.show` | `tab?: 'data' \| 'config'` | 打开“查看表单数据”弹窗（默认“表单数据”页，`'config'` 为“表单配置”页） |
 | `kabel.undo` / `kabel.redo` | `Mod+Z` / `Mod+Shift+Z`、`Mod+Y` | 只读时禁用 |
 | `palette.open` | `Mod+Shift+P` | 命令面板（macOS ⌘⇧P，其他平台 Ctrl+Shift+P） |
 | `workspace.prev / next / goto` | `goto(index)` | 切换当前文件 |

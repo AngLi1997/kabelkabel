@@ -6,7 +6,9 @@ import {
   type HistoryOptions,
   type KabelEvents,
   type ConfirmOptions,
+  collectFormConfig,
   collectFormData,
+  type FormConfigRecord,
   type FormDataRecord,
   type KabelState,
   type Kernel,
@@ -93,6 +95,8 @@ export interface ArchiveEditor {
   save(): Promise<SaveResult>;
   /** 当前表单下全部插件的完整提交数据（与 `save` 载荷的 `data` 相同），以提供者 id 为键 */
   getFormData(): Promise<FormDataRecord>;
+  /** 当前表单的配置：实例 id、插件及其生效配置、布局、主题与各插件贡献的配置（`ExtensionPoints.formConfig`） */
+  getFormConfig(): Promise<FormConfigRecord>;
   setReadonly(readonly: boolean): void;
   isReadonly(): boolean;
   /** 显示一条提示 */
@@ -181,6 +185,7 @@ export function createArchiveEditor(target: HTMLElement | string, options: Edito
     goto: (index) => kernel.services.tryGet(WORKSPACE_SERVICE)?.goto(index),
     save: async () => ((await kernel.execute<SaveResult>('kabel.save')) ?? { ok: false }),
     getFormData: () => collectFormData(kernel),
+    getFormConfig: () => collectFormConfig(kernel),
     setReadonly: (readonly) => void kernel.execute('kabel.setReadonly', readonly),
     isReadonly: () => isReadonly(kernel.getState()),
     notify: (message, options) => void kernel.services.tryGet(NOTIFY_SERVICE)?.notify(message, options),

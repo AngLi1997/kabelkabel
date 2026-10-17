@@ -1,4 +1,4 @@
-import { collectFormData, ExtensionPoints } from '@kabel/core';
+import { collectFormConfig, collectFormData, ExtensionPoints } from '@kabel/core';
 import { createTestKernel, setupPlugins } from '@kabel/core/testing';
 import { workspacePlugin } from '@kabel/plugin-workspace';
 import { layoutPlugin, Workbench } from '@kabel/ui';
@@ -67,13 +67,44 @@ describe('表格插件', () => {
     expect(service.getState('materials')).toMatchObject({ total: 1, url: null });
   });
 
+  it('运行期修改配置：标题、列、分页、数据源', async () => {
+    const fetchMock = vi.fn(async () => [{ title: '接口' }]);
+    const { kernel, panels } = await setupPlugins([tablePlugin({ tables: [table({ pageSize: 10 })] })]);
+    const service = kernel.services.get(TABLE_SERVICE);
+    const onConfig = vi.fn();
+    kernel.bus.on('table:config', onConfig);
+    await service.setPage('materials', 2);
+
+    await service.update('materials', { title: '卷内目录', pageSize: 5, columns: [columns[0]!] });
+    expect(panels().find((p) => p.id === 'table.materials')?.title).toBe('卷内目录');
+    expect(service.getConfig('materials')?.columns).toHaveLength(1);
+    expect(service.getState('materials')).toMatchObject({ page: 1, pageSize: 5 });
+    expect(onConfig).toHaveBeenCalledWith(expect.objectContaining({ id: 'materials', changed: ['title', 'pageSize', 'columns'] }));
+
+    await kernel.execute('table.update', 'materials', { url: '/api/x', fetch: fetchMock });
+    expect(fetchMock).toHaveBeenCalledWith('/api/x', { page: 1, pageSize: 5 });
+    expect(service.getState('materials')).toMatchObject({ url: '/api/x', rows: [{ title: '接口' }] });
+
+    await service.update('materials', { data: [{ title: 'a' }, { title: 'b' }], submit: false });
+    expect(service.getState('materials')).toMatchObject({ total: 2, url: null });
+    expect(kernel.extensions.get(ExtensionPoints.formData).getAll().map((p) => p.id)).not.toContain('table.materials');
+
+    const config = (await collectFormConfig(kernel)).table as Record<string, { title: string; data: string }>;
+    expect(config.materials).toMatchObject({ title: '卷内目录', data: '[2 行]', url: '/api/x' });
+  });
+
   it('运行期新增与移除表格', async () => {
     const { kernel, panels } = await setupPlugins([workspacePlugin(), tablePlugin()]);
     const service = kernel.services.get(TABLE_SERVICE);
+    const events: string[] = [];
+    kernel.bus.on('table:add', ({ id }) => events.push(`add:${id}`));
+    kernel.bus.on('table:remove', ({ id }) => events.push(`remove:${id}`));
     const remove = service.add(table({ id: 'x', panel: { region: 'right' }, submit: false }));
     expect(panels().find((p) => p.id === 'table.x')?.region).toBe('right');
     expect(kernel.extensions.get(ExtensionPoints.formData).getAll().map((p) => p.id)).not.toContain('table.x');
     remove();
+    remove();
+    expect(events).toEqual(['add:x', 'remove:x']);
     expect(panels().find((p) => p.id === 'table.x')).toBeUndefined();
     expect(kernel.getState().table.x).toBeUndefined();
   });

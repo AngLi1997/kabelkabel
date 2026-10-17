@@ -149,5 +149,6 @@ export const themePlugin = (options: ThemeOptions = {}) =>
         run: (k) => k.dispatch(slice.actions.reset()),
       });
       ctx.contribute(ExtensionPoints.settings, { id: 'theme', title: '主题', icon: 'palette', order: 20, view: ThemePage });
+      ctx.contribute(ExtensionPoints.formConfig, { id: 'theme', title: '主题', order: 20, collect: (k) => k.getState().theme });
     },
   });

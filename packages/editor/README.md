@@ -24,7 +24,7 @@ await editor.use(myPlugin());                        // 运行期注册业务插
 editor.destroy();
 ```
 
-`ArchiveEditor` 提供：`on / once / off / emit`、`execute`、`use / unuse`、`getState / subscribe`、`setImages / getImages`、`setDocuments / getDocuments / getCurrentDocument / goto`、`save`、`getFormData`、`setReadonly / isReadonly`、`notify / confirm`、`undo / redo / isDirty`、`layout.*`、`destroy`。完整选项与方法见 [API 参考](../../docs/api.md)。
+`ArchiveEditor` 提供：`on / once / off / emit`、`execute`、`use / unuse`、`getState / subscribe`、`setImages / getImages`、`setDocuments / getDocuments / getCurrentDocument / goto`、`save`、`getFormData`、`getFormConfig`、`setReadonly / isReadonly`、`notify / confirm`、`undo / redo / isDirty`、`layout.*`、`destroy`。完整选项与方法见 [API 参考](../../docs/api.md)。
 
 ## baseline 预设
 

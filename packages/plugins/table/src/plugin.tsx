@@ -3,6 +3,7 @@ import {
   TABLE_PLUGIN,
   TABLE_SERVICE,
   type TableConfig,
+  type TablePatch,
   type TableQuery,
   type TableRow,
   type TableService,
@@ -93,24 +94,15 @@ export const tablePlugin = (options: TablePluginOptions = {}) =>
         return { rows: t.rows, total: config && mode(config) === 'server' ? t.total : t.rows.length, selected };
       };
 
-      const add = (input: TableConfig): (() => void) => {
-        const { id } = input;
-        if (configs.has(id)) remove(id);
-        const config = { ...input };
-        configs.set(id, config);
-        const sizes = config.pageSizes?.length ? config.pageSizes : DEFAULT_PAGE_SIZES;
-        const initial: TableState = {
-          rows: config.data ? [...config.data] : [],
-          total: config.data?.length ?? 0,
-          page: 1,
-          pageSize: config.pagination === false ? Number.MAX_SAFE_INTEGER : config.pageSize ?? sizes[0]!,
-          loading: false,
-          error: null,
-          selected: null,
-          url: config.url ?? null,
-        };
-        kernel.dispatch(tableActions.init({ id, state: initial }));
+      const sizesOf = (config: TableConfig) => (config.pageSizes?.length ? config.pageSizes : DEFAULT_PAGE_SIZES);
+      const pageSizeOf = (config: TableConfig) =>
+        config.pagination === false ? Number.MAX_SAFE_INTEGER : config.pageSize ?? sizesOf(config)[0]!;
 
+      /** 按当前配置（重新）贡献面板与表单数据；配置变化时先释放旧的贡献 */
+      const contribute = (id: string) => {
+        disposers.get(id)?.forEach((d) => d.dispose());
+        const config = configOf(id);
+        const sizes = sizesOf(config);
         const items: Disposable[] = [];
         const panelId = tablePanelId(id);
         if (config.panel !== false) {
@@ -139,21 +131,70 @@ export const tablePlugin = (options: TablePluginOptions = {}) =>
           );
         }
         disposers.set(id, items);
+      };
+
+      const add = (input: TableConfig): (() => void) => {
+        const { id } = input;
+        if (configs.has(id)) remove(id);
+        const config = { ...input };
+        configs.set(id, config);
+        const initial: TableState = {
+          rows: config.data ? [...config.data] : [],
+          total: config.data?.length ?? 0,
+          page: 1,
+          pageSize: pageSizeOf(config),
+          loading: false,
+          error: null,
+          selected: null,
+          url: config.url ?? null,
+        };
+        kernel.dispatch(tableActions.init({ id, state: initial }));
+        contribute(id);
+        ctx.bus.emit('table:add', { id });
         if (!config.data && config.url) void request(id, config.url, { page: 1, pageSize: initial.pageSize }).catch(() => {});
         return () => remove(id);
       };
 
+      /**
+       * 运行期修改配置（与当前配置浅合并，`id` 不可改）：标题、列、分页、序号列、提交与面板默认位置立即生效；
+       * 传入 `data` 切换为本地数据，传入 `url` 重新请求；分页方式或每页条数变化时回到第 1 页。
+       */
+      const update = async (id: string, patch: TablePatch): Promise<void> => {
+        const prev = configOf(id);
+        const { id: _ignored, ...rest } = patch as TablePatch & { id?: string };
+        const next: TableConfig = { ...prev, ...rest };
+        configs.set(id, next);
+        contribute(id);
+        ctx.bus.emit('table:config', { id, config: next, changed: Object.keys(rest) });
+        if (rest.data) return setData(id, rest.data);
+        const sizeChanged = mode(next) !== mode(prev) || pageSizeOf(next) !== pageSizeOf(prev);
+        if (rest.url !== undefined && rest.url !== tableOf(id)?.url) {
+          if (rest.url) await request(id, rest.url, { page: 1, pageSize: pageSizeOf(next) });
+          return;
+        }
+        if (sizeChanged) {
+          const t = tableOf(id);
+          if (mode(next) === 'server' && t?.url) await request(id, t.url, { page: 1, pageSize: pageSizeOf(next) });
+          else kernel.dispatch(tableActions.setPage({ id, page: 1, pageSize: pageSizeOf(next) }));
+        }
+      };
+
       function remove(id: string) {
+        if (!configs.has(id)) return;
         disposers.get(id)?.forEach((d) => d.dispose());
         disposers.delete(id);
         configs.delete(id);
         generations.delete(id);
         kernel.dispatch(tableActions.remove(id));
+        ctx.bus.emit('table:remove', { id });
       }
 
       const service: TableService = {
         list: () => [...configs.keys()],
         add,
+        update,
+        remove: (id) => remove(id),
+        getConfig: (id) => configs.get(id),
         setData,
         load: async (id, url) => {
           const t = tableOf(id);
@@ -191,6 +232,32 @@ export const tablePlugin = (options: TablePluginOptions = {}) =>
         title: '刷新表格',
         hidden: true,
         run: (_k, id: string) => service.load(id),
+      });
+      ctx.registerCommand({
+        id: 'table.update',
+        title: '修改表格配置',
+        hidden: true,
+        run: (_k, id: string, patch: TablePatch) => service.update(id, patch),
+      });
+      ctx.registerCommand({
+        id: 'table.setData',
+        title: '设置表格数据',
+        hidden: true,
+        run: (_k, id: string, rows: TableRow[]) => service.setData(id, rows),
+      });
+      ctx.registerCommand({
+        id: 'table.select',
+        title: '选中表格行',
+        hidden: true,
+        run: (_k, id: string, index: number | null) => service.select(id, index),
+      });
+
+      // 表单配置：各表格当前生效的配置（函数在展示时显示为 ƒ）
+      ctx.contribute(ExtensionPoints.formConfig, {
+        id: 'table',
+        title: '表格',
+        order: 50,
+        collect: () => Object.fromEntries([...configs].map(([id, { data, ...config }]) => [id, { ...config, ...(data ? { data: `[${data.length} 行]` } : {}) }])),
       });
 
       for (const table of options.tables ?? []) add(table);
