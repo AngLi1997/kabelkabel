@@ -169,3 +169,77 @@
   padding: 0 2px;
   color: var(--kb-color-text-2);
 }
+
+/* ---------- 可编辑：操作条、行内编辑、修改标记 ---------- */
+.kb-dt__bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  min-height: 34px;
+  padding: 2px var(--kb-space-2);
+  border-bottom: 1px solid var(--kb-color-border);
+  background: var(--kb-color-surface);
+}
+
+.kb-dt__spacer {
+  flex: 1;
+}
+
+.kb-dt__required {
+  margin-right: 2px;
+  color: var(--kb-color-danger);
+}
+
+.kb-dt.is-editable .kb-dt__table td.is-editable {
+  cursor: text;
+}
+
+.kb-dt__table td.is-editing {
+  padding: 0 2px;
+}
+
+.kb-dt__editor {
+  display: block;
+  width: 100%;
+  height: 28px;
+  padding: 0 6px;
+  border: 1px solid var(--kb-color-primary);
+  border-radius: var(--kb-radius);
+  outline: none;
+  background: var(--kb-color-surface);
+  color: var(--kb-color-text);
+  font: inherit;
+  box-shadow: 0 0 0 2px var(--kb-color-primary-soft);
+}
+
+/* 修改过的单元格：左上角标记 */
+.kb-dt__table td.is-changed {
+  background-image: linear-gradient(135deg, var(--kb-color-warning) 0 5px, transparent 5px);
+}
+
+/* 新增行：首列左侧色条 */
+.kb-dt__table tbody tr.is-added td:first-child {
+  box-shadow: inset 3px 0 0 var(--kb-color-success);
+}
+
+.kb-dt__table td.is-invalid {
+  box-shadow: inset 0 0 0 1px var(--kb-color-danger);
+  background: color-mix(in srgb, var(--kb-color-danger) 8%, transparent);
+}
+
+/* ---------- 多选 ---------- */
+.kb-dt__table .kb-dt__check {
+  padding: 0;
+  cursor: default;
+}
+
+.kb-dt__check input {
+  vertical-align: middle;
+  accent-color: var(--kb-color-primary);
+  cursor: pointer;
+}
+
+.kb-dt__table tbody tr.is-checked td {
+  background: var(--kb-color-primary-soft);
+}

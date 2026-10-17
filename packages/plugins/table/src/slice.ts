@@ -34,13 +34,19 @@ export const tableSlice = createSlice({
         error: null,
         ...(p.page !== undefined ? { page: p.page } : {}),
         ...(p.pageSize !== undefined ? { pageSize: p.pageSize } : {}),
-        ...(p.keepSelection ? {} : { selected: null }),
+        ...(p.keepSelection ? {} : { selected: null, checked: [] }),
+        // 新数据即新的基线：清除编辑状态与修改标记
+        editing: null,
+        dirty: false,
+        invalid: [],
       }),
     failed: (s: Tables, p: { id: string; error: string }) => patch(s, p.id, { loading: false, error: p.error }),
     setPage: (s: Tables, p: { id: string; page: number; pageSize: number }) => {
       const t = s[p.id];
       return !t || (t.page === p.page && t.pageSize === p.pageSize) ? s : patch(s, p.id, { page: p.page, pageSize: p.pageSize });
     },
+    /** 合并更新一个表格的状态（编辑、勾选、提交等由插件计算好后一次写入） */
+    patch: (s: Tables, p: { id: string; next: Partial<TableState> }) => patch(s, p.id, p.next),
     select: (s: Tables, p: { id: string; index: number | null }) =>
       s[p.id]?.selected === p.index ? s : patch(s, p.id, { selected: p.index }),
   },
