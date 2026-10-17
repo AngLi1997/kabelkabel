@@ -1,17 +1,20 @@
 import { NOTIFY_SERVICE, type NoticeType } from '@kabel/core';
 import { useEffect, useRef } from 'preact/hooks';
 import { Button, IconButton } from '../components/Button';
+import { useDraggable } from '../components/draggable';
 import { useKernel, useSelector } from '../hooks';
 import { Icon } from '../icons/Icon';
 import { cx } from '../utils';
+import { DialogHost } from './DialogHost';
 
 const ICONS: Record<NoticeType, string> = { info: 'info', success: 'success', warning: 'warning', error: 'error' };
 
-/** 提示与确认对话框的渲染出口，由 Workbench 挂载 */
+/** 提示、弹窗与确认对话框的渲染出口，由 Workbench 挂载；确认框在弹窗之上 */
 export function FeedbackHost() {
   return (
     <>
       <Toasts />
+      <DialogHost />
       <ConfirmDialog />
     </>
   );
@@ -39,11 +42,14 @@ function ConfirmDialog() {
   const confirm = useSelector((s) => s.feedback?.confirm);
   const dialog = useRef<HTMLDivElement>(null);
   const answer = (ok: boolean) => void kernel.execute('feedback.answer', ok);
+  const drag = useDraggable(dialog);
+  const { reset } = drag;
 
   useEffect(() => {
     if (!confirm) return;
     const previous = dialog.current?.ownerDocument.activeElement as HTMLElement | null;
     dialog.current?.focus();
+    reset();
     return () => previous?.focus?.();
   }, [confirm?.id]);
 
@@ -53,6 +59,7 @@ function ConfirmDialog() {
       <div
         ref={dialog}
         class="kb-confirm"
+        style={drag.style}
         role="alertdialog"
         aria-modal="true"
         aria-label={confirm.title ?? '确认'}
@@ -67,8 +74,10 @@ function ConfirmDialog() {
           }
         }}
       >
-        {confirm.title && <div class="kb-confirm__title">{confirm.title}</div>}
-        <div class="kb-confirm__message">{confirm.message}</div>
+        <div {...drag.handleProps}>
+          {confirm.title && <div class="kb-confirm__title">{confirm.title}</div>}
+          <div class="kb-confirm__message">{confirm.message}</div>
+        </div>
         <div class="kb-confirm__actions">
           <Button onClick={() => answer(false)}>{confirm.cancelText ?? '取消'}</Button>
           <Button variant={confirm.danger ? 'danger' : 'primary'} onClick={() => answer(true)}>

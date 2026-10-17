@@ -1,6 +1,6 @@
 export * from './contract';
 export { fileLoaderPlugin, type FileLoaderOptions } from './plugin';
-export { fileLoaderSlice, fileLoaderActions, type FileLoaderState, type LoaderDialog } from './slice';
+export { fileLoaderSlice, fileLoaderActions, type FileLoaderState } from './slice';
 export { parseUrlList, urlEntries } from './urls';
 export { listMinioEntries, presignUrl, parseListResult, normalizePrefix, type MinioListOptions, type PresignOptions } from './minio';
 export { pickDirectory, entriesFromFiles } from './local';

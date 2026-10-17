@@ -363,3 +363,58 @@
 .kb-root[data-size='sm'] .kb-toolbar {
   padding: 0 4px;
 }
+
+/* ---------- 快捷键提示与横幅 ---------- */
+.kb-toolbar__kbd {
+  margin-left: 6px;
+  padding: 0 4px;
+  border: 1px solid currentColor;
+  border-radius: var(--kb-radius);
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 16px;
+  opacity: 0.75;
+}
+
+.kb-banners {
+  flex: none;
+  border-bottom: 1px solid var(--kb-color-border);
+}
+
+.kb-banner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 0 var(--kb-space-3);
+  font-size: var(--kb-font-size-sm);
+}
+
+.kb-banner + .kb-banner {
+  border-top: 1px solid var(--kb-color-divider);
+}
+
+.kb-banner__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.kb-banner--info {
+  background: var(--kb-color-primary-soft);
+  color: var(--kb-color-primary);
+}
+
+.kb-banner--success {
+  background: var(--kb-color-success-soft);
+  color: var(--kb-color-success);
+}
+
+.kb-banner--warning {
+  background: var(--kb-color-warning-soft);
+  color: var(--kb-color-warning);
+}
+
+.kb-banner--danger {
+  background: var(--kb-color-danger-soft);
+  color: var(--kb-color-danger);
+}

@@ -1,3 +1,18 @@
+/* ---------- 弹窗拖动柄 ---------- */
+.kb-drag-handle {
+  cursor: move;
+  user-select: none;
+  touch-action: none;
+}
+
+.kb-drag-handle :is(button, input, textarea, select, a, [data-kb-no-drag]) {
+  cursor: auto;
+}
+
+.kb-drag-handle button {
+  cursor: pointer;
+}
+
 /* ---------- 模态层（确认框、命令面板） ---------- */
 .kb-modal {
   position: absolute;
@@ -41,6 +56,63 @@
   justify-content: flex-end;
   gap: var(--kb-space-2);
   padding: var(--kb-space-2) var(--kb-space-3) var(--kb-space-3);
+}
+
+/* ---------- 底座弹窗（DIALOG_SERVICE） ---------- */
+.kb-dialog {
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+  max-height: 100%;
+  border: 1px solid var(--kb-color-border);
+  background: var(--kb-color-surface);
+  box-shadow: var(--kb-shadow-overlay);
+  outline: none;
+}
+
+.kb-dialog__header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kb-space-2);
+  padding: var(--kb-space-2) var(--kb-space-3);
+  border-bottom: 1px solid var(--kb-color-border);
+}
+
+.kb-dialog__title {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kb-dialog__main,
+.kb-dialog__view {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.kb-dialog__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--kb-space-3);
+  min-height: 0;
+  padding: var(--kb-space-3);
+  overflow: auto;
+}
+
+.kb-dialog__footer {
+  display: flex;
+  flex: none;
+  justify-content: flex-end;
+  gap: var(--kb-space-2);
+  padding: 0 var(--kb-space-3) var(--kb-space-3);
 }
 
 /* ---------- 消息提示 ---------- */
@@ -312,4 +384,90 @@
   min-height: 64px;
   padding: var(--kb-space-3);
   color: var(--kb-color-danger);
+}
+
+/* ---------- 查看表单数据（底座弹窗内容） ---------- */
+.kb-formdata {
+  display: flex;
+  height: 520px;
+  max-height: calc(100vh - 200px);
+  min-height: 0;
+}
+
+.kb-formdata__nav {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  width: 168px;
+  padding: var(--kb-space-2) 0;
+  border-right: 1px solid var(--kb-color-divider);
+  background: var(--kb-color-surface-2);
+  overflow-y: auto;
+}
+
+.kb-formdata__nav-item {
+  position: relative;
+  height: 32px;
+  padding: 0 var(--kb-space-3);
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+  color: var(--kb-color-text);
+  text-align: left;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.kb-formdata__nav-item:hover {
+  background: var(--kb-color-hover);
+}
+
+.kb-formdata__nav-item.is-active {
+  background: var(--kb-color-primary-soft);
+  color: var(--kb-color-primary);
+  font-weight: 600;
+}
+
+.kb-formdata__nav-item.is-active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 3px;
+  background: var(--kb-color-primary);
+}
+
+.kb-formdata__nav-item.is-error {
+  color: var(--kb-color-danger);
+}
+
+.kb-formdata__content {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+}
+
+.kb-formdata__json {
+  margin: 0;
+  padding: var(--kb-space-3);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: var(--kb-font-size-sm);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
+  user-select: text;
+}
+
+.kb-root[data-size='sm'] .kb-formdata {
+  flex-direction: column;
+}
+
+.kb-root[data-size='sm'] .kb-formdata__nav {
+  flex-direction: row;
+  width: auto;
+  padding: 0;
+  border-right: 0;
+  border-bottom: 1px solid var(--kb-color-divider);
+  overflow-x: auto;
 }

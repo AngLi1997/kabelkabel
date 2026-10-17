@@ -13,10 +13,12 @@ import {
   formDataViewPlugin,
   keymapPlugin,
   layoutPlugin,
+  logsPlugin,
   palettePlugin,
   settingsPlugin,
   themePlugin,
   type LayoutOptions,
+  type LogsConfig,
   type ThemeOptions,
 } from '@kabel/ui';
 
@@ -34,11 +36,13 @@ export interface BaselineOptions {
   formData?: false;
   /** `false` 关闭主题插件（仍可通过覆盖 CSS 变量换肤） */
   theme?: ThemeOptions | false;
+  /** 事件日志（状态栏右下角“日志”按钮 + 最右侧日志看板）：注册方配置；`false` 不注册 */
+  logs?: Partial<LogsConfig> | false;
 }
 
 /**
  * baseline 预设（底座）：
- * 布局 · 撤销重做 · 只读模式 · 保存契约 · 查看表单数据 · 消息与对话框 · 快捷键 · 右键菜单 · 命令面板 ·
+ * 事件日志 · 布局 · 撤销重做 · 只读模式 · 保存契约 · 查看表单数据 · 消息与对话框 · 快捷键 · 右键菜单 · 命令面板 ·
  * 工作台（左侧文件目录 + 内容区域 + 影像舞台，所有业务插件的底座）· 设置 · 主题。
  *
  * 布局为 顶部工具栏 / 中间（左侧扩展面板 · 内容 · 右侧扩展面板）/ 底部状态栏；
@@ -47,6 +51,8 @@ export interface BaselineOptions {
 export function createBaselinePreset(options: BaselineOptions = {}): PluginInput[] {
   const mode: ModePluginOptions = { readonly: options.readonly };
   return [
+    // 日志最先注册，以便记录其后所有插件的启用过程
+    options.logs !== false && logsPlugin(options.logs || {}),
     layoutPlugin(options.layout),
     historyPlugin(),
     modePlugin(mode),

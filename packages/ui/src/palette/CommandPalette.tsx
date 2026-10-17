@@ -1,5 +1,6 @@
 import { formatKeybinding } from '@kabel/core';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { useDraggable } from '../components/draggable';
 import { useCommandsVersion, useKernel, useSelector } from '../hooks';
 import { Icon } from '../icons/Icon';
 import { commandBindings, listedCommands } from '../keymap/bindings';
@@ -19,6 +20,8 @@ function Palette() {
   const [active, setActive] = useState(0);
   const input = useRef<HTMLInputElement>(null);
   const list = useRef<HTMLDivElement>(null);
+  const box = useRef<HTMLDivElement>(null);
+  const drag = useDraggable(box);
   const state = kernel.getState();
 
   const items = useMemo(() => {
@@ -63,8 +66,8 @@ function Palette() {
 
   return (
     <div class="kb-modal kb-modal--top" onPointerDown={(e) => e.target === e.currentTarget && close()}>
-      <div class="kb-palette" role="dialog" aria-modal="true" aria-label="命令面板" onKeyDown={onKeyDown}>
-        <div class="kb-palette__search">
+      <div ref={box} class="kb-palette" style={drag.style} role="dialog" aria-modal="true" aria-label="命令面板" onKeyDown={onKeyDown}>
+        <div {...drag.handleProps} class={cx('kb-palette__search', drag.handleProps.class)}>
           <Icon name="command" />
           <input
             ref={input}

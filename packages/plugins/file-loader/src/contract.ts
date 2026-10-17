@@ -65,3 +65,7 @@ declare module '@kabel/core' {
     'file-loader:load': FileLoadResult;
   }
 }
+
+/** 底座弹窗 id（`ExtensionPoints.dialogs`）：URL 列表、MinIO 表单 */
+export const URLS_DIALOG = 'fileLoader.urls';
+export const MINIO_DIALOG = 'fileLoader.minio';

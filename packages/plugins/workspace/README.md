@@ -92,6 +92,7 @@ editor.setDocuments([{ id: 'x', name: 'x.pdf', kind: 'pdf', src: '/x.pdf' }]);  
 | 命令 | 说明 |
 | --- | --- |
 | `workspace.prev` / `workspace.next` / `workspace.goto(index)` | 切换当前文件 |
+| `workspace.reveal(documentId, bbox?)` | 切换到文件并定位区域（隐藏命令，供不依赖工作台类型的插件按命令 id 调用） |
 | `workspace.zoomIn` / `zoomOut` / `fit` / `actual` | 缩放（仅当前文件是影像时可用） |
 | `workspace.rotateLeft` / `rotateRight` | 旋转 |
 | `workspace.toggleThumbnails` | 缩略图开关 |
@@ -122,11 +123,16 @@ workspace.setDocuments(items); workspace.getDocuments(); workspace.getImages();
 workspace.current(); workspace.goto(2); workspace.getStage();
 const lease = workspace.acquireTool('acme:draw', { cursor: 'crosshair' });   // 租用舞台指针
 lease.dispose();                                                              // 归还
+workspace.reveal('p2', { x: 120, y: 340, width: 400, height: 60 });          // 切页，缩放并平移使区域居中（图片像素坐标）
+workspace.updateDocument('p2', { meta: { material: '营业执照' } });           // 局部更新，不改变当前位置
+const blob = await workspace.readBlob();                                      // 读取当前文件内容（识别、上传）
 ```
+
+`DocumentItem.meta` 用于承载宿主或插件的业务属性（材料项、页号、档案号…），工作台不解释。
 
 ## 事件与状态
 
-- 事件 `document:change`：`{ index, document }`；`stage:tool-change`：`{ active, previous }`（舞台交互工具被占用、归还或被抢占，`@mode emit`）。
+- 事件 `document:change`：`{ index, document }`；`stage:tool-change`：`{ active, previous }`（舞台交互工具被占用、归还或被抢占，`@mode emit`）；`stage:reveal`：`{ documentId, bbox? }`（由 `reveal` 派发，影像渲染器在目标图片加载后执行定位）。
 - 切片 `documents`：`items, index, loading`；切片 `stage`：`zoom, fitScale, rotation, thumbnails, thumbSize, tool`（`tool` 为当前交互工具 `{ id, cursor? }`，不持久化）。均不纳入撤销。切换文件时舞台自动恢复适应窗口与不旋转。
 - 辅助函数：`groupDocuments(items)`、`documentPosition(state)`。
 - 表单数据：贡献 `ExtensionPoints.formData` 的 `workspace.documents`：`{ current, items: [{ id, name, group, kind, mime, src }] }`；本地文件的 blob / data URL 只在本页有效，`src` 留空。

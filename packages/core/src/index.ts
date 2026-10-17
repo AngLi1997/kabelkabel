@@ -16,3 +16,7 @@ export { savePlugin, saveActions, type SaveState, type SaveResult, type SavePlug
 export { collectFormData, collectFormEntries, gatherFormData, gatherFormEntries, type FormDataEntry, type FormDataRecord } from './form';
 
 export * from './feedback';
+export * from './logs';
+
+/** 配置 Schema（cordis 同款 schemastery）：插件 `Config` 声明、校验与默认值 */
+export { default as Schema } from 'schemastery';

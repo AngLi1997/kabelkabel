@@ -10,6 +10,8 @@ export interface DocumentItem {
   src: string;
   thumbnail?: string;
   mime?: string;
+  /** 宿主或插件附加的业务属性（如材料项、页号、档案号），工作台不解释 */
+  meta?: Record<string, unknown>;
 }
 
 export interface DocumentsState {

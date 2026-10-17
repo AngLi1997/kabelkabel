@@ -1,0 +1,38 @@
+/* ---------- 框选识别：字段证据 ---------- */
+.kb-root .kb-excerpt__svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.kb-root .kb-excerpt__box polygon {
+  fill: none;
+  stroke: var(--kb-color-success);
+  stroke-width: 1.2;
+  stroke-dasharray: 4 3;
+}
+
+.kb-root .kb-excerpt__box.is-active polygon {
+  fill: color-mix(in srgb, var(--kb-color-primary) 10%, transparent);
+  stroke: var(--kb-color-primary);
+  stroke-width: 2;
+  stroke-dasharray: none;
+}
+
+.kb-root .kb-excerpt__label {
+  fill: var(--kb-color-success);
+  font-size: 12px;
+  cursor: pointer;
+  pointer-events: auto;
+  paint-order: stroke;
+  stroke: #fff;
+  stroke-width: 3px;
+}
+
+.kb-root .kb-excerpt__box.is-active .kb-excerpt__label {
+  fill: var(--kb-color-primary);
+  font-weight: 600;
+}

@@ -1,0 +1,36 @@
+{
+  "name": "@kabel/plugin-layout-extract",
+  "version": "0.1.0",
+  "description": "Kabel 版面分析自动填充（业务插件）：整页 OCR + 大模型结构化提取，按字段配置自动回填",
+  "type": "module",
+  "license": "MIT",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup"
+  },
+  "dependencies": {
+    "@kabel/core": "workspace:*",
+    "@kabel/plugin-workspace": "workspace:*",
+    "@kabel/plugin-fields": "workspace:*",
+    "@kabel/plugin-ocr": "workspace:*",
+    "@kabel/plugin-llm": "workspace:*"
+  }
+}

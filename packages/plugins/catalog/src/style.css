@@ -1,0 +1,159 @@
+/* ---------- 著录面板（档案详情数据） ---------- */
+.kb-root .kb-catalog {
+  container-type: inline-size;
+  height: 100%;
+  padding: var(--kb-space-2) var(--kb-space-3) var(--kb-space-3);
+  overflow: auto;
+}
+
+.kb-root .kb-catalog__group {
+  border: 1px solid var(--kb-color-divider);
+  background: var(--kb-color-surface);
+}
+
+.kb-root .kb-catalog__group > .kb-section__header {
+  padding-left: var(--kb-space-2);
+  background: var(--kb-color-surface-2);
+}
+
+.kb-root .kb-catalog__group > .kb-section__body {
+  padding: var(--kb-space-2) var(--kb-space-3) var(--kb-space-2);
+}
+
+.kb-root .kb-catalog__grid {
+  display: grid;
+  grid-template-columns: repeat(var(--kb-catalog-columns, 2), minmax(0, 1fr));
+  gap: 4px var(--kb-space-3);
+}
+
+.kb-root .kb-catalog__field {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  align-items: start;
+  column-gap: var(--kb-space-2);
+  padding: 4px 4px 4px 0;
+  border-left: 2px solid transparent;
+}
+
+.kb-root .kb-catalog__field.is-wide {
+  grid-column: 1 / -1;
+}
+
+.kb-root .kb-catalog__field.is-focused {
+  border-left-color: var(--kb-color-primary);
+  background: var(--kb-color-primary-soft);
+}
+
+.kb-root .kb-catalog__label {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  min-height: var(--kb-control-height);
+  color: var(--kb-color-text-2);
+  text-align: right;
+}
+
+.kb-root .kb-catalog__label label.is-required::before {
+  content: '*';
+  margin-right: 2px;
+  color: var(--kb-color-danger);
+}
+
+.kb-root .kb-catalog__label .kb-btn {
+  opacity: 0;
+}
+
+.kb-root .kb-catalog__field:hover .kb-catalog__label .kb-btn,
+.kb-root .kb-catalog__field.is-focused .kb-catalog__label .kb-btn {
+  opacity: 1;
+}
+
+.kb-root .kb-catalog__control {
+  min-width: 0;
+}
+
+.kb-root .kb-catalog__field.is-pending .kb-input {
+  border-color: var(--kb-color-warning);
+  background: var(--kb-color-warning-soft);
+}
+
+.kb-root .kb-catalog__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px var(--kb-space-2);
+  grid-column: 2;
+  margin-top: 2px;
+  font-size: var(--kb-font-size-sm);
+}
+
+.kb-root .kb-catalog__error {
+  color: var(--kb-color-danger);
+}
+
+.kb-root .kb-catalog__source {
+  padding: 0 4px;
+  border: 1px solid var(--kb-color-primary);
+  border-radius: var(--kb-radius);
+  color: var(--kb-color-primary);
+}
+
+.kb-root .kb-catalog__source.is-pending {
+  border-color: var(--kb-color-warning);
+  color: var(--kb-color-warning);
+}
+
+.kb-root .kb-catalog__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--kb-color-primary);
+  cursor: pointer;
+}
+
+.kb-root .kb-catalog__link:hover {
+  text-decoration: underline;
+}
+
+.kb-root .kb-catalog__more {
+  margin-top: 4px;
+}
+
+/* 面板较窄时退为单列（按面板自身宽度，而非视口） */
+@container (max-width: 560px) {
+  .kb-root .kb-catalog__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---------- 档案主题：表单间距同 kaifang-lab（控件 34px + 行距） ---------- */
+.kb-root[data-theme='archive'] .kb-catalog {
+  padding: 12px 16px 16px;
+}
+
+.kb-root[data-theme='archive'] .kb-catalog__group {
+  overflow: hidden;
+  border-radius: var(--kb-radius);
+}
+
+.kb-root[data-theme='archive'] .kb-catalog__group > .kb-section__header {
+  padding-left: 12px;
+}
+
+.kb-root[data-theme='archive'] .kb-catalog__group > .kb-section__body {
+  padding: 16px 16px 12px;
+}
+
+.kb-root[data-theme='archive'] .kb-catalog__grid {
+  gap: 10px 20px;
+}
+
+.kb-root[data-theme='archive'] .kb-catalog__field {
+  grid-template-columns: 100px minmax(0, 1fr);
+  column-gap: 12px;
+}
+
+.kb-root[data-theme='archive'] .kb-catalog__label {
+  color: var(--kb-color-text);
+}

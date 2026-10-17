@@ -1,8 +1,10 @@
-import { definePlugin, ExtensionPoints, NOTIFY_SERVICE } from '@kabel/core';
+import { definePlugin, DIALOG_SERVICE, ExtensionPoints, NOTIFY_SERVICE } from '@kabel/core';
 import { WORKSPACE_PLUGIN, WORKSPACE_SERVICE, type ImageObjectInput } from '@kabel/plugin-workspace';
 import {
   FILE_LOADER_PLUGIN,
   FILE_LOADER_SERVICE,
+  MINIO_DIALOG,
+  URLS_DIALOG,
   type FileEntry,
   type FileLoadResult,
   type FileLoadSource,
@@ -13,13 +15,13 @@ import { DEFAULT_IMAGE_EXTENSIONS, selectImages } from './filter';
 import { listMinioEntries } from './minio';
 import { entriesFromFiles, pickDirectory } from './local';
 import { fileLoaderActions, fileLoaderSlice } from './slice';
-import { LoaderToolbar } from './ui';
+import { LoaderToolbar, MinioDialog, UrlsDialog } from './ui';
 import { parseUrlList, urlEntries } from './urls';
 
 export interface FileLoaderOptions {
   /** 视为影像的扩展名（无 MIME 信息时使用），默认 jpg/png/gif/webp/bmp/svg/avif/tif */
   extensions?: readonly string[];
-  /** MinIO 对话框的预填值；`accessKey`/`secretKey` 仅在内存中使用，不会持久化 */
+  /** MinIO 弹窗的预填值；`accessKey`/`secretKey` 仅在内存中使用，不会持久化 */
   minio?: Partial<MinioConfig>;
   /** 自定义 MinIO 签名（如向后端换取预签名地址）；提供后不再在浏览器中使用密钥 */
   signUrl?: (url: string) => string | Promise<string>;
@@ -39,6 +41,7 @@ const toImageInput = (e: FileEntry): ImageObjectInput => ({
  * - **来源**：`loadMinio` / `openDirectory`（`loadFiles`）/ `loadUrls`，均归一化为条目，过滤出影像并自然排序；
  * - **目录分组**：子目录路径作为文件目录的分组；
  * - **入口**：工具栏“打开”菜单，与命令 `fileLoader.openDirectory | openUrls | openMinio`；
+ *   MinIO / URL 列表表单经底座弹窗（`DIALOG_SERVICE`）打开，外框与行为由底座统一定义；
  * - **对接**：只依赖 `kabel:workspace`，通过 `WORKSPACE_SERVICE.setImages` 写入文档模型，加载完成后派发 `file-loader:load`。
  */
 export const fileLoaderPlugin = (options: FileLoaderOptions = {}) =>
@@ -99,12 +102,17 @@ export const fileLoaderPlugin = (options: FileLoaderOptions = {}) =>
       };
       ctx.provide(FILE_LOADER_SERVICE, service);
 
-      const openDialog = (dialog: 'urls' | 'minio') => kernel.dispatch(fileLoaderActions.openDialog(dialog));
+      const openDialog = (id: string) => kernel.services.tryGet(DIALOG_SERVICE)?.open(id);
       const idle = () => !kernel.getState().fileLoader.busy;
       ctx.registerCommand({ id: 'fileLoader.openDirectory', title: '打开本地目录', icon: 'folder', enabled: idle, run: () => void service.openDirectory().catch(() => {}) });
-      ctx.registerCommand({ id: 'fileLoader.openUrls', title: '从 URL 列表加载', icon: 'link', enabled: idle, run: () => openDialog('urls') });
-      ctx.registerCommand({ id: 'fileLoader.openMinio', title: '从 MinIO 加载', icon: 'folder', enabled: idle, run: () => openDialog('minio') });
-      ctx.onDispose(() => kernel.dispatch(fileLoaderActions.openDialog(null)));
+      ctx.registerCommand({ id: 'fileLoader.openUrls', title: '从 URL 列表加载', icon: 'link', enabled: idle, run: () => openDialog(URLS_DIALOG) });
+      ctx.registerCommand({ id: 'fileLoader.openMinio', title: '从 MinIO 加载', icon: 'folder', enabled: idle, run: () => openDialog(MINIO_DIALOG) });
+      ctx.contribute(ExtensionPoints.dialogs, { id: URLS_DIALOG, title: '从 URL 列表加载', view: UrlsDialog });
+      ctx.contribute(ExtensionPoints.dialogs, {
+        id: MINIO_DIALOG,
+        title: '从 MinIO 加载',
+        view: (props) => <MinioDialog {...props} defaults={options.minio} />,
+      });
 
       if (options.toolbar !== false) {
         ctx.contribute(ExtensionPoints.toolbar, {
@@ -112,7 +120,7 @@ export const fileLoaderPlugin = (options: FileLoaderOptions = {}) =>
           type: 'view',
           group: options.toolbar?.group ?? 'start',
           order: options.toolbar?.order ?? 5,
-          view: (props) => <LoaderToolbar kernel={props.kernel} defaults={options.minio} />,
+          view: (props) => <LoaderToolbar kernel={props.kernel} />,
         });
       }
     },

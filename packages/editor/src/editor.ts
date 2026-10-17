@@ -49,6 +49,8 @@ export interface EditorOptions {
   /** `false` 关闭工具栏“查看表单数据”按钮 */
   formData?: false;
   theme?: ThemeOptions | false;
+  /** 事件日志：`{ capacity?, format?, actions?, rules? }`；`false` 不注册 */
+  logs?: BaselineOptions['logs'];
   /** 实例标识，用于布局持久化命名空间；同页多实例需不同 */
   instanceId?: string;
   /** 持久化存储，默认 localStorage */
@@ -140,6 +142,7 @@ export function createArchiveEditor(target: HTMLElement | string, options: Edito
           settings: options.settings,
           formData: options.formData,
           theme: options.theme,
+          logs: options.logs,
         })
       : options.preset || null;
 

@@ -17,13 +17,28 @@
 └──────────────────────────────────────────────────────────────┘
 ```
 
-依赖只能自上而下。`@kabel/core` 不依赖 DOM 渲染库，可在 Node 中单测；插件之间不直接 import 实现，只通过**服务令牌**、**扩展点**和**命令 id** 协作（业务插件只依赖工作台：声明 `dependencies: ['kabel:workspace']`，通过它的服务与扩展点协作）。
+依赖只能自上而下。`@kabel/core` 不依赖 DOM 渲染库，可在 Node 中单测；插件之间不直接 import 实现，只通过**服务令牌**、**扩展点**和**命令 id** 协作。
+
+## 插件分层
+
+```
+L4 场景预设   market-supervision …        只用 ctx.plugin() 组合子插件与默认配置
+L3 业务插件   catalog · ocr-excerpt · layout-extract · data-exchange …   只依赖 L1 / L2 契约，彼此不依赖
+L2 能力插件   fields · ocr · llm · region-select …       contract.ts + 默认实现，宿主可同令牌替换
+L1 工作台     kabel:workspace（builtin）
+L0 内核 / ui  Kernel · Workbench
+```
+
+- 业务插件之间的联动经由能力插件的共享服务与事件：框选识别、版面分析、宿主都通过 `FIELDS_SERVICE` 写字段，著录面板只是字段模型的视图，任何一个停用都不影响其他。
+- 服务依赖用 `inject` 声明（见下文“插件模型”），缺少服务时插件等待而不是报错。
+- 设计说明与场景拆解见 [档案业务插件拆解设计](archive-plugin-design.md)。
 
 ## baseline 与插件分类
 
 | 类别 | 插件 | 说明 |
 | --- | --- | --- |
 | 内置（`builtin`） | `kabel:layout`、`kabel:history`、`kabel:mode`、`kabel:save`、`kabel:feedback`、`kabel:keymap`、`kabel:contextmenu`、`kabel:palette`、`kabel:form-data`、`kabel:workspace`、`kabel:settings`、`kabel:theme` | 工作台骨架与公共能力：不可停用，不在 设置 › 插件管理 中显示 |
+| 底座可选 | `kabel:logs`（事件日志） | 默认注册（`logs: false` 关闭），可在插件管理中停用与配置事件规则 |
 | 宿主 / 功能插件 | 如文书著录、图片标记等业务功能 | 不属于底座；通过 `plugins` 或 `editor.use()` 注册，可在运行期启停 |
 
 底座（baseline）= 上述内置插件，不含任何业务功能。底座提供的公共能力：
@@ -34,10 +49,11 @@
 | 保存契约 | `kabel:save`（core） | `kabel.save` + 可否决的 `save` 事件 + `saved` / `save:error` + dirty + 离开确认 |
 | 表单数据 | 扩展点 `ExtensionPoints.formData`（core）+ `kabel:form-data`（ui） | 插件声明各自的提交数据；保存时汇总进 `save` 载荷的 `data`，工具栏“查看表单数据”弹窗展示全部 |
 | 只读模式 | `kabel:mode`（core） | `state.mode.readonly`，命令 `mutates: true` 自动禁用 |
-| 消息与对话框 | `kabel:feedback`（ui） | `NOTIFY_SERVICE`：`notify` / `confirm` |
+| 消息与对话框 | `kabel:feedback`（ui） | `NOTIFY_SERVICE`：`notify` / `confirm`；`DIALOG_SERVICE` + 扩展点 `ExtensionPoints.dialogs`：底座弹窗（见“弹窗”） |
 | 命令面板 | `kabel:palette`（ui） | `Mod+Shift+P`，列出所有可执行且未 `hidden` 的命令 |
 | 快捷键改绑 | `kabel:keymap`（ui） | `state.keymap.overrides`（持久化）、设置 › 快捷键、冲突检测 |
 | 右键菜单 | `kabel:contextmenu`（ui） | 扩展点 `ExtensionPoints.contextMenu` + `data-kb-context` |
+| 事件日志 | `kabel:logs`（ui） | `LOG_SERVICE`；状态栏右下角“日志”按钮展开最右侧看板（扩展点 `drawers`）；插件经 `ctx.bus` / `ctx.emit` 派发的事件自动带来源（`EventBus.withSource`、`onAny` 的 `meta.source`） |
 | 视图错误隔离 | ui `ViewHost` | 面板 / 视图渲染出错只影响自身，派发 `error` 事件，可重试 |
 
 底座只定义契约，不含业务实现；业务插件通过这些契约协作（例如著录插件监听 `save`，标注插件贡献 `image` 之上的覆盖层与右键菜单）。
@@ -57,25 +73,39 @@
 | `plugins` | 插件生命周期：依赖拓扑排序、同步/异步 setup、按依赖逆序卸载；可恢复的停用 / 启用 |
 | `storage` | 带命名空间的持久化存储（默认 localStorage，可替换） |
 
-## 插件模型
+## 插件模型（对照 cordis）
 
 ```ts
 definePlugin({
   name: 'scope:name',
   title: '显示名称',                                   // 插件管理中显示
-  dependencies: ['kabel:workspace'],
-  setup(ctx) {
+  inject: [WORKSPACE_SERVICE, FIELDS_SERVICE],         // 必需服务；{ required, optional } 形式可声明可选服务
+  Config: Schema.object({ endpoint: Schema.string().default('http://…') }),   // 配置 Schema（schemastery）
+  setup(ctx, config) {
+    const fields = ctx.services.get(FIELDS_SERVICE);   // 必需服务一定存在；服务变化时插件会重载，缓存是安全的
     ctx.registerSlice(slice);                          // 状态
     ctx.registerCommand({ id, run, keybinding });      // 行为
     ctx.contribute(ExtensionPoints.toolbar, item);     // 界面贡献
     ctx.provide(TOKEN, service);                       // 对外能力
     ctx.on('document:change', handler);                // 事件
+    ctx.plugin(childPlugin(), { … });                  // 子插件：随本插件停用 / 重载 / 卸载
+    const scope = ctx.scope();                         // 子作用域：可单独释放
     return () => {/* 额外清理 */};
   },
 });
 ```
 
-`ctx` 上注册的一切都挂在插件自己的 `DisposableStore` 上，`kernel.unuse(name)` 时逆序释放，UI 会实时反映（按钮消失、面板卸载）。这使运行期注册/卸载成为常规操作，而不是特例。
+`ctx` 上注册的一切都挂在插件自己的 `DisposableStore` 上，停用、重载、`kernel.unuse(name)` 时逆序释放，UI 会实时反映（按钮消失、面板卸载）。这使运行期注册/卸载成为常规操作，而不是特例。
+
+| cordis 概念 | Kabel | 说明 |
+| --- | --- | --- |
+| `inject`（required / optional） | `KabelPlugin.inject` | 必需服务未就绪时插件 `pending`（不执行 setup），就绪后自动启用，撤回后回到等待；注入的服务出现 / 撤回 / 被覆盖时插件重载（提供者自身除外） |
+| Service | `ctx.provide(token, value)` / `ServiceRegistry` | 覆盖栈：后提供者生效，撤回后恢复；栈顶变化派发 `service:change` |
+| `Config` + `apply(ctx, config)` | `KabelPlugin.Config` + `setup(ctx, config)` | schemastery Schema；注册方配置 < 用户保存的配置；保存后插件重载 |
+| `ctx.plugin(plugin, config)` | `ctx.plugin(input, config?)` | 子插件生命周期挂在父插件上；场景预设即一组子插件 |
+| fork / scope | `ctx.scope()` | 可单独释放的子作用域 |
+
+插件状态：`kernel.plugins.status(name)` 为 `active` / `pending` / `disabled`，`blockers(name)` 为等待的依赖与服务；设置 › 插件管理 显示“运行中 / 等待服务 / 已停用”，子插件列在父插件下，声明了 `Config` 的插件可在其中编辑配置（表单由 Schema 生成）。配置持久化在 `kabel:<instanceId>:kabel:plugins:config`。
 
 **编译期注册**：`createArchiveEditor({ plugins })` / `createKernel({ plugins })`。全部是同步插件时，函数返回前即已完成注册，首帧渲染即完整。
 **运行期注册**：`editor.use(plugin | () => import('./plugin'))`，返回 Promise。
@@ -155,7 +185,7 @@ Vue 组件通过 `vueView(Component)` 转为 DomView；`<KabelPanel>` 则直接�
 | 在内容上叠加什么？ | 影像舞台 `state.stage`（缩放 / 旋转 / 平移）与坐标换算；扩展点 `WorkspaceExtensions.overlays`（覆盖层）与 `tools`（侧边工具条） |
 | 文件从哪来？ | 图片来源解析（URL、base64、Blob、二进制、对象、异步加载器）与 object URL 管理，宿主通过 `setImages` / `setDocuments` 传入 |
 
-业务插件（著录、标注、OCR…）依赖方向是 `业务插件 → workspace → ui → core`，业务插件之间不互相 import。左侧目录、内容面板、影像渲染器都是普通贡献项，同 id 贡献即可整体替换，因此界面也可以由自定义插件定义，无需改动 ui 或 workspace 源码。
+业务插件（著录、标注、OCR…）依赖方向是 `业务插件 → 能力插件契约 → workspace → ui → core`，业务插件之间不互相 import。工作台另提供 `reveal(documentId, bbox)`（切页并把区域缩放平移到视野中，字段证据、问题列表的“定位”都用它）、`updateDocument`、`readBlob`，`DocumentItem.meta` 承载业务属性。左侧目录、内容面板、影像渲染器都是普通贡献项，同 id 贡献即可整体替换，因此界面也可以由自定义插件定义，无需改动 ui 或 workspace 源码。
 
 ## 保存与只读
 
@@ -177,9 +207,24 @@ Vue 组件通过 `vueView(Component)` 转为 DomView；`<KabelPanel>` 则直接�
 - 有交互工具（`WORKSPACE_SERVICE.acquireTool` 租约，同一时刻只有一个，新租约抢占旧租约并广播 `stage:tool-change`）：左键、右键交给工具的覆盖层（`StageOverlay.tool`），**空格 + 左键**或中键拖动平移。平移在捕获阶段接管，工具收不到这些事件，草稿不会被打断。
 - 工具之间的互斥靠租约与 `stage:tool-change` 事件，插件互不知道对方存在。
 
+## 横幅与快捷键提示
+
+扩展点 `ExtensionPoints.banners`：工具栏下方的一行状态提示（如“智能算法已调用…”“请在影像上框选…”），`text` 返回空值时隐藏，`tone` 可按状态计算，可带一个命令按钮。工具栏项 `showKeybinding: true` 时在按钮内显示生效的快捷键（宽屏）。
+
+## 弹窗
+
+弹窗的外框与行为统一由底座定义，插件只提供内容——与面板、工具栏一样“一切皆贡献”：
+
+- **贡献**：插件向 `ExtensionPoints.dialogs` 贡献 `{ id, title, view, width?, closable?, maskClosable?, onClose? }`。`title` 可按参数计算；`closable(state)` 为假时（如加载中）Esc、遮罩与关闭按钮都不关闭。贡献随插件的 `DisposableStore` 释放，插件停用 / 卸载时底座自动关闭它打开的弹窗。
+- **触发**：`DIALOG_SERVICE.open(id, props)` / `update` / `close` / `isOpen`，或命令 `dialog.open` / `dialog.close`；底座派发 `dialog:open` / `dialog:close` 事件（自动进入事件日志）。打开状态在 `state.feedback.dialogs`（后者在上层），同 id 再次打开会更新参数并置顶。
+- **底座行为**（`kabel:feedback` 的 `DialogHost`）：遮罩与居中、拖动头部移动（双击复位，限制在工作台内）、关闭按钮、Esc / 点击遮罩关闭、打开时聚焦第一个输入控件并在关闭后归还焦点、多层叠放、确认框（`NOTIFY_SERVICE.confirm`）始终在最上层。内容视图经 `ViewHost` 渲染（错误隔离、可为 DomView / Vue）。
+- **内容**：视图收到 `{ kernel, dialogId, props, close }`；内容区与操作栏用 ui 的 `DialogBody` / `DialogFooter`（或 `.kb-dialog__body` / `.kb-dialog__footer`），保证各插件弹窗外观一致。
+
+因此宿主替换弹窗样式或行为只需改底座一处，插件之间的弹窗也不会互相遮挡错乱。插件不得自绘遮罩或弹窗外框。
+
 ## 设置与主题
 
-`settingsPlugin` 在工具栏右侧提供设置入口，弹窗分类页来自扩展点 `ExtensionPoints.settings`：插件管理（设置插件内置）、主题（主题插件贡献）。`themePlugin` 把 `state.theme` 转为根节点的 `data-scheme`、`data-density` 与 `--kb-accent` 等变量并持久化。
+`settingsPlugin` 在工具栏右侧提供设置入口，弹窗分类页来自扩展点 `ExtensionPoints.settings`：插件管理（设置插件内置）、主题（主题插件贡献）。`themePlugin` 把 `state.theme` 转为根节点的 `data-theme`（主题预设）、`data-scheme`、`data-density` 与 `--kb-accent` 等变量并持久化。内置两套预设：标准（`tokens.css`，藏青、冷灰）与档案（`data-theme="archive"`，`styles/theme-archive.css`，参照业务系统 kaifang-lab：绛红 `#8f2428` 主色、暖纸色底、暖灰文字与描边，含深色配色；尺寸同其 naive-ui 风格——14px 字号、34px 控件、3px 圆角、48px 表格行、8px 圆角的面板卡片、24px 弹窗内边距、40×22 开关、标签式页签；插件自身的尺寸调整写在各插件 `style.css` 的 `.kb-root[data-theme='archive']` 下），在 设置 › 主题 中切换，宿主可用 `themePlugin({ defaults: { preset: 'archive' } })` 设为默认；预设可带 `defaults`（如档案主题的 14px 字号），选用时一并应用；自定义预设经 `presets` 选项登记，并在 `.kb-root[data-theme='<id>']` 下覆盖 `--kb-*` 令牌（需写在 `[data-accent]` 规则之前，使自选主题色仍生效）。
 
 ## 与宿主的通信
 

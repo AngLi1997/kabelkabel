@@ -1,0 +1,40 @@
+{
+  "name": "@kabel/plugin-data-exchange",
+  "version": "0.1.0",
+  "description": "Kabel 数据对接（业务插件）：把字段与文件导出为 JSON / YAML 交给业务层提交，按业务层提供的数据加载，控件与数据项可配置",
+  "type": "module",
+  "license": "MIT",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./style.css": "./dist/style.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "scripts": {
+    "build": "tsup && node ../../../scripts/build-css.mjs dist/style.css src/style.css"
+  },
+  "dependencies": {
+    "@kabel/core": "workspace:*",
+    "@kabel/plugin-workspace": "workspace:*",
+    "@kabel/plugin-fields": "workspace:*",
+    "@kabel/ui": "workspace:*",
+    "preact": "^10.29.0",
+    "yaml": "^2.8.0"
+  }
+}

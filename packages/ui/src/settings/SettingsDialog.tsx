@@ -1,13 +1,14 @@
 import { ExtensionPoints } from '@kabel/core';
 import { useEffect, useRef } from 'preact/hooks';
 import { IconButton } from '../components/Button';
+import { useDraggable } from '../components/draggable';
 import { ViewHost } from '../components/ViewHost';
 import { useContributions, useKernel, useSelector, useStoreState } from '../hooks';
 import { Icon } from '../icons/Icon';
 import { cx } from '../utils';
 import { settingsActions } from './settings-plugin';
 
-/** 设置弹窗：覆盖整个工作台，左侧分类导航、右侧分类页内容 */
+/** 设置弹窗：覆盖整个工作台，左侧分类导航、右侧分类页内容；拖动头部移动、拖动右下角调整大小，双击头部复位 */
 export function SettingsDialog() {
   const open = useSelector((s) => !!s.settings?.open);
   return open ? <Dialog /> : null;
@@ -21,6 +22,7 @@ function Dialog() {
   const dialog = useRef<HTMLDivElement>(null);
   const titleId = `kb-settings-title-${kernel.id}`;
   const close = () => kernel.dispatch(settingsActions.close());
+  const drag = useDraggable(dialog);
 
   // 打开时聚焦弹窗，关闭后焦点回到打开前的元素
   useEffect(() => {
@@ -39,8 +41,16 @@ function Dialog() {
         close();
       }}
     >
-      <div ref={dialog} class="kb-settings__dialog" role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1}>
-        <header class="kb-settings__header">
+      <div
+        ref={dialog}
+        class="kb-settings__dialog"
+        style={drag.style}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+      >
+        <header {...drag.handleProps} class={cx('kb-settings__header', drag.handleProps.class)} onDblClick={drag.reset}>
           <span id={titleId} class="kb-settings__title">
             设置
           </span>

@@ -4,7 +4,15 @@ import { Button } from '../components/Button';
 import { Segmented } from '../components/form';
 import { useSelector } from '../hooks';
 import { cx } from '../utils';
-import { DEFAULT_ACCENTS, FONT_SIZES, THEME_ACCENTS, themeActions, type ThemeState } from './theme-plugin';
+import {
+  DEFAULT_ACCENTS,
+  DEFAULT_PRESETS,
+  FONT_SIZES,
+  THEME_ACCENTS,
+  THEME_PRESETS,
+  themeActions,
+  type ThemeState,
+} from './theme-plugin';
 
 function Row({ label, children }: { label: string; children: ComponentChildren }) {
   return (
@@ -17,15 +25,31 @@ function Row({ label, children }: { label: string; children: ComponentChildren }
 
 export function ThemePage({ kernel }: SettingsPageProps) {
   const theme = useSelector((s) => s.theme);
-  const accents = kernel.services.tryGet(THEME_ACCENTS) ?? DEFAULT_ACCENTS;
+  const presets = kernel.services.tryGet(THEME_PRESETS) ?? DEFAULT_PRESETS;
   const set = (patch: Partial<ThemeState>) => kernel.dispatch(themeActions.set(patch));
   if (!theme) return null;
-  // 默认主色存为 null，跟随令牌中的默认值
-  const defaultColor = DEFAULT_ACCENTS[0]!.color;
+  // 默认主色存为 null，跟随当前主题预设的默认值
+  const preset = presets.find((p) => p.id === theme.preset);
+  const defaultColor = (preset?.accent ?? DEFAULT_ACCENTS[0]!.color).toLowerCase();
   const current = (theme.accent ?? defaultColor).toLowerCase();
+  const listed = kernel.services.tryGet(THEME_ACCENTS) ?? DEFAULT_ACCENTS;
+  const accents = listed.some((a) => a.color.toLowerCase() === defaultColor)
+    ? listed
+    : [{ title: preset?.title ?? '默认', color: defaultColor }, ...listed];
 
   return (
     <div class="kb-setting-list">
+      {presets.length > 1 && (
+        <Row label="主题">
+          <Segmented
+            label="主题"
+            value={theme.preset}
+            // 切换预设时清除自选主题色并应用预设的默认设置（主色、字号等）
+            onChange={(id) => set({ preset: id, accent: null, ...presets.find((p) => p.id === id)?.defaults })}
+            options={presets.map((p) => ({ label: p.title, value: p.id }))}
+          />
+        </Row>
+      )}
       <Row label="配色方案">
         <Segmented
           label="配色方案"

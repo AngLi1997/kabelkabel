@@ -29,42 +29,10 @@
   background: var(--kb-color-hover, rgba(127, 127, 127, 0.12));
 }
 
-.kb-root .kb-fl__modal {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--kb-space-4);
-  background: rgba(20, 28, 40, 0.32);
-}
-
-.kb-root .kb-fl__dialog {
-  width: 480px;
-  max-width: 100%;
-  border: 1px solid var(--kb-color-border);
-  background: var(--kb-color-surface);
-  box-shadow: var(--kb-shadow-overlay);
-}
-
-.kb-root .kb-fl__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--kb-space-2) var(--kb-space-3);
-  border-bottom: 1px solid var(--kb-color-border);
-}
-
-.kb-root .kb-fl__title {
-  font-weight: 600;
-}
-
 .kb-root .kb-fl__body {
   display: flex;
   flex-direction: column;
   gap: var(--kb-space-3);
-  padding: var(--kb-space-3);
 }
 
 .kb-root .kb-fl__row {
@@ -78,11 +46,4 @@
   flex-direction: column;
   gap: var(--kb-space-1);
   min-width: 0;
-}
-
-.kb-root .kb-fl__footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--kb-space-2);
-  padding: var(--kb-space-2) var(--kb-space-3) var(--kb-space-3);
 }

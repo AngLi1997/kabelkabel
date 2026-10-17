@@ -284,6 +284,10 @@
   color: var(--kb-color-primary);
 }
 
+.kb-root[data-theme='archive'] .kb-files__item.is-active {
+  box-shadow: inset 3px 0 0 var(--kb-color-primary);
+}
+
 .kb-files__name {
   flex: 1;
   min-width: 0;
@@ -296,4 +300,46 @@
   flex: none;
   color: var(--kb-color-text-2);
   font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 档案主题：目录项同 kaifang-lab 侧边菜单（圆角、内缩、选中左侧色条） ---------- */
+.kb-root[data-theme='archive'] .kb-files {
+  padding: 6px 0;
+}
+
+.kb-root[data-theme='archive'] .kb-files__folder,
+.kb-root[data-theme='archive'] .kb-files__item {
+  gap: 6px;
+  width: calc(100% - 12px);
+  height: 38px;
+  margin: 1px 6px;
+  padding: 0 12px 0 10px;
+  border-radius: var(--kb-radius);
+}
+
+.kb-root[data-theme='archive'] .kb-files__item.is-nested {
+  padding-left: 34px;
+}
+
+.kb-root[data-theme='archive'] .kb-files__folder .kb-icon,
+.kb-root[data-theme='archive'] .kb-files__item .kb-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.kb-root[data-theme='archive'] .kb-files__item.is-active {
+  box-shadow: inset 4px 0 0 var(--kb-color-primary);
+  font-weight: 400;
+}
+
+.kb-root[data-theme='archive'] .kb-stage__bar {
+  width: 40px;
+  gap: 4px;
+  padding: 6px 0;
+  border-right-color: var(--kb-color-divider);
+}
+
+.kb-root[data-theme='archive'] .kb-stage__thumbs {
+  gap: 8px;
+  padding: 10px 8px;
 }

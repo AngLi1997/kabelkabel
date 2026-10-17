@@ -1,6 +1,6 @@
 # Kabel · 通用档案工具底座
 
-可通过 npm 引入、集成到任意系统页面的档案工具底座。微内核 + 插件架构（一切皆插件），原生 TypeScript 内核、Preact 轻量渲染层，提供 Vue 3 适配器。底座只负责工作台骨架与**工作台插件**（文件、内容、影像舞台），业务功能（著录、标注等）全部以插件形式接入，并只依赖工作台。
+可通过 npm 引入、集成到任意系统页面的档案工具底座。微内核 + 插件架构（一切皆插件），原生 TypeScript 内核、Preact 轻量渲染层，提供 Vue 3 适配器。底座只负责工作台骨架与**工作台插件**（文件、内容、影像舞台），能力（字段模型、OCR、大模型、框选）与业务功能（著录、框选识别、版面分析等）全部以插件形式接入；插件模型对照 cordis（`inject` 服务依赖、`Config` 配置、子插件、作用域）。
 
 ```
 ┌──────────────────── 顶部工具栏（撤销/重做 · 插件按钮 …………… 布局 · 设置）────────────────────┐
@@ -26,11 +26,12 @@
 - **快捷键改绑**：设置 › 快捷键 中查看、修改、清除、恢复默认，冲突时提示并可覆盖，持久化。
 - **右键菜单**：`data-kb-context` 标识区域 + 扩展点 `contextMenu`。
 - **视图错误隔离**：单个面板渲染出错只影响自身，显示重试，并派发 `error` 事件。
+- **cordis 式插件模型**：插件用 `inject` 声明所需服务，服务未就绪时自动等待、就绪后启用、变化时重载；用 `Config`（schemastery）声明配置，在 设置 › 插件管理 中编辑并持久化；`ctx.plugin()` 组合子插件，场景预设即一组子插件。
 - **编译期 / 运行期注册**：`plugins` 选项静态注册；`editor.use(() => import('./x'))` 运行期懒加载；`editor.unuse(name)` 卸载并自动清理。
 - **可预测状态 + 撤销/重做**：单一状态树，所有变更经 `dispatch(action)`；快照式历史，连续输入自动合并，支持事务与保存点（dirty）。
 - **可调布局**：拖拽调宽、折叠、最大化（Esc 还原）、状态持久化；按容器宽度响应式（宽屏三栏 / 中屏右栏浮层 / 窄屏单栏切换）。
 - **多种影像源**：URL、base64（自动识别 MIME）、Blob/File、ArrayBuffer、对象、异步加载器；缩放、旋转、拖拽、翻页，覆盖层与工具条扩展点。
-- **设置**：工具栏右侧设置入口——插件管理（按依赖关系树形显示、运行期启停）、主题（浅色 / 深色 / 跟随系统、主题色、界面密度、字号）。
+- **设置**：工具栏右侧设置入口——插件管理（按依赖关系树形显示、运行状态 / 等待的服务、运行期启停、由 Schema 生成的插件配置表单）、主题（浅色 / 深色 / 跟随系统、主题色、界面密度、字号）。
 - **不污染宿主**：样式全部作用于 `.kb-root` 下，设计令牌为 CSS 变量；快捷键只在工作台内生效。
 - **图标统一 iconfont**：内置 iconfont Symbol 雪碧图，可切换为宿主 iconfont 项目（Symbol 或 Font class）。
 - **完整类型**：各包导出完整 `.d.ts`，插件通过模块扩充为状态与事件补充类型。
@@ -45,7 +46,7 @@
 | `@kabel/editor` | **主包**：baseline 预设 + `createArchiveEditor` 宿主 API，并再导出以上各包 |
 | `@kabel/vue` | **Vue 3 适配器**：`<KabelEditor>`、`<KabelPanel>`、`<KabelToolbarButton>`、`vueView()`、组合式 API |
 
-后续扩展的业务插件统一放在 [`packages/plugins`](packages/plugins/README.md)，包名 `@kabel/plugin-<name>`。
+扩展插件统一放在 [`packages/plugins`](packages/plugins/README.md)，包名 `@kabel/plugin-<name>`：能力插件（`fields` 字段模型、`ocr` 文字识别、`llm` 大模型、`region-select` 框选、`file-loader` 文件加载）、业务插件（`catalog` 著录面板、`ocr-excerpt` 框选识别回填、`layout-extract` 版面分析自动填充、`data-exchange` 数据对接）与场景预设（`market-supervision` 市场监管档案加工）。示例 `pnpm dev` 默认进入场景列表，市场监管场景也可直接打开 `?scene=market`。
 
 baseline 组成（均为内置）：布局、撤销与重做、只读模式、保存、消息与对话框、快捷键、右键菜单、命令面板、工作台、设置、主题。按需组合：`createArchiveEditor(el, { preset: [layoutPlugin(), historyPlugin(), workspacePlugin()] })`。
 
@@ -124,6 +125,6 @@ pnpm pack:all     # 打包 tarball 到 .packs/，可在任意项目中 npm insta
 ```
 packages/        各 npm 包（core / ui / editor / vue，均含 README.md）
 packages/plugins 插件（workspace 工作台 + 后续扩展的业务插件；每个插件一个目录：src / test / README.md），见其 README
-examples/vue-app Vue 3 + Vite 宿主示例（默认文件目录 + 影像、KabelPanel 右侧面板、工具栏按钮、保存与只读）
+examples/vue-app Vue 3 + Vite 宿主示例（默认场景列表：自由场景、市场监管场景、文书著录场景）
 docs/            文档
 ```

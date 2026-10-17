@@ -26,18 +26,19 @@ describe('工具栏入口', () => {
     expect(items.map((i) => i.textContent)).toEqual(['本地目录…', 'MinIO 桶与路径…', 'URL 列表…']);
     await act(async () => items[2]!.click());
 
-    const textarea = host.querySelector('.kb-fl__dialog textarea') as HTMLTextAreaElement;
+    expect(host.querySelector('.kb-dialog__title')?.textContent).toBe('从 URL 列表加载');
+    const textarea = host.querySelector('.kb-dialog textarea') as HTMLTextAreaElement;
     expect(textarea).toBeTruthy();
     act(() => {
       textarea.value = 'https://x/1.jpg\nhttps://x/2.jpg';
       textarea.dispatchEvent(new Event('input', { bubbles: true }));
     });
-    await act(async () => (host.querySelector('.kb-fl__footer .kb-btn--primary') as HTMLElement).click());
+    await act(async () => (host.querySelector('.kb-dialog__footer .kb-btn--primary') as HTMLElement).click());
     await new Promise((r) => setTimeout(r));
     act(() => {});
 
     expect(kernel.services.get(WORKSPACE_SERVICE).getImages()).toHaveLength(2);
-    expect(host.querySelector('.kb-fl__dialog')).toBeNull();
+    expect(host.querySelector('.kb-dialog')).toBeNull();
     expect(host.querySelector('.kb-stage__image')?.getAttribute('src')).toBe('https://x/1.jpg');
   });
 });

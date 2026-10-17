@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
   createInitialLayout,
   createLayoutSlice,
+  feedbackPlugin,
   formDataViewPlugin,
   layoutActions,
   layoutPlugin,
@@ -65,7 +66,7 @@ describe('左侧上下分区', () => {
 
 describe('查看表单数据', () => {
   it('有提供者时显示按钮，弹窗展示全部插件的提交数据', async () => {
-    const kernel = createTestKernel({ plugins: [layoutPlugin({ persist: false }), formDataViewPlugin()] });
+    const kernel = createTestKernel({ plugins: [layoutPlugin({ persist: false }), feedbackPlugin(), formDataViewPlugin()] });
     mount(kernel);
     const button = () => [...host.querySelectorAll('.kb-toolbar button')].find((b) => b.textContent === '查看表单数据');
     expect(button()).toBeUndefined();
@@ -78,12 +79,13 @@ describe('查看表单数据', () => {
     await act(async () => void (await flush()));
     const json = () => host.querySelector('.kb-formdata__json')?.textContent ?? '';
     expect(JSON.parse(json())).toEqual({ catalog: { title: '公司章程' }, bad: { error: '失败' } });
-    const tabs = [...host.querySelectorAll<HTMLElement>('.kb-formdata .kb-settings__nav-item')];
+    const tabs = [...host.querySelectorAll<HTMLElement>('.kb-formdata__nav-item')];
     expect(tabs.map((t) => t.textContent)).toEqual(['全部', '著录', '坏的']);
     act(() => tabs[1]!.click());
     expect(JSON.parse(json())).toEqual({ title: '公司章程' });
 
+    expect(host.querySelector('[data-dialog="formData.view"] .kb-dialog__title')?.textContent).toBe('表单数据');
     await act(() => kernel.execute('formData.close'));
-    expect(host.querySelector('.kb-formdata')).toBeNull();
+    expect(host.querySelector('[data-dialog="formData.view"]')).toBeNull();
   });
 });

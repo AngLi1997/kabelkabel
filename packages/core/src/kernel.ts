@@ -41,6 +41,11 @@ export class Kernel {
     this.history = new History(this.store, options.history);
     this.commands = new CommandRegistry(this);
     this.plugins = new PluginManager(this);
+    // 服务栈顶变化：广播给宿主，并让声明了 inject 的插件等待 / 启用 / 重载
+    this.services.onChange((change) => {
+      this.bus.emitAs(change.owner, 'service:change', change);
+      this.plugins.onServiceChange(change);
+    });
     this.ready = this.plugins.register(options.plugins);
   }
 

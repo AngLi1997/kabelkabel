@@ -84,10 +84,36 @@ describe('themePlugin', () => {
     expect(kernel.getState().theme).toEqual(DEFAULT_THEME);
   });
 
+  it('档案主题预设：写入 data-theme，设置页切换并清除自选主题色', async () => {
+    const kernel = mount();
+    const root = $('.kb-root')!;
+    expect(root.hasAttribute('data-theme')).toBe(false);
+    act(() => kernel.dispatch(themeActions.set({ accent: '#2d6a4f' })));
+    await act(() => kernel.execute('settings.open', 'theme'));
+    const preset = [...document.querySelectorAll<HTMLElement>('[aria-label="主题"] [role="radio"]')];
+    expect(preset.map((b) => b.textContent)).toEqual(['标准', '档案']);
+    act(() => preset[1]!.click());
+    expect(root.dataset.theme).toBe('archive');
+    expect(kernel.getState().theme).toMatchObject({ preset: 'archive', accent: null, fontSize: 14 });
+    expect(root.style.getPropertyValue('--kb-font-size')).toBe('14px');
+    // 色板首项为档案主题默认的绛红，且处于选中状态
+    const swatch = document.querySelector<HTMLElement>('.kb-swatch.is-active')!;
+    expect(swatch.title).toBe('档案');
+    act(() => kernel.dispatch(themeActions.set({ preset: 'default' })));
+    expect(root.hasAttribute('data-theme')).toBe(false);
+  });
+
+  it('宿主默认选用档案主题时应用预设的默认字号，显式配置优先', async () => {
+    const { kernel } = await setupPlugins([themePlugin({ defaults: { preset: 'archive' } })]);
+    expect(kernel.getState().theme).toMatchObject({ preset: 'archive', fontSize: 14 });
+    const other = await setupPlugins([themePlugin({ defaults: { preset: 'archive', fontSize: 12 } })]);
+    expect(other.kernel.getState().theme.fontSize).toBe(12);
+  });
+
   it('贡献主题设置页；sanitize 丢弃非法值', async () => {
     const { kernel } = await setupPlugins([settingsPlugin(), themePlugin({ defaults: { density: 'comfortable' } })]);
     expect(kernel.extensions.get(ExtensionPoints.settings).getAll().map((p) => p.id)).toEqual(['plugins', 'theme']);
     expect(kernel.getState().theme.density).toBe('comfortable');
-    expect(sanitizeTheme(DEFAULT_THEME, { scheme: 'x', accent: 'red;', fontSize: 99 } as never)).toEqual(DEFAULT_THEME);
+    expect(sanitizeTheme(DEFAULT_THEME, { preset: 'x"]', scheme: 'x', accent: 'red;', fontSize: 99 } as never)).toEqual(DEFAULT_THEME);
   });
 });

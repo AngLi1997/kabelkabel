@@ -1,5 +1,6 @@
 /*
  * 主题插件在根节点上设置的属性：
+ *   data-theme                 主题预设（未设置为标准主题，即 tokens.css；档案主题见 theme-archive.css）
  *   data-accent + --kb-accent  自定义主题色（派生悬停/按下/浅色与焦点环）
  *   data-scheme="dark"         深色配色
  *   data-density               界面密度

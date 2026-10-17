@@ -1,0 +1,43 @@
+/* ---------- 数据对接 ---------- */
+.kb-root .kb-dx {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.kb-root .kb-dx__file {
+  display: flex;
+  align-items: center;
+  gap: var(--kb-space-2);
+  min-width: 0;
+}
+
+.kb-root .kb-dx__file input {
+  display: none;
+}
+
+.kb-root .kb-dx__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kb-root .kb-dx__body .kb-textarea {
+  min-height: 180px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.kb-root .kb-dx__pre {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: var(--kb-space-3);
+  overflow: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre;
+}

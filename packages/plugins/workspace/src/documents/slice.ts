@@ -15,6 +15,13 @@ export const documentsSlice = createSlice({
     },
     next: (s: DocumentsState) => (s.index < s.items.length - 1 ? { ...s, index: s.index + 1 } : s),
     prev: (s: DocumentsState) => (s.index > 0 ? { ...s, index: s.index - 1 } : s),
+    update: (s: DocumentsState, { id, patch }: { id: string; patch: Partial<Omit<DocumentItem, 'id'>> }) => {
+      const index = s.items.findIndex((d) => d.id === id);
+      if (index < 0) return s;
+      const items = [...s.items];
+      items[index] = { ...items[index]!, ...patch };
+      return { ...s, items };
+    },
   },
 });
 

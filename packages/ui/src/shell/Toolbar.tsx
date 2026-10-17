@@ -59,7 +59,16 @@ function ToolbarEntry({ item, breakpoint }: { item: ToolbarItem; breakpoint: Bre
       title={tooltip}
       onClick={() => runAction(kernel, item)}
     >
-      {showLabel ? label : undefined}
+      {showLabel ? (
+        item.showKeybinding && keys && breakpoint === 'lg' ? (
+          <>
+            {label}
+            <kbd class="kb-toolbar__kbd">{formatKeybinding(keys)}</kbd>
+          </>
+        ) : (
+          label
+        )
+      ) : undefined}
     </Button>
   );
 }

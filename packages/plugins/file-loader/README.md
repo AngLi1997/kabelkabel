@@ -18,7 +18,7 @@ createArchiveEditor(el, { plugins: [fileLoaderPlugin({ minio: { endpoint: 'http:
 | 选项 | 说明 |
 | --- | --- |
 | `extensions` | 无 MIME 信息时视为影像的扩展名，默认 jpg/png/gif/webp/bmp/svg/avif/tif |
-| `minio` | MinIO 对话框预填值（`MinioConfig` 的子集）；密钥只在内存使用，不持久化 |
+| `minio` | MinIO 弹窗预填值（`MinioConfig` 的子集）；密钥只在内存使用，不持久化 |
 | `signUrl` | 自定义签名，如向后端换取预签名地址；提供后浏览器不再接触密钥（**生产环境推荐**） |
 | `toolbar` | `{ group, order }` 调整入口位置；`false` 不注册入口，宿主自行调用命令/服务 |
 
@@ -32,7 +32,7 @@ createArchiveEditor(el, { plugins: [fileLoaderPlugin({ minio: { endpoint: 'http:
 
 ## 命令
 
-`fileLoader.openDirectory`、`fileLoader.openUrls`（打开对话框）、`fileLoader.openMinio`（打开对话框）
+`fileLoader.openDirectory`、`fileLoader.openUrls`（打开底座弹窗 `fileLoader.urls`，`URLS_DIALOG`）、`fileLoader.openMinio`（打开底座弹窗 `fileLoader.minio`，`MINIO_DIALOG`）。两个表单只向 `ExtensionPoints.dialogs` 贡献内容，经 `DIALOG_SERVICE` 打开，外框与拖动、关闭等行为由底座统一定义；加载成功后关闭弹窗。
 
 ## 服务 `FILE_LOADER_SERVICE`
 
@@ -44,4 +44,4 @@ createArchiveEditor(el, { plugins: [fileLoaderPlugin({ minio: { endpoint: 'http:
 
 ## 状态与样式
 
-切片 `fileLoader = { dialog, busy }`（不入撤销栈）；样式类前缀 `kb-fl`，位于 `src/style.css`。
+切片 `fileLoader = { busy }`（不入撤销栈；弹窗打开状态由底座维护）；样式类前缀 `kb-fl`，位于 `src/style.css`。
