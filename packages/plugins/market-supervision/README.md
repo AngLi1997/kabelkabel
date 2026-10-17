@@ -43,4 +43,4 @@ marketSupervisionPreset({
 - 停用文字识别：框选识别回填与版面分析进入“等待服务”，按钮消失；重新启用后自动恢复。
 - 停用预设：全部子插件随之卸载。
 
-示例：`pnpm dev` 后打开 `http://localhost:5178/?scene=market`。
+示例：`pnpm dev` 后在场景列表进入「市场监管场景」，或打开 `http://localhost:5178/?scene=market`。

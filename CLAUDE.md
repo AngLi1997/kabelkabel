@@ -16,7 +16,7 @@ pnpm test                      # vitest run（happy-dom），测试直接走源�
 npx vitest run packages/plugins/workspace            # 单个包
 npx vitest run packages/core/test/plugin.test.ts -t "按依赖排序"   # 单个用例
 pnpm typecheck                 # 根 tsconfig 通过 paths 映射到各包 src，覆盖 packages
-pnpm dev                       # Vue 示例 examples/vue-app（端口 5178；?scene=market 为市场监管档案加工场景）；它消费的是各包 dist，改完包源码需重新 build
+pnpm dev                       # Vue 示例 examples/vue-app（端口 5178；默认进入场景列表，?scene=market 为市场监管档案加工场景）；它消费的是各包 dist，改完包源码需重新 build
 (cd examples/vue-app && npx vue-tsc --noEmit)     # 示例工程类型检查
 pnpm pack:all                  # 打 tarball 到 .packs/，用于在仓库外的全新项目中 npm install 验证
 ```

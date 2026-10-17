@@ -35,15 +35,30 @@ importers:
       '@kabel/editor':
         specifier: workspace:*
         version: link:../../packages/editor
+      '@kabel/plugin-catalog':
+        specifier: workspace:*
+        version: link:../../packages/plugins/catalog
       '@kabel/plugin-fields':
         specifier: workspace:*
         version: link:../../packages/plugins/fields
       '@kabel/plugin-file-loader':
         specifier: workspace:*
         version: link:../../packages/plugins/file-loader
+      '@kabel/plugin-layout-extract':
+        specifier: workspace:*
+        version: link:../../packages/plugins/layout-extract
+      '@kabel/plugin-llm':
+        specifier: workspace:*
+        version: link:../../packages/plugins/llm
       '@kabel/plugin-market-supervision':
         specifier: workspace:*
         version: link:../../packages/plugins/market-supervision
+      '@kabel/plugin-ocr':
+        specifier: workspace:*
+        version: link:../../packages/plugins/ocr
+      '@kabel/plugin-ocr-excerpt':
+        specifier: workspace:*
+        version: link:../../packages/plugins/ocr-excerpt
       '@kabel/plugin-region-select':
         specifier: workspace:*
         version: link:../../packages/plugins/region-select
