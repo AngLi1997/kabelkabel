@@ -10,6 +10,7 @@ export * from './components/Empty';
 export * from './components/Resizer';
 export * from './components/ViewHost';
 export * from './components/Section';
+export * from './components/SchemaForm';
 export * from './components/form';
 export { Workbench, type WorkbenchProps } from './shell/Workbench';
 export { Region, type RegionProps } from './shell/Region';

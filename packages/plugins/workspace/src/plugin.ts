@@ -50,6 +50,15 @@ export interface WorkspaceService {
    * 插件应 `ctx.onDispose(lease)`，卸载时自动归还。
    */
   acquireTool(id: string, options?: { cursor?: string }): Disposable;
+  /**
+   * 定位：切换到指定文件；给出区域（图片像素坐标）时缩放并平移使区域居中。
+   * 字段证据、问题、标注列表的“点击定位”都用它。
+   */
+  reveal(documentId: string, bbox?: { x: number; y: number; width: number; height: number }): void;
+  /** 局部更新文件属性（如 `meta`、`name`），不改变当前位置 */
+  updateDocument(id: string, patch: Partial<Omit<DocumentItem, 'id'>>): void;
+  /** 读取文件内容（默认当前文件），用于识别、上传等；跨域地址需服务端允许 CORS */
+  readBlob(document?: DocumentItem): Promise<Blob>;
 }
 
 declare module '@kabel/core' {
@@ -59,6 +68,11 @@ declare module '@kabel/core' {
      * @mode emit
      */
     'stage:tool-change': { active: string | null; previous: string | null };
+    /**
+     * 请求影像舞台定位到某文件的区域（由 `WorkspaceService.reveal` 派发）。
+     * @mode emit
+     */
+    'stage:reveal': { documentId: string; bbox?: { x: number; y: number; width: number; height: number } };
   }
 }
 
@@ -189,6 +203,20 @@ export const workspacePlugin = (options: WorkspacePluginOptions = {}) =>
             kernel.dispatch(stageActions.setTool(null));
             ctx.bus.emit('stage:tool-change', { active: null, previous: id });
           });
+        },
+        reveal: (documentId, bbox) => {
+          const index = documents().items.findIndex((d) => d.id === documentId);
+          if (index < 0) return;
+          kernel.dispatch(documentsActions.goto(index));
+          ctx.bus.emit('stage:reveal', { documentId, bbox });
+        },
+        updateDocument: (id, patch) => kernel.dispatch(documentsActions.update({ id, patch })),
+        readBlob: async (document) => {
+          const target = document ?? service.current();
+          if (!target) throw new Error('没有打开的文件');
+          const response = await fetch(target.src);
+          if (!response.ok) throw new Error(`读取文件失败：${response.status}`);
+          return response.blob();
         },
       };
       ctx.provide(WORKSPACE_SERVICE, service);

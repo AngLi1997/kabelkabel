@@ -65,6 +65,9 @@ const ICONS: Record<string, string> = {
   trash: 'M4 7h16 M9 7V4h6v3 M6 7l1 13h10l1-13 M10 11v5 M14 11v5',
   sparkles: 'M10 4l1.6 4.4L16 10l-4.4 1.6L10 16l-1.6-4.4L4 10l4.4-1.6z M17.5 14l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z M17 3v3 M15.5 4.5h3',
   sliders: 'M4 7h9 M17 7h3 M4 17h3 M11 17h9 M15 5v4 M9 15v4',
+  scan: 'M4 8V4h4 M16 4h4v4 M20 16v4h-4 M8 20H4v-4 M8 9h8 M8 12h8 M8 15h5',
+  'layout-analysis': 'M4 4h16v16H4z M4 9h16 M10 9v11 M13 13h4 M13 16h4',
+  ocr: 'M4 8V4h4 M16 4h4v4 M20 16v4h-4 M8 20H4v-4 M9 16l3-8 3 8 M10.2 13h3.6',
 };
 
 export const builtinIconNames = Object.keys(ICONS);

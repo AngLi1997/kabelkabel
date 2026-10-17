@@ -35,6 +35,8 @@ export interface ToolbarItem {
   label?: string;
   /** 为 true 时显示文字，否则仅图标 */
   showLabel?: boolean;
+  /** 在按钮内显示生效的快捷键（宽屏且显示文字时） */
+  showKeybinding?: boolean;
   primary?: boolean;
   tooltip?: string;
   /** 点击执行的命令；enabled/checked 状态取自命令定义 */
@@ -125,6 +127,19 @@ export interface ContextMenuItem {
   when?: (state: KabelState, kernel: Kernel, context: ContextMenuContext) => boolean;
 }
 
+/**
+ * 横幅：工具栏下方的一行提示（如“智能算法已调用”“影像已锁定”），由状态计算，返回空值时隐藏。
+ */
+export interface BannerItem {
+  id: string;
+  order?: number;
+  tone?: 'info' | 'success' | 'warning' | 'danger';
+  icon?: string;
+  text: (state: KabelState, kernel: Kernel) => string | null | undefined | false;
+  /** 横幅右侧的操作按钮（执行命令） */
+  action?: { label: string; command: string; args?: unknown[] };
+}
+
 /** 内置扩展点 */
 export const ExtensionPoints = {
   toolbar: defineExtensionPoint<ToolbarItem>('kabel.toolbar'),
@@ -132,4 +147,5 @@ export const ExtensionPoints = {
   panels: defineExtensionPoint<PanelContribution>('kabel.panels'),
   settings: defineExtensionPoint<SettingsPage>('kabel.settings'),
   contextMenu: defineExtensionPoint<ContextMenuItem>('kabel.contextMenu'),
+  banners: defineExtensionPoint<BannerItem>('kabel.banners'),
 } as const;

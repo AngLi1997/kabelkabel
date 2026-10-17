@@ -22,6 +22,7 @@ import { themeRootProps } from '../theme/theme-plugin';
 import { cx } from '../utils';
 import { Region } from './Region';
 import { StatusBar } from './StatusBar';
+import { Banners } from './Banners';
 import { Toolbar } from './Toolbar';
 
 export interface WorkbenchProps {
@@ -191,6 +192,7 @@ function Shell({ class: className }: { class?: string }) {
       {...themeRootProps(theme, prefersDark)}
     >
       <Toolbar breakpoint={breakpoint} />
+      <Banners />
       {compact && (
         <div class="kb-switcher" role="tablist">
           {REGIONS.filter(present).map((r) => (

@@ -64,6 +64,26 @@ export function ImageRenderer({ document }: DocumentRendererProps) {
     if (view.zoom === 'fit') setPan({ x: 0, y: 0 });
   }, [view.zoom, rotation]);
 
+  // 定位到区域（WORKSPACE_SERVICE.reveal）：等目标图片加载、测量完成后，缩放并平移使区域居中
+  const [reveal, setReveal] = useState<{ documentId: string; bbox: { x: number; y: number; width: number; height: number } } | null>(null);
+  useEffect(() => kernel.bus.on('stage:reveal', (payload) => setReveal(payload.bbox ? { documentId: payload.documentId, bbox: payload.bbox } : null)), [kernel]);
+  useEffect(() => {
+    if (!reveal || !natural || !size.width || image?.id !== reveal.documentId) return;
+    setReveal(null);
+    const { bbox } = reveal;
+    const turned = rotation % 180 !== 0;
+    const bw = Math.max(1, turned ? bbox.height : bbox.width);
+    const bh = Math.max(1, turned ? bbox.width : bbox.height);
+    // 区域占舞台约 60%，不小于适应窗口比例
+    const z = Math.max(view.fitScale, Math.min((size.width * 0.6) / bw, (size.height * 0.6) / bh, 4));
+    kernel.dispatch(stageActions.setZoom(z));
+    const dx = (bbox.x + bbox.width / 2 - natural.w / 2) * z;
+    const dy = (bbox.y + bbox.height / 2 - natural.h / 2) * z;
+    const c = Math.cos(rotation * DEG);
+    const n = Math.sin(rotation * DEG);
+    setPan({ x: -(dx * c - dy * n), y: -(dx * n + dy * c) });
+  }, [reveal, natural, size.width, size.height, image?.id]);
+
   // 适应窗口比例随容器尺寸、旋转角度变化
   useLayoutEffect(() => {
     if (!natural || !size.width || !size.height) return;

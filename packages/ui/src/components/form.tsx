@@ -41,7 +41,7 @@ function useComposition<V>(onChange: (value: V) => void, read: (el: HTMLInputEle
 }
 
 export interface InputProps extends BaseControlProps<string> {
-  type?: 'text' | 'date' | 'search';
+  type?: 'text' | 'date' | 'search' | 'password';
   maxLength?: number;
 }
 
