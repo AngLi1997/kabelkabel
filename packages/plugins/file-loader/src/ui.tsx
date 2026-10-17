@@ -1,5 +1,5 @@
 import type { Kernel } from '@kabel/core';
-import { Button, IconButton, Input, Textarea, useSelector } from '@kabel/ui';
+import { Button, IconButton, Input, Textarea, useDraggable, useSelector } from '@kabel/ui';
 import type { ComponentChildren } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { FILE_LOADER_SERVICE, type MinioConfig } from './contract';
@@ -69,6 +69,7 @@ export function LoaderToolbar({ kernel, defaults }: { kernel: Kernel; defaults?:
 function Modal({ title, kernel, onSubmit, submitLabel, busy, children }: { title: string; kernel: Kernel; onSubmit: () => void; submitLabel: string; busy: boolean; children: ComponentChildren }) {
   const box = useRef<HTMLDivElement>(null);
   const close = () => kernel.dispatch(fileLoaderActions.openDialog(null));
+  const drag = useDraggable(box);
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
     box.current?.querySelector<HTMLElement>('input,textarea')?.focus();
@@ -79,6 +80,7 @@ function Modal({ title, kernel, onSubmit, submitLabel, busy, children }: { title
       <div
         ref={box}
         class="kb-fl__dialog"
+        style={drag.style}
         role="dialog"
         aria-modal="true"
         aria-label={title}
@@ -92,7 +94,7 @@ function Modal({ title, kernel, onSubmit, submitLabel, busy, children }: { title
           }
         }}
       >
-        <header class="kb-fl__header">
+        <header {...drag.handleProps} class={`kb-fl__header ${drag.handleProps.class}`}>
           <span class="kb-fl__title">{title}</span>
           <IconButton icon="close" title="关闭 (Esc)" onClick={close} />
         </header>

@@ -23,6 +23,8 @@ export interface KabelEvents {
   'service:change': { id: string; owner?: string };
   'command:before': { id: string; args: unknown[] };
   'command:after': { id: string; args: unknown[]; result: unknown };
+  /** 命令执行失败（异常仍会抛给调用方） */
+  'command:error': { id: string; args: unknown[]; error: unknown };
   /** 保存流程：处理器可返回 Promise，全部完成后才标记为已保存；reject 表示保存失败 */
   save: SavePayload;
   saved: SavePayload;
@@ -39,12 +41,18 @@ export interface SavePayload {
 export type EventName<E> = keyof E | (string & {});
 export type EventPayload<E, K> = K extends keyof E ? E[K] : unknown;
 export type EventHandler<P> = (payload: P) => unknown;
-export type AnyEventHandler = (type: string, payload: unknown) => void;
+/** 派发附带的元信息：`source` 为派发事件的插件名（经 `ctx.bus` 派发时自动填入） */
+export interface EmitMeta {
+  source?: string;
+}
+export type AnyEventHandler = (type: string, payload: unknown, meta: EmitMeta) => void;
 
 /**
  * 同步 + 异步事件总线。
  * - `emit`：同步派发，单个处理器异常不会中断其他处理器，异常转发到 `error` 事件。
  * - `emitAsync`：按注册顺序依次等待处理器，任一处理器 reject 则整体 reject（用于保存等可否决流程）。
+ * - `withSource(name)`：返回同一总线的视图，经它派发的事件带上来源（插件上下文的 `ctx.bus` 即是如此），
+ *   `onAny` 监听者可据此知道是哪个插件触发了事件（日志看板即依赖这一点）。
  */
 export class EventBus<E extends object = KabelEvents> {
   private handlers = new Map<string, Set<EventHandler<any>>>();
@@ -87,8 +95,34 @@ export class EventBus<E extends object = KabelEvents> {
   }
 
   emit<K extends EventName<E>>(type: K, ...args: OptionalPayload<EventPayload<E, K>>): void {
-    const key = type as string;
-    const payload = args[0];
+    this.fire(type as string, args[0], {});
+  }
+
+  async emitAsync<K extends EventName<E>>(
+    type: K,
+    ...args: OptionalPayload<EventPayload<E, K>>
+  ): Promise<unknown[]> {
+    return this.fireAsync(type as string, args[0], {});
+  }
+
+  /** 以指定来源派发（同步） */
+  emitAs(source: string | undefined, type: EventName<E>, payload?: unknown): void {
+    this.fire(type as string, payload, source ? { source } : {});
+  }
+
+  /**
+   * 带来源的总线视图：`on` / `off` 等与原总线共享，`emit` / `emitAsync` 自动附带来源。
+   */
+  withSource(source: string): EventBus<E> {
+    const view = Object.create(this) as EventBus<E>;
+    const meta: EmitMeta = { source };
+    view.emit = ((type: string, payload?: unknown) => this.fire(type, payload, meta)) as EventBus<E>['emit'];
+    view.emitAsync = ((type: string, payload?: unknown) => this.fireAsync(type, payload, meta)) as EventBus<E>['emitAsync'];
+    view.emitAs = (src, type, payload) => this.emitAs(src ?? source, type, payload);
+    return view;
+  }
+
+  private fire(key: string, payload: unknown, meta: EmitMeta): void {
     const set = this.handlers.get(key);
     if (set) {
       for (const handler of [...set]) {
@@ -99,28 +133,27 @@ export class EventBus<E extends object = KabelEvents> {
         }
       }
     }
-    for (const handler of [...this.anyHandlers]) {
-      try {
-        handler(key, payload);
-      } catch (error) {
-        this.reportError(key, error);
-      }
-    }
+    this.notifyAny(key, payload, meta);
   }
 
-  async emitAsync<K extends EventName<E>>(
-    type: K,
-    ...args: OptionalPayload<EventPayload<E, K>>
-  ): Promise<unknown[]> {
-    const key = type as string;
-    const payload = args[0];
+  private async fireAsync(key: string, payload: unknown, meta: EmitMeta): Promise<unknown[]> {
     const results: unknown[] = [];
     const set = this.handlers.get(key);
     if (set) {
       for (const handler of [...set]) results.push(await handler(payload));
     }
-    for (const handler of [...this.anyHandlers]) handler(key, payload);
+    this.notifyAny(key, payload, meta);
     return results;
+  }
+
+  private notifyAny(key: string, payload: unknown, meta: EmitMeta) {
+    for (const handler of [...this.anyHandlers]) {
+      try {
+        handler(key, payload, meta);
+      } catch (error) {
+        this.reportError(key, error);
+      }
+    }
   }
 
   listenerCount(type: EventName<E>): number {

@@ -64,6 +64,7 @@ export function definePlugin<C = any>(plugin: KabelPlugin<C>): KabelPlugin<C> {
 export interface PluginContext<C = any> {
   readonly name: string;
   readonly kernel: Kernel;
+  /** 事件总线（带来源视图）：经它派发的事件自动标注为本插件触发 */
   readonly bus: EventBus<KabelEvents>;
   readonly store: Store<KabelState>;
   readonly history: History;
@@ -80,6 +81,8 @@ export interface PluginContext<C = any> {
   contribute<T extends Contribution>(point: ExtensionPoint<T>, ...items: T[]): void;
   provide<T>(token: ServiceToken<T>, value: T): void;
   on<K extends EventName<KabelEvents>>(type: K, handler: EventHandler<EventPayload<KabelEvents, K>>): void;
+  /** 以本插件为来源派发事件（等同 `ctx.bus.emit`），自定义事件通过模块扩充 `KabelEvents` 声明类型 */
+  emit<K extends EventName<KabelEvents>>(type: K, payload?: EventPayload<KabelEvents, K>): void;
   watch<T>(selector: (state: KabelState) => T, callback: (value: T, prev: T) => void, options?: WatchOptions<T>): void;
   onDispose(fn: Teardown | Disposable): void;
   /**
@@ -290,14 +293,14 @@ export class PluginManager {
       return Promise.reject(error);
     }
     this.writeConfig(name, resolved);
-    this.kernel.bus.emit('plugin:config', { name, config: resolved });
+    this.kernel.bus.emitAs(name, 'plugin:config', { name, config: resolved });
     return this.reload(name);
   }
 
   /** 清除用户配置，恢复注册方给定的配置并重载 */
   resetConfig(name: string): Promise<void> {
     this.writeConfig(name, undefined);
-    this.kernel.bus.emit('plugin:config', { name, config: this.getConfig(name) });
+    this.kernel.bus.emitAs(name, 'plugin:config', { name, config: this.getConfig(name) });
     return this.reload(name);
   }
 
@@ -408,8 +411,8 @@ export class PluginManager {
     const done = (teardown: void | Teardown) => {
       if (typeof teardown === 'function') runtime.add(teardown);
       if (record.runtime !== runtime) return;
-      this.kernel.bus.emit('plugin:registered', { name: plugin.name });
-      this.kernel.bus.emit('plugin:status', { name: plugin.name, status: 'active' });
+      this.kernel.bus.emitAs(plugin.name, 'plugin:registered', { name: plugin.name });
+      this.kernel.bus.emitAs(plugin.name, 'plugin:status', { name: plugin.name, status: 'active' });
     };
     try {
       const result = plugin.setup?.(ctx, config);
@@ -424,7 +427,7 @@ export class PluginManager {
   private fail(record: PluginRecord, error: unknown) {
     const { name } = record.plugin;
     if (this.records.get(name) === record) this.remove(name, false, [], true);
-    this.kernel.bus.emit('error', { error, source: `plugin:${name}` });
+    this.kernel.bus.emitAs(name, 'error', { error, source: `plugin:${name}` });
     if (!this.kernel.bus.listenerCount('error')) console.error(`[kabel] plugin "${name}" setup failed`, error);
   }
 
@@ -440,7 +443,7 @@ export class PluginManager {
     record.runtime = null;
     this.removeChildren(name);
     runtime?.dispose();
-    this.kernel.bus.emit('plugin:status', { name, status: 'pending' });
+    this.kernel.bus.emitAs(name, 'plugin:status', { name, status: 'pending' });
   }
 
   private removeChildren(parent: string) {
@@ -462,7 +465,7 @@ export class PluginManager {
     record.status = 'pending';
     this.removeChildren(name);
     runtime?.dispose();
-    if (!silent) this.kernel.bus.emit('plugin:unregistered', { name, disabled: keep });
+    if (!silent) this.kernel.bus.emitAs(name, 'plugin:unregistered', { name, disabled: keep });
     return removed;
   }
 
@@ -523,10 +526,11 @@ export function sortByDependencies(plugins: KabelPlugin[], existing: Set<string>
 
 function createPluginContext<C>(kernel: Kernel, manager: PluginManager, name: string, disposables: DisposableStore, config: C): PluginContext<C> {
   const track = (d: Disposable | (() => void)) => void disposables.add(d);
+  const bus = kernel.bus.withSource(name);
   return {
     name,
     kernel,
-    bus: kernel.bus,
+    bus,
     store: kernel.store,
     history: kernel.history,
     services: kernel.services,
@@ -536,10 +540,11 @@ function createPluginContext<C>(kernel: Kernel, manager: PluginManager, name: st
     getState: () => kernel.store.getState(),
     dispatch: (action) => kernel.store.dispatch(action),
     registerSlice: (slice, preloaded) => track(kernel.store.registerSlice(slice, preloaded)),
-    registerCommand: (command) => track(kernel.commands.register(command)),
+    registerCommand: (command) => track(kernel.commands.register(command, name)),
     contribute: (point, ...items) => items.forEach((item) => track(kernel.extensions.contribute(point, item))),
     provide: (token, value) => track(kernel.services.provide(token, value, name)),
     on: (type, handler) => track(kernel.bus.on(type, handler)),
+    emit: (type, payload) => bus.emitAs(name, type, payload),
     watch: (selector, callback, options) => track(kernel.store.watch(selector, callback, options)),
     onDispose: (fn) => track(fn),
     plugin(input, childConfig) {

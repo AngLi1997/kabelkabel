@@ -25,11 +25,14 @@ export interface CommandDefinition<A extends unknown[] = any[]> {
 export class CommandRegistry {
   private commands = new Map<string, CommandDefinition[]>();
   private listeners = new Set<() => void>();
+  private owners = new WeakMap<CommandDefinition, string>();
 
   constructor(private readonly kernel: Kernel) {}
 
-  register<A extends unknown[]>(definition: CommandDefinition<A>): Disposable {
+  /** `owner` 为注册命令的插件名（经 `ctx.registerCommand` 注册时自动填入），命令事件以它为来源 */
+  register<A extends unknown[]>(definition: CommandDefinition<A>, owner?: string): Disposable {
     const def = definition as unknown as CommandDefinition;
+    if (owner) this.owners.set(def, owner);
     const stack = this.commands.get(def.id) ?? [];
     stack.push(def);
     this.commands.set(def.id, stack);
@@ -45,6 +48,12 @@ export class CommandRegistry {
   get(id: string): CommandDefinition | undefined {
     const stack = this.commands.get(id);
     return stack?.[stack.length - 1];
+  }
+
+  /** 当前生效的命令由哪个插件注册 */
+  ownerOf(id: string): string | undefined {
+    const def = this.get(id);
+    return def && this.owners.get(def);
   }
 
   has(id: string): boolean {
@@ -80,9 +89,16 @@ export class CommandRegistry {
     if (!def) throw new Error(`[kabel] command "${id}" not found`);
     if (!this.isEnabled(id)) return undefined;
     const { bus } = this.kernel;
-    bus.emit('command:before', { id, args });
-    const result = await def.run(this.kernel, ...args);
-    bus.emit('command:after', { id, args, result });
+    const owner = this.owners.get(def);
+    bus.emitAs(owner, 'command:before', { id, args });
+    let result: unknown;
+    try {
+      result = await def.run(this.kernel, ...args);
+    } catch (error) {
+      bus.emitAs(owner, 'command:error', { id, args, error });
+      throw error;
+    }
+    bus.emitAs(owner, 'command:after', { id, args, result });
     return result as T;
   }
 

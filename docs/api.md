@@ -121,14 +121,15 @@
 | `Schema` | 配置 Schema（schemastery，与 cordis 相同） |
 | `createSlice` / `Store` / `Action` / `ActionMeta` | 状态 |
 | `History` / `HistoryState` | 撤销/重做 |
-| `EventBus` / `KabelEvents` | 事件 |
-| `CommandRegistry` / `CommandDefinition`（`mutates`、`hidden`） | 命令 |
+| `EventBus`（`withSource` / `emitAs`，`onAny` 收到 `meta.source`）/ `KabelEvents` / `EmitMeta` | 事件 |
+| `CommandRegistry`（`ownerOf`）/ `CommandDefinition`（`mutates`、`hidden`） | 命令；派发 `command:before / after / error` |
 | `createServiceToken` / `ServiceRegistry`（`onChange`） | 服务 |
-| `defineExtensionPoint` / `ExtensionPoints`（`toolbar` / `statusbar` / `panels` / `settings` / `contextMenu` / `banners`）/ `ContributionRegistry` | 扩展点 |
+| `defineExtensionPoint` / `ExtensionPoints`（`toolbar` / `statusbar` / `panels` / `settings` / `contextMenu` / `banners` / `drawers`）/ `ContributionRegistry` | 扩展点 |
 | `ToolbarItem` / `StatusItem` / `PanelContribution` / `SettingsPage` / `ContextMenuItem` / `View` / `DomView` | 贡献项类型 |
 | `modePlugin` / `isReadonly` | 只读模式（内置） |
 | `savePlugin` / `SaveResult` | 保存契约（内置） |
 | `NOTIFY_SERVICE` / `NotifyService` | 消息与确认对话框的服务令牌（实现在 ui 的 `feedbackPlugin`） |
+| `LOG_SERVICE` / `LogService` / `LogEntry` | 事件日志的服务令牌（实现在 ui 的 `logsPlugin`） |
 | `eventToKeybinding` / `sameKeybinding` | 快捷键工具 |
 | `kernel.plugins.list / listDisabled / disable / enable / isDisabled / status / blockers / parentOf / reload` | 插件管理 |
 | `kernel.plugins.getConfig / updateConfig / resetConfig / hasStoredConfig` | 插件配置 |
@@ -147,6 +148,8 @@
 | `settingsPlugin()` / `settingsActions` / `SettingsDialog` / `PluginsPage` / `pluginTree` | 设置插件（内置） |
 | `feedbackPlugin()` | 消息提示与确认对话框（内置） |
 | `palettePlugin()` | 命令面板（内置） |
+| `logsPlugin(config)` / `DEFAULT_LOG_RULES` / `LogPanel` / `exportLogs` | 事件日志（状态栏日志按钮 + 最右侧看板，事件规则可配置） |
+| `useDraggable(ref)` / `Drawers` | 弹窗拖动 / 抽屉栏 |
 | `keymapPlugin()` / `keymapActions` / `commandBindings` / `findConflicts` | 快捷键改绑与冲突检测（内置） |
 | `contextMenuPlugin()` | 右键菜单（内置，菜单项来自 `ExtensionPoints.contextMenu`） |
 | `themePlugin(options)` / `themeActions` / `THEME_ACCENTS` / `DEFAULT_ACCENTS` | 主题插件（内置） |

@@ -1,6 +1,7 @@
 import { NOTIFY_SERVICE, type NoticeType } from '@kabel/core';
 import { useEffect, useRef } from 'preact/hooks';
 import { Button, IconButton } from '../components/Button';
+import { useDraggable } from '../components/draggable';
 import { useKernel, useSelector } from '../hooks';
 import { Icon } from '../icons/Icon';
 import { cx } from '../utils';
@@ -39,11 +40,14 @@ function ConfirmDialog() {
   const confirm = useSelector((s) => s.feedback?.confirm);
   const dialog = useRef<HTMLDivElement>(null);
   const answer = (ok: boolean) => void kernel.execute('feedback.answer', ok);
+  const drag = useDraggable(dialog);
+  const { reset } = drag;
 
   useEffect(() => {
     if (!confirm) return;
     const previous = dialog.current?.ownerDocument.activeElement as HTMLElement | null;
     dialog.current?.focus();
+    reset();
     return () => previous?.focus?.();
   }, [confirm?.id]);
 
@@ -53,6 +57,7 @@ function ConfirmDialog() {
       <div
         ref={dialog}
         class="kb-confirm"
+        style={drag.style}
         role="alertdialog"
         aria-modal="true"
         aria-label={confirm.title ?? '确认'}
@@ -67,8 +72,10 @@ function ConfirmDialog() {
           }
         }}
       >
-        {confirm.title && <div class="kb-confirm__title">{confirm.title}</div>}
-        <div class="kb-confirm__message">{confirm.message}</div>
+        <div {...drag.handleProps}>
+          {confirm.title && <div class="kb-confirm__title">{confirm.title}</div>}
+          <div class="kb-confirm__message">{confirm.message}</div>
+        </div>
         <div class="kb-confirm__actions">
           <Button onClick={() => answer(false)}>{confirm.cancelText ?? '取消'}</Button>
           <Button variant={confirm.danger ? 'danger' : 'primary'} onClick={() => answer(true)}>

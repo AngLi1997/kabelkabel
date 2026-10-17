@@ -15,6 +15,7 @@ export { modePlugin, modeActions, isReadonly, type ModeState, type ModePluginOpt
 export { savePlugin, saveActions, type SaveState, type SaveResult, type SavePluginOptions } from './save';
 
 export * from './feedback';
+export * from './logs';
 
 /** 配置 Schema（cordis 同款 schemastery）：插件 `Config` 声明、校验与默认值 */
 export { default as Schema } from 'schemastery';

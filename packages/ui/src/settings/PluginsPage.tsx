@@ -71,12 +71,20 @@ export function PluginsPage({ kernel }: SettingsPageProps) {
 
   return (
     <table class="kb-table kb-plugins">
+      <colgroup>
+        <col class="kb-plugins__col-name" />
+        <col class="kb-plugins__col-id" />
+        <col class="kb-plugins__col-status" />
+        <col class="kb-plugins__col-deps" />
+        <col class="kb-plugins__col-config" />
+        <col class="kb-plugins__col-switch" />
+      </colgroup>
       <thead>
         <tr>
           <th>插件</th>
-          <th>标识</th>
+          <th class="kb-plugins__id">标识</th>
           <th>状态</th>
-          <th>依赖</th>
+          <th class="kb-plugins__deps">依赖</th>
           <th class="kb-table__action">配置</th>
           <th class="kb-table__action">启用</th>
         </tr>
@@ -89,13 +97,15 @@ export function PluginsPage({ kernel }: SettingsPageProps) {
           const requires = [...(plugin.dependencies ?? []).map(titleOf), ...injectNames(plugin)];
           return (
             <tr key={plugin.name} class={enabled ? undefined : 'is-disabled'}>
-              <td>
-                <span class="kb-plugins__name" style={{ '--kb-depth': depth }}>
+              <td class="kb-plugins__name-cell">
+                <span class="kb-plugins__name" style={{ '--kb-depth': depth }} title={`${plugin.title ?? plugin.name}（${plugin.name}）`}>
                   {depth > 0 && <span class="kb-plugins__branch" aria-hidden="true" />}
-                  {plugin.title ?? plugin.name}
+                  <span class="kb-plugins__label">{plugin.title ?? plugin.name}</span>
                 </span>
               </td>
-              <td class="kb-table__code">{plugin.name}</td>
+              <td class="kb-table__code kb-plugins__id" title={plugin.name}>
+                {plugin.name}
+              </td>
               <td>
                 <span
                   class={cx('kb-plugins__status', `is-${status ?? 'disabled'}`)}
@@ -104,7 +114,9 @@ export function PluginsPage({ kernel }: SettingsPageProps) {
                   {status === 'active' ? '运行中' : status === 'pending' ? '等待服务' : '已停用'}
                 </span>
               </td>
-              <td class="kb-plugins__deps">{requires.length ? requires.join('、') : '—'}</td>
+              <td class="kb-plugins__deps" title={requires.join('、') || undefined}>
+                {requires.length ? requires.join('、') : '—'}
+              </td>
               <td class="kb-table__action">
                 {plugin.Config ? (
                   <Button size="sm" variant="text" icon="sliders" onClick={() => setEditing(plugin.name)}>

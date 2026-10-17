@@ -38,6 +38,7 @@ L0 内核 / ui  Kernel · Workbench
 | 类别 | 插件 | 说明 |
 | --- | --- | --- |
 | 内置（`builtin`） | `kabel:layout`、`kabel:history`、`kabel:mode`、`kabel:save`、`kabel:feedback`、`kabel:keymap`、`kabel:contextmenu`、`kabel:palette`、`kabel:workspace`、`kabel:settings`、`kabel:theme` | 工作台骨架与公共能力：不可停用，不在 设置 › 插件管理 中显示 |
+| 底座可选 | `kabel:logs`（事件日志） | 默认注册（`logs: false` 关闭），可在插件管理中停用与配置事件规则 |
 | 宿主 / 功能插件 | 如文书著录、图片标记等业务功能 | 不属于底座；通过 `plugins` 或 `editor.use()` 注册，可在运行期启停 |
 
 底座（baseline）= 上述内置插件，不含任何业务功能。底座提供的公共能力：
@@ -51,6 +52,7 @@ L0 内核 / ui  Kernel · Workbench
 | 命令面板 | `kabel:palette`（ui） | `Mod+Shift+P`，列出所有可执行且未 `hidden` 的命令 |
 | 快捷键改绑 | `kabel:keymap`（ui） | `state.keymap.overrides`（持久化）、设置 › 快捷键、冲突检测 |
 | 右键菜单 | `kabel:contextmenu`（ui） | 扩展点 `ExtensionPoints.contextMenu` + `data-kb-context` |
+| 事件日志 | `kabel:logs`（ui） | `LOG_SERVICE`；状态栏右下角“日志”按钮展开最右侧看板（扩展点 `drawers`）；插件经 `ctx.bus` / `ctx.emit` 派发的事件自动带来源（`EventBus.withSource`、`onAny` 的 `meta.source`） |
 | 视图错误隔离 | ui `ViewHost` | 面板 / 视图渲染出错只影响自身，派发 `error` 事件，可重试 |
 
 底座只定义契约，不含业务实现；业务插件通过这些契约协作（例如著录插件监听 `save`，标注插件贡献 `image` 之上的覆盖层与右键菜单）。
