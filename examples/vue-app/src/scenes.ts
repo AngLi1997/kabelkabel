@@ -1,14 +1,13 @@
 import {
   definePlugin,
   ExtensionPoints,
-  FileList,
   type ImageSourceInput,
   type LayoutOptions,
   type PluginInput,
 } from '@kabel/vue';
 import { catalogPlugin, CATALOG_PLUGIN } from '@kabel/plugin-catalog';
 import { dataExchangePlugin, DATA_EXCHANGE_PLUGIN } from '@kabel/plugin-data-exchange';
-import { dataTablePlugin, DATA_TABLE_PLUGIN } from '@kabel/plugin-data-table';
+import { tablePlugin, TABLE_PLUGIN } from '@kabel/plugin-table';
 import { fieldsPlugin, FIELDS_PLUGIN, type FieldsConfig } from '@kabel/plugin-fields';
 import { fileLoaderPlugin, FILE_LOADER_PLUGIN } from '@kabel/plugin-file-loader';
 import { layoutExtractPlugin, LAYOUT_EXTRACT_PLUGIN } from '@kabel/plugin-layout-extract';
@@ -50,7 +49,7 @@ export const demoPlugins: readonly DemoPluginSpec[] = [
   { id: LLM_PLUGIN, title: '大模型（LLM）', create: () => llmPlugin() },
   { id: EXCERPT_PLUGIN, title: '框选识别回填', create: () => ocrExcerptPlugin() },
   { id: LAYOUT_EXTRACT_PLUGIN, title: '版面分析自动填充', create: () => layoutExtractPlugin() },
-  { id: DATA_TABLE_PLUGIN, title: '数据表格', create: () => dataTablePlugin({ tables: [marketRegulationTable] }) },
+  { id: TABLE_PLUGIN, title: '表格', create: () => tablePlugin({ tables: [marketRegulationTable] }) },
 ];
 
 /**
@@ -66,8 +65,8 @@ export const marketPlugins: readonly DemoPluginSpec[] = [
   pluginSpec(EXCERPT_PLUGIN, '框选识别回填', () => ocrExcerptPlugin()),
   pluginSpec(LAYOUT_EXTRACT_PLUGIN, '版面分析自动填充', () => layoutExtractPlugin({ scope: 'group' })),
   pluginSpec(DATA_EXCHANGE_PLUGIN, '数据对接', () => dataExchangePlugin(marketExchange)),
-  // 卷内文件目录：左侧下半区（著录面板下方）
-  pluginSpec(DATA_TABLE_PLUGIN, '卷内文件目录', () => dataTablePlugin({ tables: [marketRegulationTable] })),
+  // 表格（能力插件）：本场景用它展示“卷内文件目录”，位置在 marketLayout.panels 中指定
+  pluginSpec(TABLE_PLUGIN, '表格', () => tablePlugin({ tables: [marketRegulationTable] })),
   pluginSpec(FILE_LOADER_PLUGIN, '文件加载', () => fileLoaderPlugin()),
 ];
 
@@ -83,14 +82,8 @@ const marketFilesPlugin = () =>
     title: '电子文件列表',
     builtin: true,
     setup(ctx) {
-      ctx.contribute(ExtensionPoints.panels, {
-        id: 'workspace.files',
-        region: 'right',
-        title: '电子文件列表',
-        icon: 'folder',
-        order: 10,
-        view: FileList,
-      });
+      // 只调整工作台文件目录的位置与标题，视图仍由工作台提供
+      ctx.contribute(ExtensionPoints.placements, { id: 'workspace.files', region: 'right', title: '电子文件列表', order: 10 });
     },
   });
 
@@ -171,8 +164,17 @@ export interface DemoScene {
 
 const archiveImages = () => sampleImages('关于档案工作的通知');
 
-/** 市场监管场景的栏宽。字段、识别地址和面板位置写在 marketPlugins 里。 */
-const marketLayout = { regions: { left: { size: 640, max: 900 }, right: { size: 260 } } } satisfies LayoutOptions;
+/**
+ * 市场监管场景的布局：栏宽与面板摆放。面板位置统一在这里按面板 id 指定，插件只提供视图与默认位置；
+ * 用户在面板标题栏右键“移到…”的调整优先于这里，“重置布局”恢复。
+ */
+const marketLayout = {
+  regions: { left: { size: 640, max: 900, split: 0.42 }, right: { size: 260 } },
+  panels: {
+    // 卷内文件目录放在左侧下半区（著录面板下方）
+    'table.materials': { region: 'left', slot: 'bottom' },
+  },
+} satisfies LayoutOptions;
 
 export const scenes: readonly DemoScene[] = [
   {

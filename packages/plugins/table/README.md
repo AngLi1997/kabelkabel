@@ -1,19 +1,20 @@
-# @kabel/plugin-data-table · 数据表格
+# @kabel/plugin-table · 表格
 
-业务端传入 **JSON 数据** 或 **接口 URL**，在工作台面板中以表格展示；支持前端 / 后端分页、行选中，并把表格数据作为**表单数据**提交（“查看表单数据”弹窗与 `save` 载荷的 `data`）。默认放在**左侧面板下半区**（文件目录下方）。
+**通用能力插件**（L2）：传入 **JSON 数据** 或 **接口 URL**，在工作台面板中以表格展示；支持前端 / 后端分页、行选中，并把表格数据作为**表单数据**提交（“查看表单数据”弹窗与 `save` 载荷的 `data`）。
 
-只依赖 `kabel:workspace`，不 import 其他业务插件。
+- 不依赖任何插件，不含业务含义：“卷内文件目录”“材料清单”等都只是宿主 / 场景传入的一份表格配置；
+- 面板位置由**布局**决定：`panel` 只是默认位置（左侧下半区），场景 / 宿主用 `layout.panels['table.<id>']` 指定，用户可在面板标题栏右键“移到…”。
 
 ## 集成
 
 ```ts
 import { createArchiveEditor } from '@kabel/editor';
-import { dataTablePlugin } from '@kabel/plugin-data-table';
-import '@kabel/editor/style.css'; // 已包含本插件样式；单独使用时引入 '@kabel/plugin-data-table/style.css'
+import { tablePlugin } from '@kabel/plugin-table';
+import '@kabel/editor/style.css'; // 已包含本插件样式；单独使用时引入 '@kabel/plugin-table/style.css'
 
 createArchiveEditor('#app', {
   plugins: [
-    dataTablePlugin({
+    tablePlugin({
       tables: [
         {
           id: 'materials',
@@ -27,22 +28,23 @@ createArchiveEditor('#app', {
             { key: 'date', title: '成文日期', width: 100, align: 'center' },
             { key: 'pages', title: '纸质页号', width: 80, align: 'center' },
           ],
-          panel: { region: 'left', slot: 'bottom' },                 // 默认值：左侧下半区
         },
       ],
     }),
   ],
+  // 面板位置由布局指定（按面板 id `table.<id>`），不写在表格配置里
+  layout: { panels: { 'table.materials': { region: 'left', slot: 'bottom' } } },
 });
 ```
 
-Vue 中同样通过 `<KabelEditor :plugins="[dataTablePlugin({ tables })]" />` 接入。完整示例见 `examples/vue-app/src/mock/market-regulation.ts`（市场监管 · 企业设立登记档案）。
+Vue 中同样通过 `<KabelEditor :plugins="[tablePlugin({ tables })]" />` 接入。完整示例见 `examples/vue-app/src/mock/market-regulation.ts`（市场监管 · 企业设立登记档案）。
 
-## 配置 `DataTableConfig`
+## 配置 `TableConfig`
 
 | 字段 | 说明 |
 | --- | --- |
-| `id` | 表格标识；面板 id 与表单数据键均为 `dataTable.<id>` |
-| `title` | 面板标题，默认“数据表格” |
+| `id` | 表格标识；面板 id 与表单数据键均为 `table.<id>` |
+| `title` | 面板标题，默认“表格” |
 | `columns` | 列：`{ key, title, width?, align?, format?, mark?, ellipsis? }`；`key` 支持 `a.b` 嵌套字段；`mark` 为字段名或 `(row) => boolean`；`ellipsis` 默认 true（超出省略、悬停显示全文） |
 | `data` | JSON 数组，直接展示 |
 | `url` | 数据接口（GET JSON）。兼容：数组；`{ rows \| list \| records \| items \| data: [], total }`；以及外层包 `{ code, data: { … } }` |
@@ -51,13 +53,13 @@ Vue 中同样通过 `<KabelEditor :plugins="[dataTablePlugin({ tables })]" />` �
 | `index` | 序号列：`true`（默认，“序号”）/ 自定义标题 / `false` |
 | `fetch(url, query)` | 自定义请求（如追加鉴权头），返回值交给解析 |
 | `parse(response, query)` | 自定义解析，返回数组或 `{ rows, total }` |
-| `panel` | `{ region?, slot?, order? }`，默认 `{ region: 'left', slot: 'bottom' }`；`false` 不注册面板（只用服务与表单数据） |
+| `panel` | 面板的**默认**位置 `{ region?, slot?, order? }`，默认 `{ region: 'left', slot: 'bottom' }`；实际位置以布局为准（`layout.panels` / 摆放贡献 / 用户调整）；`false` 不注册面板（只用服务与表单数据） |
 | `submit` | 是否作为表单数据提交，默认 true |
 | `emptyText` | 空数据提示 |
 
-`slot: 'bottom'` 是底座布局的通用能力：区域内同时有上半区与下半区面板时上下分区，中间可拖拽调整高度（比例持久化，双击复位）；比例默认值由 `layout.regions.<id>.split` 配置（下半区所占比例，默认 0.5）。
+`slot: 'bottom'` 是底座布局的通用能力：区域内同时有上半区与下半区面板时上下两组各自成卡片，中间可拖拽调整高度（比例持久化，双击复位），下半区可收起为标题栏；比例默认值由 `layout.regions.<id>.split` 配置（下半区所占比例，默认 0.5）。
 
-## 服务 `DATA_TABLE_SERVICE`
+## 服务 `TABLE_SERVICE`
 
 | 方法 | 说明 |
 | --- | --- |
@@ -76,13 +78,13 @@ Vue 中同样通过 `<KabelEditor :plugins="[dataTablePlugin({ tables })]" />` �
 
 | id | 说明 |
 | --- | --- |
-| `dataTable.reload` | 重新加载接口数据（参数：表格 id；`hidden`） |
+| `table.reload` | 重新加载接口数据（参数：表格 id；`hidden`） |
 
 配置了 `url` 的表格在面板头部提供“刷新”按钮。
 
 ## 表单数据
 
-每个表格贡献 `ExtensionPoints.formData`，键 `dataTable.<id>`，内容：
+每个表格贡献 `ExtensionPoints.formData`，键 `table.<id>`，内容：
 
 ```json
 { "rows": [ … ], "total": 8, "selected": { "title": "原许可证正/副本复印件", … } }
@@ -94,12 +96,12 @@ Vue 中同样通过 `<KabelEditor :plugins="[dataTablePlugin({ tables })]" />` �
 
 | 事件 | 载荷 |
 | --- | --- |
-| `data-table:load` | `{ id, total }` |
-| `data-table:select` | `{ id, index, row }`（`row` 为空表示取消选中） |
+| `table:load` | `{ id, total }` |
+| `table:select` | `{ id, index, row }`（`row` 为空表示取消选中） |
 
 ## 状态
 
-`state.dataTable[id]`：见 `getState`。不纳入撤销。
+`state.table[id]`：见 `getState`。不纳入撤销。
 
 ## 样式
 

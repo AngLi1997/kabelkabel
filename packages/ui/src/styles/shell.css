@@ -166,16 +166,46 @@
   letter-spacing: 2px;
 }
 
-/* 上下分区：下半区（slot: bottom）有自己的子标题栏 */
-.kb-region__lower {
+/* 一组面板（标题栏 + 内容）。区域只有一组时铺满区域 */
+.kb-region__group {
   display: flex;
+  flex: 1 1 0px;
   flex-direction: column;
   min-height: 0;
-  border-top: 1px solid var(--kb-color-border);
 }
 
-.kb-region.is-split .kb-region__body {
+/*
+ * 上下分区：区域本身不再画边框，上下两组各自成卡片，中间留出与左右栏相同的间隔（即拖拽条），
+ * 下半区（slot: bottom）有自己的标题栏，可收起为一行。
+ */
+.kb-region.is-split {
+  border: 0;
+  background: transparent;
+}
+
+.kb-region.is-split .kb-region__group {
   min-height: 72px;
+  border: 1px solid var(--kb-color-border);
+  background: var(--kb-color-surface);
+}
+
+.kb-region.is-split .kb-region__lower.is-folded {
+  flex: none;
+  min-height: 0;
+  margin-top: var(--kb-space-2);
+}
+
+.kb-region.is-split .kb-region__lower.is-folded .kb-region__subheader {
+  border-bottom: 0;
+}
+
+.kb-resizer--y.kb-region__split {
+  height: var(--kb-space-2);
+  margin: 0;
+}
+
+.kb-resizer--y.kb-region__split::after {
+  top: 3px;
 }
 
 .kb-region__subheader {
@@ -184,13 +214,17 @@
   align-items: center;
   gap: 4px;
   height: var(--kb-header-height);
-  padding: 0 4px 0 var(--kb-space-3);
+  padding: 0 4px;
   border-bottom: 1px solid var(--kb-color-border);
   background: var(--kb-color-surface-2);
 }
 
+.kb-region__subheader .kb-region__heading {
+  padding-left: 2px;
+}
+
 .kb-region__subheader .kb-tabs {
-  margin-left: -10px;
+  margin-left: -6px;
 }
 
 /* 中等宽度：右侧区域以浮层形式展开，不挤占内容区域 */

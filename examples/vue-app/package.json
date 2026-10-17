@@ -12,7 +12,7 @@
     "@kabel/editor": "workspace:*",
     "@kabel/plugin-catalog": "workspace:*",
     "@kabel/plugin-data-exchange": "workspace:*",
-    "@kabel/plugin-data-table": "workspace:*",
+    "@kabel/plugin-table": "workspace:*",
     "@kabel/plugin-fields": "workspace:*",
     "@kabel/plugin-file-loader": "workspace:*",
     "@kabel/plugin-layout-extract": "workspace:*",

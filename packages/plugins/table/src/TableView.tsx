@@ -1,24 +1,24 @@
 import type { Kernel } from '@kabel/core';
 import { Empty, IconButton, useSelector } from '@kabel/ui';
 import type { JSX } from 'preact';
-import { DATA_TABLE_SERVICE, type DataTableColumn, type DataTableConfig, type DataTableRow } from './contract';
+import { TABLE_SERVICE, type TableColumn, type TableConfig, type TableRow } from './contract';
 import { cellText, getField, pageCount, pageItems } from './source';
 
-export interface DataTableProps {
+export interface TableViewProps {
   kernel: Kernel;
-  config: DataTableConfig;
+  config: TableConfig;
   pageSizes: number[];
 }
 
-const widthOf = (w: DataTableColumn['width']) => (typeof w === 'number' ? `${w}px` : w);
-const marked = (column: DataTableColumn, row: DataTableRow) =>
+const widthOf = (w: TableColumn['width']) => (typeof w === 'number' ? `${w}px` : w);
+const marked = (column: TableColumn, row: TableRow) =>
   typeof column.mark === 'function' ? column.mark(row) : typeof column.mark === 'string' ? !!getField(row, column.mark) : false;
 
 /** 表格面板：表头固定、行可选中，底部为分页条（共 N 条 · 每页条数 · 页码） */
-export function DataTable({ kernel, config, pageSizes }: DataTableProps) {
-  const table = useSelector((s) => s.dataTable?.[config.id]);
+export function TableView({ kernel, config, pageSizes }: TableViewProps) {
+  const table = useSelector((s) => s.table?.[config.id]);
   if (!table) return null;
-  const service = kernel.services.get(DATA_TABLE_SERVICE);
+  const service = kernel.services.get(TABLE_SERVICE);
   const mode = config.pagination === undefined ? 'client' : config.pagination;
   const paged = mode !== false;
   const pages = pageCount(table.total, table.pageSize);

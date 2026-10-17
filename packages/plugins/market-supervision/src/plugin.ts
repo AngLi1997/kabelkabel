@@ -7,7 +7,6 @@ import { llmPlugin, type LlmConfig } from '@kabel/plugin-llm';
 import { ocrPlugin, type OcrConfig } from '@kabel/plugin-ocr';
 import { ocrExcerptPlugin, type ExcerptConfig } from '@kabel/plugin-ocr-excerpt';
 import { regionSelectPlugin } from '@kabel/plugin-region-select';
-import { FileList } from '@kabel/plugin-workspace';
 import { MARKET_FIELD_GROUPS } from './fields';
 
 export interface MarketSupervisionOptions {
@@ -52,15 +51,8 @@ export const marketSupervisionPreset = (options: MarketSupervisionOptions = {}) 
     name: MARKET_SUPERVISION_PLUGIN,
     title: '市场监管档案加工',
     setup(ctx) {
-      // 布局：文件目录移到右侧作为“电子文件列表”（同 id 贡献覆盖工作台的默认面板）
-      ctx.contribute(ExtensionPoints.panels, {
-        id: 'workspace.files',
-        region: 'right',
-        title: '电子文件列表',
-        icon: 'folder',
-        order: 10,
-        view: FileList,
-      });
+      // 布局：文件目录移到右侧作为“电子文件列表”（摆放贡献，只改位置与标题，不重新贡献视图）
+      ctx.contribute(ExtensionPoints.placements, { id: 'workspace.files', region: 'right', title: '电子文件列表', order: 10 });
 
       void ctx.plugin([
         fieldsPlugin({ groups: MARKET_FIELD_GROUPS as FieldsConfig['groups'], ...options.fields }),

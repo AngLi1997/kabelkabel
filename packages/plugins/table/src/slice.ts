@@ -1,24 +1,24 @@
 import { createSlice } from '@kabel/core';
-import type { DataTableRow, DataTableState } from './contract';
+import type { TableRow, TableState } from './contract';
 
 declare module '@kabel/core' {
   interface KabelState {
-    dataTable: Record<string, DataTableState>;
+    table: Record<string, TableState>;
   }
 }
 
-type Tables = Record<string, DataTableState>;
+type Tables = Record<string, TableState>;
 
-const patch = (s: Tables, id: string, next: Partial<DataTableState>): Tables => {
+const patch = (s: Tables, id: string, next: Partial<TableState>): Tables => {
   const table = s[id];
   return table ? { ...s, [id]: { ...table, ...next } } : s;
 };
 
-export const dataTableSlice = createSlice({
-  name: 'dataTable',
+export const tableSlice = createSlice({
+  name: 'table',
   initialState: {} as Tables,
   reducers: {
-    init: (s: Tables, p: { id: string; state: DataTableState }) => ({ ...s, [p.id]: p.state }),
+    init: (s: Tables, p: { id: string; state: TableState }) => ({ ...s, [p.id]: p.state }),
     remove: (s: Tables, id: string) => {
       if (!s[id]) return s;
       const { [id]: _, ...rest } = s;
@@ -26,7 +26,7 @@ export const dataTableSlice = createSlice({
     },
     loading: (s: Tables, p: { id: string; url?: string | null }) =>
       patch(s, p.id, { loading: true, error: null, ...(p.url !== undefined ? { url: p.url } : {}) }),
-    loaded: (s: Tables, p: { id: string; rows: DataTableRow[]; total: number; page?: number; pageSize?: number; keepSelection?: boolean }) =>
+    loaded: (s: Tables, p: { id: string; rows: TableRow[]; total: number; page?: number; pageSize?: number; keepSelection?: boolean }) =>
       patch(s, p.id, {
         rows: p.rows,
         total: p.total,
@@ -46,4 +46,4 @@ export const dataTableSlice = createSlice({
   },
 });
 
-export const dataTableActions = dataTableSlice.actions;
+export const tableActions = tableSlice.actions;

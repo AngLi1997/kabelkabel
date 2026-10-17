@@ -28,7 +28,6 @@
   },
   "dependencies": {
     "@kabel/core": "workspace:*",
-    "@kabel/plugin-workspace": "workspace:*",
     "@kabel/plugin-region-select": "workspace:*",
     "@kabel/plugin-fields": "workspace:*",
     "@kabel/plugin-catalog": "workspace:*",

@@ -24,7 +24,7 @@
 ```
 L4 场景预设   market-supervision …        只用 ctx.plugin() 组合子插件与默认配置
 L3 业务插件   catalog · ocr-excerpt · layout-extract · data-exchange …   只依赖 L1 / L2 契约，彼此不依赖
-L2 能力插件   fields · ocr · llm · region-select …       contract.ts + 默认实现，宿主可同令牌替换
+L2 能力插件   fields · ocr · llm · region-select · table …     contract.ts + 默认实现，宿主可同令牌替换
 L1 工作台     kabel:workspace（builtin）
 L0 内核 / ui  Kernel · Workbench
 ```
@@ -165,6 +165,8 @@ Vue 组件通过 `vueView(Component)` 转为 DomView；`<KabelPanel>` 则直接�
 | 右 | `panels`（`region: 'right'`） | 通用扩展区域，不预设用途。没有面板时整个区域与工具栏开关都不出现 |
 
 `layoutPlugin` 管理 `layout` 切片：左右宽度、折叠、最大化、标签激活项、堆叠面板高度权重/折叠、窄屏区域。面板定位统一使用命令 `layout.showPanel(panelId)`（显示所在区域并激活标签）。
+
+**面板摆放与贡献解耦**：面板贡献里的 `region` / `slot` / `order` / `title` 只是默认值，实际位置由 `resolvePanels(kernel, state)` 按优先级合并——用户调整（面板标题栏右键“移到…”、命令 `layout.movePanel`，存于 `layout.placements` 并持久化）> 宿主 `layout.panels`（`LayoutOptions.panels`，按面板 id）> 摆放贡献 `ExtensionPoints.placements`（场景预设用，随插件释放）> 面板贡献自身。插件只提供视图与默认位置，场景 / 宿主决定放在哪里，移动面板不需要重新贡献视图；`layout.reset` 一并恢复。区域存在下半区面板时上下两组各自成卡片，中间是拖拽条，下半区可收起为标题栏（`layout.folded['<region>.bottom']`）。
 
 | 断点（容器宽度） | 行为 |
 | --- | --- |

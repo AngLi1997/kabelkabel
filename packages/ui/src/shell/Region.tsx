@@ -70,9 +70,11 @@ export function Region({ region, config, panels, compact, collapsed, hidden, sty
     </>
   );
 
+  const lowerFolded = useSelector((s) => !!s.layout?.folded[slotKey(region, 'bottom')]);
+
   return (
     <div
-      class={cx('kb-region', `kb-region--${region}`, collapsed && 'is-collapsed', maximized && 'is-maximized', split && 'is-split')}
+      class={cx('kb-region', `kb-region--${region}`, collapsed && 'is-collapsed', maximized && 'is-maximized', split && !collapsed && 'is-split')}
       style={style}
       hidden={hidden}
       data-region={region}
@@ -84,61 +86,79 @@ export function Region({ region, config, panels, compact, collapsed, hidden, sty
         </button>
       )}
       <div class="kb-region__inner" hidden={collapsed}>
-        <header class="kb-region__header" onDblClick={(e) => canMaximize && e.target === e.currentTarget && kernel.execute('layout.maximize', region)}>
-          {region === 'right' && collapseButton}
-          <div class="kb-region__heading">{heading}</div>
-          <div class="kb-region__tools">
-            {!stack && <PanelActions actions={active?.actions} />}
-            {canMaximize && (
-              <IconButton
-                icon={maximized ? 'restore' : 'maximize'}
-                title={maximized ? '还原 (Esc)' : '最大化'}
-                onClick={() => kernel.execute('layout.maximize', region)}
-              />
-            )}
-            {region === 'left' && collapseButton}
-          </div>
-        </header>
-        {!split ? (
-          <div class="kb-region__body">{upperBody}</div>
-        ) : (
-          <>
-            <div ref={upperRef} class="kb-region__body" style={{ flex: `${1 - ratio} 1 0px` }}>
-              {upperBody}
+        <section
+          ref={upperRef}
+          class="kb-region__group"
+          style={split && !lowerFolded ? { flex: `${1 - ratio} 1 0px` } : undefined}
+        >
+          <header
+            class="kb-region__header"
+            data-kb-context="panel"
+            data-kb-context-data={stack ? undefined : activeId}
+            onDblClick={(e) => canMaximize && e.target === e.currentTarget && kernel.execute('layout.maximize', region)}
+          >
+            {region === 'right' && collapseButton}
+            <div class="kb-region__heading">{heading}</div>
+            <div class="kb-region__tools">
+              {!stack && <PanelActions actions={active?.actions} />}
+              {canMaximize && (
+                <IconButton
+                  icon={maximized ? 'restore' : 'maximize'}
+                  title={maximized ? '还原 (Esc)' : '最大化'}
+                  onClick={() => kernel.execute('layout.maximize', region)}
+                />
+              )}
+              {region === 'left' && collapseButton}
             </div>
-            <Resizer
-              axis="y"
-              class="kb-region__split"
-              label={`调整${config.title}上下高度`}
-              onStart={() => {
-                drag.current = { top: upperRef.current?.offsetHeight ?? 0, bottom: lowerRef.current?.offsetHeight ?? 0 };
-              }}
-              onMove={(delta) => {
-                const d = drag.current;
-                const total = d ? d.top + d.bottom : 0;
-                if (!d || total <= 0) return;
-                kernel.dispatch(layoutActions.setSplit({ region, ratio: (d.bottom - delta) / total }));
-              }}
-              onReset={() => kernel.dispatch(layoutActions.resetSplit(region))}
-            />
-            <section ref={lowerRef} class="kb-region__lower" style={{ flex: `${ratio} 1 0px` }} data-slot="bottom">
-              <header class="kb-region__subheader">
-                <div class="kb-region__heading">
-                  <GroupHeading
-                    panels={lower}
-                    active={lowerActiveId}
-                    onChange={(panelId) => kernel.dispatch(layoutActions.setActive({ region, panelId, slot: 'bottom' }))}
-                  />
-                </div>
-                <div class="kb-region__tools">
-                  <PanelActions actions={lower.find((p) => p.id === lowerActiveId)?.actions} />
-                </div>
-              </header>
-              <div class="kb-region__body">
-                <Panes panels={lower} activeId={lowerActiveId} region={region} />
+          </header>
+          <div class="kb-region__body">{upperBody}</div>
+        </section>
+        {split && !lowerFolded && (
+          <Resizer
+            axis="y"
+            class="kb-region__split"
+            label={`调整${config.title}上下高度`}
+            onStart={() => {
+              drag.current = { top: upperRef.current?.offsetHeight ?? 0, bottom: lowerRef.current?.offsetHeight ?? 0 };
+            }}
+            onMove={(delta) => {
+              const d = drag.current;
+              const total = d ? d.top + d.bottom : 0;
+              if (!d || total <= 0) return;
+              kernel.dispatch(layoutActions.setSplit({ region, ratio: (d.bottom - delta) / total }));
+            }}
+            onReset={() => kernel.dispatch(layoutActions.resetSplit(region))}
+          />
+        )}
+        {split && (
+          // 下半区是独立的一组面板（与上半区之间留出间隔），可单独收起为标题栏
+          <section
+            ref={lowerRef}
+            class={cx('kb-region__group', 'kb-region__lower', lowerFolded && 'is-folded')}
+            style={lowerFolded ? undefined : { flex: `${ratio} 1 0px` }}
+            data-slot="bottom"
+          >
+            <header class="kb-region__subheader" data-kb-context="panel" data-kb-context-data={lowerActiveId}>
+              <IconButton
+                icon={lowerFolded ? 'chevron-right' : 'chevron-down'}
+                title={lowerFolded ? '展开' : '收起'}
+                onClick={() => kernel.dispatch(layoutActions.toggleFolded(slotKey(region, 'bottom')))}
+              />
+              <div class="kb-region__heading">
+                <GroupHeading
+                  panels={lower}
+                  active={lowerActiveId}
+                  onChange={(panelId) => kernel.dispatch(layoutActions.setActive({ region, panelId, slot: 'bottom' }))}
+                />
               </div>
-            </section>
-          </>
+              <div class="kb-region__tools">
+                <PanelActions actions={lower.find((p) => p.id === lowerActiveId)?.actions} />
+              </div>
+            </header>
+            <div class="kb-region__body" hidden={lowerFolded}>
+              <Panes panels={lower} activeId={lowerActiveId} region={region} />
+            </div>
+          </section>
         )}
       </div>
     </div>

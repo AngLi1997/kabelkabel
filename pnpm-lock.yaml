@@ -41,9 +41,6 @@ importers:
       '@kabel/plugin-data-exchange':
         specifier: workspace:*
         version: link:../../packages/plugins/data-exchange
-      '@kabel/plugin-data-table':
-        specifier: workspace:*
-        version: link:../../packages/plugins/data-table
       '@kabel/plugin-fields':
         specifier: workspace:*
         version: link:../../packages/plugins/fields
@@ -68,6 +65,9 @@ importers:
       '@kabel/plugin-region-select':
         specifier: workspace:*
         version: link:../../packages/plugins/region-select
+      '@kabel/plugin-table':
+        specifier: workspace:*
+        version: link:../../packages/plugins/table
       '@kabel/vue':
         specifier: workspace:*
         version: link:../../packages/vue
@@ -141,21 +141,6 @@ importers:
       yaml:
         specifier: ^2.8.0
         version: 2.9.1
-
-  packages/plugins/data-table:
-    dependencies:
-      '@kabel/core':
-        specifier: workspace:*
-        version: link:../../core
-      '@kabel/plugin-workspace':
-        specifier: workspace:*
-        version: link:../workspace
-      '@kabel/ui':
-        specifier: workspace:*
-        version: link:../../ui
-      preact:
-        specifier: ^10.29.0
-        version: 10.29.8
 
   packages/plugins/fields:
     dependencies:
@@ -231,9 +216,6 @@ importers:
       '@kabel/plugin-region-select':
         specifier: workspace:*
         version: link:../region-select
-      '@kabel/plugin-workspace':
-        specifier: workspace:*
-        version: link:../workspace
 
   packages/plugins/ocr:
     dependencies:
@@ -273,6 +255,18 @@ importers:
       '@kabel/plugin-workspace':
         specifier: workspace:*
         version: link:../workspace
+      '@kabel/ui':
+        specifier: workspace:*
+        version: link:../../ui
+      preact:
+        specifier: ^10.29.0
+        version: 10.29.8
+
+  packages/plugins/table:
+    dependencies:
+      '@kabel/core':
+        specifier: workspace:*
+        version: link:../../core
       '@kabel/ui':
         specifier: workspace:*
         version: link:../../ui

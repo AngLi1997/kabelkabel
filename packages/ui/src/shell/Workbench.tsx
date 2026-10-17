@@ -11,6 +11,7 @@ import {
   isRegionCollapsed,
   LAYOUT_CONFIG,
   layoutActions,
+  resolvePanels,
 } from '../layout/layout-plugin';
 import { ContextMenu, menuItemsFor } from '../contextmenu/ContextMenu';
 import { contextMenuActions } from '../contextmenu/contextmenu-plugin';
@@ -78,13 +79,16 @@ function Shell({ class: className }: { class?: string }) {
   const prefersDark = useMediaQuery('(prefers-color-scheme: dark)', theme?.scheme === 'system');
 
   const allPanels = useContributions(ExtensionPoints.panels);
+  const placements = useContributions(ExtensionPoints.placements);
+  const userPlacements = useSelector((s) => s.layout?.placements);
   const visibleKey = useSelector((s) => allPanels.filter((p) => !p.when || p.when(s, kernel)).map((p) => p.id).join('|'));
   const panelsByRegion = useMemo(() => {
     const ids = new Set(visibleKey.split('|'));
     const map: Record<RegionId, PanelContribution[]> = { left: [], main: [], right: [] };
-    for (const panel of allPanels) if (ids.has(panel.id)) map[panel.region].push(panel);
+    // 面板位置以布局摆放为准（用户调整 > 宿主 layout.panels > 摆放贡献 > 面板默认）
+    for (const panel of resolvePanels(kernel, kernel.getState(), allPanels)) if (ids.has(panel.id)) map[panel.region].push(panel);
     return map;
-  }, [allPanels, visibleKey]);
+  }, [kernel, allPanels, placements, userPlacements, visibleKey]);
 
   // 断点回写到布局状态，命令据此决定“收起”还是“关闭浮层”
   useEffect(() => {

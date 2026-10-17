@@ -1,11 +1,11 @@
 import { createServiceToken, type PanelSlot, type RegionId } from '@kabel/core';
 
-export const DATA_TABLE_PLUGIN = 'kabel:data-table';
+export const TABLE_PLUGIN = 'kabel:table';
 
 /** 一行数据：任意 JSON 对象 */
-export type DataTableRow = Record<string, unknown>;
+export type TableRow = Record<string, unknown>;
 
-export interface DataTableColumn {
+export interface TableColumn {
   /** 字段名，支持 `a.b` 取嵌套字段 */
   key: string;
   title: string;
@@ -13,33 +13,33 @@ export interface DataTableColumn {
   width?: number | string;
   align?: 'left' | 'center' | 'right';
   /** 单元格文本，默认为字段值的字符串形式 */
-  format?: (value: unknown, row: DataTableRow, index: number) => string;
+  format?: (value: unknown, row: TableRow, index: number) => string;
   /** 为 true 时在文本后显示红色星标（如必备材料、重点件）；可传字段名或判断函数 */
-  mark?: string | ((row: DataTableRow) => boolean);
+  mark?: string | ((row: TableRow) => boolean);
   /** 超出列宽时省略并以悬停提示显示全文，默认 true */
   ellipsis?: boolean;
 }
 
 /** 分页查询参数（后端分页时附加到 URL 上，或交给自定义 `fetch`） */
-export interface DataTableQuery {
+export interface TableQuery {
   page: number;
   pageSize: number;
 }
 
 /** 接口返回的分页结果 */
-export interface DataTablePage {
-  rows: DataTableRow[];
+export interface TablePage {
+  rows: TableRow[];
   total: number;
 }
 
-export interface DataTableConfig {
-  /** 表格标识：服务方法、表单数据键（`dataTable.<id>`）与面板 id 都由它派生 */
+export interface TableConfig {
+  /** 表格标识：服务方法、表单数据键（`table.<id>`）与面板 id 都由它派生 */
   id: string;
-  /** 面板标题，默认“数据表格” */
+  /** 面板标题，默认“表格” */
   title?: string;
-  columns: DataTableColumn[];
+  columns: TableColumn[];
   /** 直接传入的 JSON 数据（数组） */
-  data?: readonly DataTableRow[];
+  data?: readonly TableRow[];
   /** 数据接口地址：返回数组，或 `{ rows | list | records | items | data, total }`（可嵌套在 `data` 中） */
   url?: string;
   /**
@@ -53,9 +53,9 @@ export interface DataTableConfig {
   /** 序号列：`true`（默认，标题“序号”）、自定义标题，或 `false` 不显示 */
   index?: boolean | string;
   /** 自定义请求（如追加鉴权头）；返回值交给 `parse` */
-  fetch?: (url: string, query: DataTableQuery) => Promise<unknown>;
+  fetch?: (url: string, query: TableQuery) => Promise<unknown>;
   /** 自定义解析接口响应 */
-  parse?: (response: unknown, query: DataTableQuery) => DataTableRow[] | DataTablePage;
+  parse?: (response: unknown, query: TableQuery) => TableRow[] | TablePage;
   /** 面板位置，默认左侧下半区 `{ region: 'left', slot: 'bottom' }`；`false` 不注册面板 */
   panel?: { region?: RegionId; slot?: PanelSlot; order?: number } | false;
   /** 是否作为表单数据提交（“查看表单数据”与 `save` 载荷），默认 true */
@@ -64,10 +64,10 @@ export interface DataTableConfig {
   emptyText?: string;
 }
 
-/** 单个表格的运行状态（存于 `state.dataTable[id]`） */
-export interface DataTableState {
+/** 单个表格的运行状态（存于 `state.table[id]`） */
+export interface TableState {
   /** 前端分页时为全量数据，后端分页时为当前页数据 */
-  rows: DataTableRow[];
+  rows: TableRow[];
   total: number;
   /** 当前页，从 1 开始 */
   page: number;
@@ -80,30 +80,30 @@ export interface DataTableState {
   url: string | null;
 }
 
-export interface DataTableService {
+export interface TableService {
   /** 已注册的表格 id */
   list(): string[];
   /** 运行期新增一个表格，返回移除函数 */
-  add(config: DataTableConfig): () => void;
+  add(config: TableConfig): () => void;
   /** 替换为给定 JSON 数据（切换为本地数据源） */
-  setData(id: string, rows: readonly DataTableRow[]): void;
+  setData(id: string, rows: readonly TableRow[]): void;
   /** 从 URL 加载；不传 url 时重新加载当前接口 */
   load(id: string, url?: string): Promise<void>;
   setPage(id: string, page: number, pageSize?: number): Promise<void>;
   select(id: string, index: number | null): void;
-  getState(id: string): DataTableState | undefined;
+  getState(id: string): TableState | undefined;
   /** 当前提交数据：`{ rows, total, selected }` */
-  getSubmitData(id: string): DataTableSubmit | undefined;
+  getSubmitData(id: string): TableSubmit | undefined;
 }
 
 /** 表格提交的数据 */
-export interface DataTableSubmit {
-  rows: DataTableRow[];
+export interface TableSubmit {
+  rows: TableRow[];
   total: number;
-  selected: DataTableRow | null;
+  selected: TableRow | null;
 }
 
-export const DATA_TABLE_SERVICE = createServiceToken<DataTableService>('kabel.dataTable');
+export const TABLE_SERVICE = createServiceToken<TableService>('kabel.table');
 
 declare module '@kabel/core' {
   interface KabelEvents {
@@ -111,11 +111,11 @@ declare module '@kabel/core' {
      * 数据已加载（本地数据或接口返回）。
      * @mode emit
      */
-    'data-table:load': { id: string; total: number };
+    'table:load': { id: string; total: number };
     /**
      * 选中行变化；`row` 为空表示取消选中。
      * @mode emit
      */
-    'data-table:select': { id: string; index: number | null; row: DataTableRow | null };
+    'table:select': { id: string; index: number | null; row: TableRow | null };
   }
 }

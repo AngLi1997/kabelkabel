@@ -82,7 +82,9 @@
 | `layout.restore` | `Escape` | |
 | `layout.reveal` | `region` | 确保区域可见 |
 | `layout.showPanel` | `panelId` | 显示面板所在区域并激活其标签 |
-| `layout.reset` | | 重置布局 |
+| `layout.movePanel` | `panelId, { region?, slot?, order?, title? }` | 用户调整面板位置（持久化，优先于其他摆放来源），并显示该面板 |
+| `layout.resetPanel` | `panelId?` | 恢复面板默认位置；不传时恢复全部 |
+| `layout.reset` | | 重置布局（含用户调整过的面板位置） |
 | `settings.open` / `settings.close` | `pageId?` | 打开设置（`plugins` / `shortcuts` / `theme`） |
 | `theme.set` / `theme.reset` | `Partial<ThemeState>` | 修改 / 恢复主题 |
 
@@ -183,7 +185,6 @@
 底座只内置布局、撤销重做、工作台、设置、主题等公共能力；其余功能以插件形式提供（见[插件开发指南](plugin-guide.md)）。工作台的配置、命令、服务、事件与扩展点见其 README：
 
 - [工作台 `@kabel/plugin-workspace`](../packages/plugins/workspace/README.md)
-- 能力插件：[字段模型 `@kabel/plugin-fields`](../packages/plugins/fields/README.md)、[文字识别 `@kabel/plugin-ocr`](../packages/plugins/ocr/README.md)、[大模型 `@kabel/plugin-llm`](../packages/plugins/llm/README.md)、[框选 `@kabel/plugin-region-select`](../packages/plugins/region-select/README.md)
+- 能力插件：[表格 `@kabel/plugin-table`](../packages/plugins/table/README.md)、[字段模型 `@kabel/plugin-fields`](../packages/plugins/fields/README.md)、[文字识别 `@kabel/plugin-ocr`](../packages/plugins/ocr/README.md)、[大模型 `@kabel/plugin-llm`](../packages/plugins/llm/README.md)、[框选 `@kabel/plugin-region-select`](../packages/plugins/region-select/README.md)
 - 业务插件：[著录面板 `@kabel/plugin-catalog`](../packages/plugins/catalog/README.md)、[框选识别回填 `@kabel/plugin-ocr-excerpt`](../packages/plugins/ocr-excerpt/README.md)、[版面分析自动填充 `@kabel/plugin-layout-extract`](../packages/plugins/layout-extract/README.md)、[数据对接 `@kabel/plugin-data-exchange`](../packages/plugins/data-exchange/README.md)
-- 数据展示：[数据表格 `@kabel/plugin-data-table`](../packages/plugins/data-table/README.md)
 - 场景预设：[市场监管档案加工 `@kabel/plugin-market-supervision`](../packages/plugins/market-supervision/README.md)

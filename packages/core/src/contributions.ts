@@ -82,7 +82,7 @@ export type PanelSlot = 'top' | 'bottom';
 export interface PanelContribution {
   id: string;
   region: RegionId;
-  /** 放在区域的下半区（如左侧文件目录下方的数据表格）；区域内只有下半区面板时按主区显示 */
+  /** 放在区域的下半区（如左侧文件目录下方的表格）；区域内只有下半区面板时按主区显示 */
   slot?: PanelSlot;
   title: string;
   icon?: string;
@@ -93,6 +93,24 @@ export interface PanelContribution {
   /** 堆叠模式下的初始高度权重，默认 1 */
   weight?: number;
   when?: StatePredicate;
+}
+
+/**
+ * 面板摆放：区域、上下分区、顺序与标题。面板贡献里的 `region` / `slot` / `order` / `title` 只是默认值，
+ * 实际位置按优先级合并：用户调整（`layout.movePanel`，持久化）> 宿主 `layout.panels` > 摆放贡献
+ * （`ExtensionPoints.placements`，如场景预设）> 面板贡献自身。移动面板不需要重新贡献视图。
+ */
+export interface PanelPlacement {
+  region?: RegionId;
+  slot?: PanelSlot;
+  order?: number;
+  /** 在该布局下的面板标题（如把“文件目录”显示为“电子文件列表”） */
+  title?: string;
+}
+
+/** 摆放贡献：`id` 为目标面板 id；同 id 后注册者生效，贡献插件停用后恢复 */
+export interface PanelPlacementItem extends PanelPlacement {
+  id: string;
 }
 
 export interface SettingsPageProps {
@@ -137,7 +155,7 @@ export interface ContextMenuItem {
  * 与“查看表单数据”弹窗都按 `order` 依次调用 `collect`，结果以 `id` 为键汇总。
  */
 export interface FormDataProvider {
-  /** 汇总结果中的键，如 `dataTable.materials` */
+  /** 汇总结果中的键，如 `table.materials` */
   id: string;
   /** 显示名称，如“材料目录” */
   title: string;
@@ -220,6 +238,7 @@ export const ExtensionPoints = {
   toolbar: defineExtensionPoint<ToolbarItem>('kabel.toolbar'),
   statusbar: defineExtensionPoint<StatusItem>('kabel.statusbar'),
   panels: defineExtensionPoint<PanelContribution>('kabel.panels'),
+  placements: defineExtensionPoint<PanelPlacementItem>('kabel.placements'),
   settings: defineExtensionPoint<SettingsPage>('kabel.settings'),
   contextMenu: defineExtensionPoint<ContextMenuItem>('kabel.contextMenu'),
   formData: defineExtensionPoint<FormDataProvider>('kabel.formData'),

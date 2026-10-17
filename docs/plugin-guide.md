@@ -195,7 +195,8 @@ ctx.registerCommand({
 ```
 
 - 区域内多个面板默认以**标签页**组织；可通过 `layout.regions.<id>.mode = 'stack'` 改为上下堆叠（可折叠、可拖拽调整高度，`weight` 为初始高度比例）。
-- 面板声明 `slot: 'bottom'` 时放在区域的**下半区**（如左侧文件目录下方的数据表格）：区域上下分区，下半区有自己的标题 / 标签页，中间可拖拽调整高度（`layout.regions.<id>.split` 为下半区默认比例，默认 0.5，状态在 `layout.splits`，双击分隔条复位）；区域内只有下半区面板时按普通面板显示。`layout.showPanel` 同样适用于下半区面板。
+- 面板声明 `slot: 'bottom'` 时放在区域的**下半区**（如左侧文件目录下方的表格）：区域上下分区，下半区有自己的标题 / 标签页，中间可拖拽调整高度（`layout.regions.<id>.split` 为下半区默认比例，默认 0.5，状态在 `layout.splits`，双击分隔条复位）；区域内只有下半区面板时按普通面板显示。`layout.showPanel` 同样适用于下半区面板。上下两组各自成卡片，下半区可收起为标题栏。
+- **面板放在哪里由布局决定**：贡献中的 `region` / `slot` / `order` / `title` 只是默认值。场景预设用摆放贡献移动别人的面板（不重新贡献视图）：`ctx.contribute(ExtensionPoints.placements, { id: 'workspace.files', region: 'right', title: '电子文件列表' })`；宿主用 `layout: { panels: { 'table.materials': { region: 'left', slot: 'bottom' } } }`；用户在面板标题栏右键“移到左侧 / 左侧下方 / 右侧 / 右侧下方 / 恢复默认位置”（命令 `layout.movePanel` / `layout.resetPanel`）。优先级：用户 > 宿主 > 摆放贡献 > 面板默认。不要为了换位置而同 id 重新贡献面板。
 - 左右两侧是**通用扩展区域**，没有预设用途：区域内没有面板时整个区域不渲染，贡献第一个面板后自动出现。内置面板：左侧“文件目录”（`workspace.files`，order 10）、中间“内容”（`workspace.content`，order 10）。
 - `actions` 显示在区域标题栏（标签页模式下显示当前标签的操作）：`{ id, icon, tooltip, command? | onClick?, active? }`。面板较多时标题栏空间有限，可在面板内放一条工具条，用 `@kabel/ui` 的 `<PanelActions actions={...} />` 渲染。
 - `view` 收到 `{ kernel, panelId, region }`。定位到面板：`kernel.execute('layout.showPanel', panelId)`。

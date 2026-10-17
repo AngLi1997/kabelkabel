@@ -1,16 +1,16 @@
-import type { DataTablePage, DataTableQuery, DataTableRow } from './contract';
+import type { TablePage, TableQuery, TableRow } from './contract';
 
 const LIST_KEYS = ['rows', 'list', 'records', 'items', 'data'] as const;
 const TOTAL_KEYS = ['total', 'totalCount', 'count'] as const;
 
 const isRecord = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
-const asRows = (list: unknown[]): DataTableRow[] => list.filter(isRecord);
+const asRows = (list: unknown[]): TableRow[] => list.filter(isRecord);
 
 /**
  * 解析常见的接口返回形态：
  * 数组；`{ rows | list | records | items | data: [], total }`；以及包了一层 `{ code, data: { … } }` 的结构。
  */
-export function parseResponse(response: unknown): DataTablePage {
+export function parseResponse(response: unknown): TablePage {
   if (Array.isArray(response)) return { rows: asRows(response), total: response.length };
   if (!isRecord(response)) throw new Error('接口返回的不是表格数据');
   for (const key of LIST_KEYS) {
@@ -25,11 +25,11 @@ export function parseResponse(response: unknown): DataTablePage {
 }
 
 /** 统一为分页结果 */
-export const toPage = (result: DataTableRow[] | DataTablePage): DataTablePage =>
+export const toPage = (result: TableRow[] | TablePage): TablePage =>
   Array.isArray(result) ? { rows: result, total: result.length } : result;
 
 /** 后端分页：在 URL 上附加 `page`、`pageSize` 参数（保留已有参数与 hash） */
-export function withQuery(url: string, query: DataTableQuery): string {
+export function withQuery(url: string, query: TableQuery): string {
   const [base, hash] = url.split('#', 2) as [string, string | undefined];
   const sep = base.includes('?') ? '&' : '?';
   return `${base}${sep}page=${query.page}&pageSize=${query.pageSize}${hash !== undefined ? `#${hash}` : ''}`;
@@ -42,7 +42,7 @@ export async function fetchJson(url: string): Promise<unknown> {
 }
 
 /** 读取字段，支持 `a.b` 嵌套路径 */
-export function getField(row: DataTableRow, key: string): unknown {
+export function getField(row: TableRow, key: string): unknown {
   if (key in row) return row[key];
   let value: unknown = row;
   for (const part of key.split('.')) {

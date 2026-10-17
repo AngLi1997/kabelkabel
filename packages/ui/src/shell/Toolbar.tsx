@@ -22,6 +22,7 @@ export function Toolbar({ breakpoint = 'lg' }: { breakpoint?: Breakpoint }) {
   const state = useStoreState();
   const items = useContributions(ExtensionPoints.toolbar);
   useContributions(ExtensionPoints.panels); // 面板增减会影响区域开关按钮的可见性
+  useContributions(ExtensionPoints.placements);
   useContributions(ExtensionPoints.formData); // 表单数据提供者增减会影响“查看表单数据”按钮
   useCommandsVersion();
   const visible = items.filter((item) => !item.when || item.when(state, kernel));

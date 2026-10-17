@@ -35,7 +35,7 @@ export function PanelStack({ panels, region }: { panels: readonly PanelContribut
               class={cx('kb-stack__item', isFolded && 'is-folded')}
               style={{ flex: isFolded ? '0 0 auto' : `${weightOf(panel)} 1 0px` }}
             >
-              <header class="kb-stack__header">
+              <header class="kb-stack__header" data-kb-context="panel" data-kb-context-data={panel.id}>
                 <button
                   type="button"
                   class="kb-stack__toggle"
