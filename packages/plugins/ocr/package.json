@@ -1,6 +1,7 @@
 {
   "name": "@kabel/plugin-ocr",
   "version": "0.1.0",
+  "author": "liang",
   "description": "Kabel 文字识别服务（能力插件）：OpenAI 兼容接口（PaddleOCR-VL 等），提供 OCR_SERVICE",
   "type": "module",
   "license": "MIT",

@@ -1,6 +1,7 @@
 {
   "name": "@kabel/plugin-region-select",
   "version": "0.1.0",
+  "author": "liang",
   "description": "Kabel 框选插件：在影像舞台上框选区域（矩形、多边形，形状可扩展），并把原图与裁剪图通过事件交给下游",
   "type": "module",
   "license": "MIT",

@@ -1,6 +1,7 @@
 {
   "name": "@kabel/plugin-workspace",
   "version": "0.1.0",
+  "author": "liang",
   "description": "Kabel 工作台插件（所有业务插件的底座）：文档模型、文件目录、内容面板、渲染器与影像舞台扩展点",
   "type": "module",
   "license": "MIT",

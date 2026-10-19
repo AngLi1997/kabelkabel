@@ -1,6 +1,7 @@
 {
   "name": "@kabel/core",
   "version": "0.1.0",
+  "author": "liang",
   "description": "Kabel 档案著录工具微内核：事件总线、可预测状态、撤销重做、命令与插件系统",
   "type": "module",
   "license": "MIT",

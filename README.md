@@ -103,6 +103,7 @@ await editor.use(myPlugin());           // 运行期注册插件：向左 / 右�
 
 ## 文档
 
+- [业务系统接入](docs/business.md)（只安装 `@kabel/vue`）
 - [架构设计](docs/architecture.md)
 - [插件开发指南](docs/plugin-guide.md)
 - [Vue 3 集成](docs/vue.md)

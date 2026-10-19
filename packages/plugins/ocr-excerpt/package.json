@@ -1,6 +1,7 @@
 {
   "name": "@kabel/plugin-ocr-excerpt",
   "version": "0.1.0",
+  "author": "liang",
   "description": "Kabel 框选识别回填（业务插件）：在档案影像上框选区域，OCR 识别后回填到当前字段，并在影像上标出证据",
   "type": "module",
   "license": "MIT",

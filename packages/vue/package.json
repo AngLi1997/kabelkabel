@@ -1,6 +1,7 @@
 {
   "name": "@kabel/vue",
   "version": "0.1.0",
+  "author": "liang",
   "description": "Kabel 档案著录工具 Vue 3 适配器：<KabelEditor>、<KabelPanel>、组合式 API 与 Vue 视图桥接",
   "type": "module",
   "license": "MIT",

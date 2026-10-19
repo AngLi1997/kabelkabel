@@ -1,6 +1,7 @@
 {
   "name": "@kabel/plugin-catalog",
   "version": "0.1.0",
+  "author": "liang",
   "description": "Kabel 著录面板（业务插件）：按字段配置分组渲染档案详情数据，字段导航、复核、校验",
   "type": "module",
   "license": "MIT",

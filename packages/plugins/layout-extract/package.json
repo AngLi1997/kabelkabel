@@ -1,6 +1,7 @@
 {
   "name": "@kabel/plugin-layout-extract",
   "version": "0.1.0",
+  "author": "liang",
   "description": "Kabel 版面分析自动填充（业务插件）：整页 OCR + 大模型结构化提取，按字段配置自动回填",
   "type": "module",
   "license": "MIT",

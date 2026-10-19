@@ -1,6 +1,7 @@
 {
   "name": "@kabel/plugin-data-exchange",
   "version": "0.1.0",
+  "author": "liang",
   "description": "Kabel 数据对接（业务插件）：把字段与文件导出为 JSON / YAML 交给业务层提交，按业务层提供的数据加载，控件与数据项可配置",
   "type": "module",
   "license": "MIT",

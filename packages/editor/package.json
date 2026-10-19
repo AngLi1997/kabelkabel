@@ -1,6 +1,7 @@
 {
   "name": "@kabel/editor",
   "version": "0.1.0",
+  "author": "liang",
   "description": "Kabel 档案著录工具主包：baseline 底座（工具栏 + 左右扩展面板 + 内容区 + 状态栏、文件目录与工作台）与宿主 API",
   "type": "module",
   "license": "MIT",

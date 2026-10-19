@@ -1,6 +1,7 @@
 {
   "name": "@kabel/plugin-fields",
   "version": "0.1.0",
+  "author": "liang",
   "description": "Kabel 字段模型（能力插件）：字段配置与分组、字段值与来源（人工 / 识别 / AI）、复核、校验、焦点导航",
   "type": "module",
   "license": "MIT",

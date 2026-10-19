@@ -1,6 +1,7 @@
 {
   "name": "@kabel/ui",
   "version": "0.1.0",
+  "author": "liang",
   "description": "Kabel 渲染层：基于 Preact 的工作台外壳、布局插件与通用组件",
   "type": "module",
   "license": "MIT",

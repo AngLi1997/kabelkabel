@@ -1,6 +1,7 @@
 {
   "name": "@kabel/plugin-table",
   "version": "0.1.0",
+  "author": "liang",
   "description": "Kabel 表格能力插件：业务端传入 JSON 数据或接口 URL 展示表格，支持前端/后端分页、行选中，并作为表单数据提交",
   "type": "module",
   "license": "MIT",

@@ -1,6 +1,7 @@
 {
   "name": "@kabel/plugin-llm",
   "version": "0.1.0",
+  "author": "liang",
   "description": "Kabel 大模型服务（能力插件）：OpenAI 兼容接口，提供 LLM_SERVICE",
   "type": "module",
   "license": "MIT",
